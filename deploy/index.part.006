@@ -331,6 +331,7 @@ async function showAuthScreen(){
 }
 function enterApp(){
   document.body.classList.remove("auth-locked");
+  try{$("authView").hidden=true}catch(e){}
   try{sessionStorage.setItem(AUTH_SESSION,"1")}catch(e){}
   try{if(typeof refreshAppUI_==="function")refreshAppUI_()}catch(e){}
   try{location.hash=location.hash||"#view-dashboard"}catch(e){}
