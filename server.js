@@ -9,6 +9,7 @@ const PORT = Number(process.env.PORT || 10000);
 const ROOT = __dirname;
 const INDEX_FILE = path.join(ROOT, 'index.html');
 const SEED_FILE = path.join(ROOT, 'seed-state.json');
+const ARCHIVE_IMPORT_FILE = path.join(ROOT, 'archive-import.json');
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const IS_PRODUCTION = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 const COOKIE_SECURE = process.env.COOKIE_SECURE
@@ -37,6 +38,65 @@ const pool = new Pool({
   connectionTimeoutMillis: 15_000,
   ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : undefined
 });
+
+async function importArchiveState() {
+  if (!fs.existsSync(ARCHIVE_IMPORT_FILE)) return;
+  try {
+    const archive = JSON.parse(fs.readFileSync(ARCHIVE_IMPORT_FILE, 'utf8'));
+    if (!archive || !Number(archive.version)) return;
+    const result = await pool.query('SELECT state_json FROM app_state WHERE id=1');
+    if (!result.rows[0]) return;
+    let state = result.rows[0].state_json;
+    if (typeof state === 'string') state = JSON.parse(state);
+    if (!state || !state.data || !Array.isArray(state.data.data) || !Array.isArray(state.data.clients) || !state.data.settings) return;
+    if (Number(state.archiveImportVersion || 0) >= Number(archive.version)) return;
+
+    const invoices = Array.isArray(archive.invoices) ? archive.invoices : [];
+    const clients = Array.isArray(archive.clients) ? archive.clients : [];
+
+    for (const incoming of clients) {
+      const name = String(incoming.name || '').trim().toLowerCase();
+      const phone = String(incoming.phone || '').replace(/\D/g, '');
+      const exists = state.data.clients.some(c => {
+        const cn = String(c.name || '').trim().toLowerCase();
+        const cp = String(c.phone || '').replace(/\D/g, '');
+        return (name && cn === name) || (phone && cp === phone);
+      });
+      if (!exists) state.data.clients.push(incoming);
+    }
+
+    for (const incoming of invoices) {
+      const no = String(incoming.no || '').trim();
+      const exists = state.data.data.some(x => String(x.no || '').trim() === no);
+      if (!exists) state.data.data.push(incoming);
+    }
+
+    state.data.data.sort((a, b) => {
+      const an = Number(String(a.no || '').replace(/\D/g, '')) || 0;
+      const bn = Number(String(b.no || '').replace(/\D/g, '')) || 0;
+      return bn - an;
+    });
+
+    const maxInvoiceNo = state.data.data.reduce((m, x) => {
+      const n = Number(String(x.no || '').replace(/\D/g, '')) || 0;
+      return Math.max(m, n);
+    }, 0);
+    state.data.settings.invoiceSequence = Math.max(
+      Number(state.data.settings.invoiceSequence) || 1,
+      maxInvoiceNo + 1
+    );
+    state.archiveImportVersion = Number(archive.version);
+    const savedAt = Date.now();
+
+    await pool.query(
+      'UPDATE app_state SET version=$1,saved_at=$2,state_json=$3::jsonb WHERE id=1',
+      [Number(state.version) || 4, savedAt, JSON.stringify(state)]
+    );
+    console.log(`Archive import v${archive.version} loaded: ${invoices.length} invoices and ${clients.length} clients.`);
+  } catch (err) {
+    console.warn('Archive import could not be loaded:', err.message);
+  }
+}
 
 async function initDb() {
   await pool.query(`
@@ -67,6 +127,7 @@ async function initDb() {
   `);
 
   const state = await pool.query('SELECT id FROM app_state WHERE id=1');
+  await importArchiveState();
   if (state.rowCount === 0 && process.env.SEED_ON_EMPTY !== 'false' && fs.existsSync(SEED_FILE)) {
     try {
       const seed = JSON.parse(fs.readFileSync(SEED_FILE, 'utf8'));
