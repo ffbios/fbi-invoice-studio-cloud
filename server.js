@@ -20,15 +20,15 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
-const dbConfig = process.env.DATABASE_URL
-  ? { connectionString: process.env.DATABASE_URL }
-  : {
-      host: process.env.PGHOST || 'postgres',
+const dbConfig = process.env.PGHOST
+  ? {
+      host: process.env.PGHOST,
       port: Number(process.env.PGPORT || 5432),
       database: process.env.PGDATABASE,
       user: process.env.PGUSER,
       password: process.env.PGPASSWORD
-    };
+    }
+  : { connectionString: process.env.DATABASE_URL };
 
 const pool = new Pool({
   ...dbConfig,
