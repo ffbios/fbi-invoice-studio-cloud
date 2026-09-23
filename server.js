@@ -126,6 +126,9 @@ async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires_at ON auth_sessions(expires_at);
   `);
 
+  await pool.query('ALTER TABLE app_state ADD COLUMN IF NOT EXISTS draft_saved_at BIGINT');
+  await pool.query('ALTER TABLE app_state ADD COLUMN IF NOT EXISTS draft_json JSONB');
+
   const state = await pool.query('SELECT id FROM app_state WHERE id=1');
   await importArchiveState();
   if (state.rowCount === 0 && process.env.SEED_ON_EMPTY !== 'false' && fs.existsSync(SEED_FILE)) {
@@ -426,6 +429,47 @@ async function handleStateWrite(req, res) {
   }
 }
 
+async function handleDraftGet(req, res) {
+  const session = await requireAuth(req, res);
+  if (!session) return;
+  const { rows } = await pool.query('SELECT draft_saved_at,draft_json FROM app_state WHERE id=1');
+  if (!rows[0] || !rows[0].draft_json) return json(res, 200, { ok: true, draft: null });
+  return json(res, 200, {
+    ok: true,
+    draft: {
+      savedAt: Number(rows[0].draft_saved_at) || 0,
+      draft: rows[0].draft_json
+    }
+  });
+}
+
+async function handleDraftWrite(req, res) {
+  const session = await requireAuth(req, res);
+  if (!session) return;
+  try {
+    const body = await parseJsonBody(req);
+    if (!body || !body.draft || typeof body.draft !== 'object') {
+      return json(res, 400, { ok: false, error: 'Invalid draft.' });
+    }
+    const savedAt = Number(body.savedAt) || Date.now();
+    await pool.query(
+      'UPDATE app_state SET draft_saved_at=$1,draft_json=$2::jsonb WHERE id=1',
+      [savedAt, JSON.stringify(body.draft)]
+    );
+    return json(res, 200, { ok: true, savedAt });
+  } catch (err) {
+    console.error('Draft save failed:', err);
+    return json(res, 500, { ok: false, error: err.message || 'Draft save failed.' });
+  }
+}
+
+async function handleDraftDelete(req, res) {
+  const session = await requireAuth(req, res);
+  if (!session) return;
+  await pool.query('UPDATE app_state SET draft_saved_at=NULL,draft_json=NULL WHERE id=1');
+  return json(res, 200, { ok: true });
+}
+
 async function handleWhatsAppNotConfigured(req, res) {
   return json(res, 503, {
     ok: false,
@@ -465,6 +509,13 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/api/auth/login' && req.method === 'POST') return handleAuthLogin(req, res);
     if (url.pathname === '/api/auth/logout' && req.method === 'POST') return handleAuthLogout(req, res);
     if (url.pathname === '/api/auth/reset' && req.method === 'POST') return handleAuthReset(req, res);
+
+    if (url.pathname === '/api/draft') {
+      if (req.method === 'GET') return handleDraftGet(req, res);
+      if (req.method === 'PUT' || req.method === 'POST') return handleDraftWrite(req, res);
+      if (req.method === 'DELETE') return handleDraftDelete(req, res);
+      return json(res, 405, { ok: false, error: 'Method not allowed.' });
+    }
 
     if (url.pathname === '/api/state') {
       if (req.method === 'GET') return handleStateGet(req, res);
