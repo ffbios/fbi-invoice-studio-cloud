@@ -1,0 +1,514 @@
+  const paidCount=infos.filter(o=>o.status==="Paid").length;
+  const overdueCount=infos.filter(o=>o.status==="Overdue").length;
+  const dueSoon=infos.filter(o=>o.status!=="Paid"&&o.status!=="Draft"&&o.dueDate&&daysFromToday(o.dueDate)>=0&&daysFromToday(o.dueDate)<=7);
+  const dueSoonAmt=dueSoon.reduce((s,o)=>s+invoiceBalance(o.x),0);
+  const collection=total?Math.min(100,(paid/total)*100):0;
+  const rentals=data.filter(x=>x.category==="Equipment Rentals").length;
+  const avg=data.length?total/data.length:0;
+  $("sCount").textContent=data.length;$("sCountMeta").textContent=paidCount+" paid · "+drafts+" drafts";
+  $("sInvoiced").textContent=fmtMoney(total,"GHS");$("sInvoicedMeta").textContent=data.length+" saved invoice"+(data.length===1?"":"s");
+  $("sPaid").textContent=fmtMoney(paid,"GHS");$("sPaidMeta").textContent=paidCount+" paid invoice"+(paidCount===1?"":"s");
+  $("sDue").textContent=fmtMoney(outstanding,"GHS");$("sDueMeta").textContent=(sent+partial+overdue)+" open invoice"+((sent+partial+overdue)===1?"":"s");
+  $("sOverdue").textContent=fmtMoney(overdue,"GHS");$("sOverdueMeta").textContent=overdueCount+" overdue";
+  $("sDueSoon").textContent=fmtMoney(dueSoonAmt,"GHS");$("sDueSoonMeta").textContent=dueSoon.length+" due within 7 days";
+  $("sDraft").textContent=drafts;$("sDraftMeta").textContent="Not yet sent";
+  $("sClients").textContent=clients.length;$("sClientsMeta").textContent="Client database";
+  $("ovSent").textContent=sent;$("ovPartial").textContent=partial;$("ovPaid").textContent=paidCount;$("ovOverdue").textContent=overdueCount;$("ovDraft").textContent=drafts;$("ovCollection").textContent=collection.toFixed(1)+"%";$("ovAverage").textContent=fmtMoney(avg,"GHS");$("ovRentals").textContent=rentals;
+  const attention=[];if(overdueCount)attention.push(`<div class="attention-item"><div class="attention-icon">⚠️</div><div class="grow"><b>${overdueCount} overdue invoice${overdueCount===1?"":"s"}</b><small>${fmtMoney(overdue,"GHS")} requires follow-up</small></div><button class="btn" onclick="show('saved')">Review</button></div>`);if(drafts)attention.push(`<div class="attention-item"><div class="attention-icon">📝</div><div class="grow"><b>${drafts} draft invoice${drafts===1?"":"s"}</b><small>Saved but not sent to clients</small></div><button class="btn" onclick="show('saved')">Review</button></div>`);if(dueSoon.length)attention.push(`<div class="attention-item"><div class="attention-icon">⏰</div><div class="grow"><b>${dueSoon.length} invoice${dueSoon.length===1?"":"s"} due soon</b><small>${fmtMoney(dueSoonAmt,"GHS")} due within 7 days</small></div></div>`);$("attentionList").innerHTML=attention.join("")||'<div style="color:#6f7888;font-size:10px;padding:14px 0">✓ Nothing requires immediate attention.</div>';
+  $("recent").innerHTML=infos.slice(0,10).map(o=>{const x=o.x,b=invoiceBalance(x);return `<tr><td><b>${esc(x.no)}</b></td><td>${esc(x.client||"No client")}</td><td>${esc(x.date||"—")}</td><td>${esc(x.due||"On Receipt")}</td><td><span class="status-pill ${o.cls}">${esc(o.status)}</span></td><td>${fmtMoney(x.total,x.cur)}</td><td>${fmtMoney(b,x.cur)}</td><td><button class="btn" onclick="previewSaved('${x.id}')">View</button></td></tr>`}).join("")||'<tr><td colspan="8" style="text-align:center;color:#777;padding:22px">Create your first invoice to start your dashboard.</td></tr>';
+  const dueRows=infos.filter(o=>o.status!=="Paid"&&o.status!=="Draft"&&o.dueDate).sort((a,b)=>a.dueDate-b.dueDate).slice(0,8);$("dueList").innerHTML=dueRows.length?dueRows.map(o=>{const d=daysFromToday(o.dueDate),label=d<0?Math.abs(d)+" day"+(Math.abs(d)===1?"":"s")+" overdue":d===0?"Due today": "Due in "+d+" day"+(d===1?"":"s");return `<div class="due-item"><div class="grow"><b>${esc(o.x.no)} · ${esc(o.x.client||"No client")}</b><small class="${d<0?"due-overdue":d<=7?"due-soon":"due-normal"}">${label} · ${fmtMoney(invoiceBalance(o.x),o.x.cur)}</small></div><button class="btn" onclick="previewSaved('${o.x.id}')">View</button></div>`}).join(""):'<div style="color:#6f7888;font-size:10px;padding:12px 0">No dated open invoices.</div>';
+  $("sumClients").textContent=clients.length;$("sumClientInvoices").textContent=data.filter(x=>x.client).length;$("sumNoClient").textContent=data.filter(x=>!x.client).length;$("sumLatest").textContent=data[0]?data[0].no:"—";$("sumLatestClient").textContent=clients[0]?clients[0].name:"—";
+}
+function saveSettings(){settings.biz=$("biz").value;settings.owner=$("owner").value;settings.baddr=$("baddr").value;settings.bphone=$("bphone").value;settings.bemail=$("bemail").value;settings.bnum=$("bnum").value;settings.defaultPay=$("defaultPay").value;settings.template=Number($("template")?.value||settings.template||100)||100;persist();$("payment").value=settings.defaultPay;toast("Settings saved")}
+$("logoFile").onchange=function(){let f=this.files[0];if(!f)return;let r=new FileReader();r.onload=e=>{settings.logo=e.target.result;persist();toast("Logo saved")};r.readAsDataURL(f)}
+
+function showRecoveryCode(){const a=getAuth();if(!a?.recoveryCode){toast("No recovery code available");return}$('recoveryDisplay').value=a.recoveryCode;toast("Recovery code displayed")}
+function regenerateRecoveryCode(){if(!confirm("Generate a new recovery code? The old code will stop working."))return;const a=getAuth();if(!a)return;a.recoveryCode=generateRecoveryCode();a.recoveryIssuedAt=new Date().toISOString();setAuth(a);$('recoveryDisplay').value=a.recoveryCode;alert("NEW RECOVERY CODE:\n\n"+a.recoveryCode+"\n\nSave it in a safe place.");toast("Recovery code regenerated")}
+function saveWhatsAppSettings(){
+  settings.waEnabled=$("waEnabled").value;
+  settings.waRecipient=$("waRecipient").value.replace(/\D/g,"");
+  settings.waApiUrl=$("waApiUrl").value.trim();
+  settings.waTemplate=$("waTemplate").value.trim();
+  settings.waLanguage=$("waLanguage").value.trim()||"en_US";
+  settings.waEvent=$("waEvent").value;
+  persist();
+  toast("WhatsApp settings saved");
+}
+function invoiceNotificationUrl(invoice){
+  const base=(settings.waApiUrl||"/api/whatsapp/invoice-created").trim();
+  const url=new URL(base, "http://127.0.0.1:3000");
+  const q={recipient:settings.waRecipient||"233257407350",template:settings.waTemplate||"hello_world",language:settings.waLanguage||"en_US",number:invoice.no,client:invoice.client||"Client",total:Number(invoice.total||0).toFixed(2),currency:invoice.cur||"GHS",date:invoice.date||"",due:invoice.due||"",status:invoice.status||""};
+  Object.entries(q).forEach(([k,v])=>url.searchParams.set(k,String(v)));
+  return url.href;
+}
+function setWaStatus(text){const el=$("waStatus");if(el)el.textContent=text}
+async function sendWhatsAppNotification(invoice){if(settings.waEnabled!=="yes")return {skipped:true};const payload={recipient:settings.waRecipient||"233257407350",template:settings.waTemplate||"hello_world",language:settings.waLanguage||"en_US",invoice:{number:invoice.no,client:invoice.client||"Client",total:Number(invoice.total||0),currency:invoice.cur||"GHS",date:invoice.date||"",due:invoice.due||"",status:invoice.status||""}};try{const res=await fetch("/api/whatsapp/invoice-created",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});const raw=await res.text();let body={};try{body=JSON.parse(raw)}catch(e){body={error:raw||"Empty server response"}};if(!res.ok||!body.ok)return {ok:false,error:body.error||("Server returned HTTP "+res.status),status:res.status,meta:body.meta};return {ok:true,messageId:body.messageId,status:res.status,meta:body.meta}}catch(e){return {ok:false,error:e.message||"Could not reach WhatsApp gateway"}}}
+async function testWhatsApp(){saveWhatsAppSettings();setWaStatus("Testing Meta WhatsApp connection...");try{const res=await fetch("/api/whatsapp/test?recipient="+encodeURIComponent(settings.waRecipient||"233257407350"));const raw=await res.text();let body={};try{body=JSON.parse(raw)}catch(e){body={error:raw||"Empty server response"}}if(!res.ok||!body.ok){setWaStatus("❌ "+(body.error||("HTTP "+res.status))+"\nHTTP: "+res.status);return}setWaStatus("✅ WhatsApp API accepted the test.\nMessage ID: "+body.messageId+"\nHTTP: "+res.status);refreshWhatsAppDebug()}catch(e){setWaStatus("❌ Cannot reach local WhatsApp server. "+(e.message||""))}}
+async function refreshWhatsAppDebug(){try{const r=await fetch("/api/whatsapp/debug-log");const b=await r.json();$("waDebug").textContent=b.log||"No WhatsApp server log yet."}catch(e){$("waDebug").textContent="Could not load debug log: "+e.message}}
+
+function exportStudioBackup(){
+  try{
+    const payload={version:3,exportedAt:new Date().toISOString(),data,clients,settings};
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="FBI-Invoice-Studio-backup.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    toast("Backup exported");
+  }catch(e){console.error(e);toast("Could not export backup: "+e.message)}
+}
+function importStudioBackup(evt){
+  const f=evt.target.files&&evt.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const obj=JSON.parse(r.result||"{}");
+      if(!Array.isArray(obj.data)||!Array.isArray(obj.clients)||!obj.settings)throw new Error("Invalid Invoice Studio backup file");
+      data=obj.data;clients=obj.clients;settings={...settings,...obj.settings};persist();populateClientSelect();renderClients();dashboard();renderSaved();renderReceipts();toast("Backup restored successfully");
+    }catch(e){console.error(e);toast("Backup restore failed: "+e.message)}
+    finally{evt.target.value=""}
+  };
+  r.readAsText(f);
+}
+function preview(){
+  try{
+    renderPaper();
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active","print-view"));
+    $("view-preview").classList.add("active");
+    $("side").classList.remove("open");
+  }catch(e){console.error("Preview error",e);toast("Preview failed: "+e.message)}
+}
+function renderPaper(){
+ let x=get(),s=settings,logo=s.logo?`<div class="logo" style="background-image:url('${s.logo}')"></div>`:`<div class="logo"></div>`;
+ let rows=x.items.map(i=>`<tr><td>${esc(i.desc)}</td><td>${esc(money(i.rate))}</td><td>${i.qty}</td><td>${esc(money(i.qty*i.rate))}</td></tr>`).join("");
+ let vat=x.vatInclusive?`<div class="vat-note">This invoice is VAT inclusive.</div>`:"";
+ let status=(x.status||"Draft").toLowerCase();
+ let statusClass=status.includes("paid")&&!status.includes("partial")?"status-paid":status.includes("overdue")?"status-overdue":status.includes("partial")?"status-partial":status.includes("sent")?"status-sent":"status-draft";
+ let rental=x.category==="Equipment Rentals"?`<div class="rental-box"><div class="rental-title">Equipment Rental Details</div><div class="rental-grid"><div>Period<b>${esc(x.rentalStart||"—")} → ${esc(x.rentalEnd||"—")}</b></div><div>Rate Unit<b>${esc(x.rentalUnit||"Per Day")}</b></div><div>Job Location<b>${esc(x.jobLocation||"—")}</b></div><div>Reference / Deposit<b>${esc(x.rentalRef||"—")}${x.deposit?" · "+esc(money(x.deposit))+" deposit":""}</b></div></div></div>`:"";
+ let eventDetails=["Live Streaming","Media Works","Live Production","Drone Works"].includes(x.category)&&x.eventDate?`<div class="rental-box"><div class="rental-title">Event Details</div><div class="rental-grid"><div>Service Category<b>${esc(x.category)}</b></div><div>Event Date<b>${esc(x.eventDate)}</b></div></div></div>`:"";
+ $("paper").className="paper template-100";
+ $("paper").innerHTML=`
+ <div class="paper-top">
+   <div class="business">${logo}<div class="biz"><h2>${esc(s.biz)}</h2><div>${esc(s.owner)}<br>${esc(s.bnum)} · ${esc(s.baddr)}<br>${esc(s.bphone)} · ${esc(s.bemail)}</div></div></div>
+   <div class="invoice-meta"><b>INVOICE</b><div class="big">${esc(x.no)}</div><b>ISSUED</b><br>${esc(x.date)}<br><br><b>DUE</b><br>${esc(x.due)}<br><span class="status-pill ${statusClass}">${esc(x.status||"Draft")}</span></div>
+ </div>
+ <div class="bill"><div class="bill-grid">
+   <div class="info-card"><div class="info-label">Bill To</div><div class="bill-name">${esc(x.client||"Client")}</div><div class="bill-info">${esc(x.clientAddress||"")}<br>${esc(x.clientPhone||"")}${x.clientEmail?esc(" · "+x.clientEmail):""}</div></div>
+   <div class="info-card"><div class="info-label">Amount Due</div><div class="bill-name">${esc(money(x.total))}</div><div class="bill-info">Invoice total · ${esc(x.cur||"GHS")}<br>Payment status: ${esc(x.status||"Draft")}</div></div>
+ </div></div>
+ ${rental}
+ ${eventDetails}
+ <table class="invtable"><thead><tr><th>DESCRIPTION</th><th>RATE</th><th>QTY</th><th>AMOUNT</th></tr></thead><tbody>${rows||`<tr><td>No items added</td><td>${esc(money(0))}</td><td>0</td><td>${esc(money(0))}</td></tr>`}</tbody></table>
+ <div class="lower"><div class="pay"><h3>Payment Information</h3><h4>PAYMENT INSTRUCTIONS</h4><p>${esc(x.payment||s.defaultPay||"").replace(/\n/g,"<br>")}</p><h4>NOTES</h4><p>${esc(x.notes||"Thank you for your business.")}</p>${vat}</div><div class="totals"><div class="tl"><span>SUBTOTAL</span><b>${esc(money(x.sub))}</b></div><div class="tl"><span>DISCOUNT</span><b>${esc(money(x.dis||0))}</b></div><div class="tl"><span>TAX (${x.taxRate}%)</span><b>${esc(money(x.tax))}</b></div><div class="tl total"><span>TOTAL</span><b>${esc(money(x.total))}</b></div><div class="tl balance"><span>BALANCE DUE</span><b>${esc(money(x.total))}</b></div></div></div>
+ <div class="paper-footer"><b>PAYMENT &amp; RECORD</b><div class="two"><div>${esc(s.biz)} · ${esc(s.bemail)} · ${esc(s.bphone)}</div><div style="text-align:right">Invoice ${esc(x.no)} · ${esc(x.status||"Draft")}<br>Thank you for your business.</div></div></div>
+ <div class="watermark">${esc(s.biz)} · ${esc(x.no)}</div>`;
+}
+function printInvoice(){
+  try{
+    const invoice=get();
+    if(!invoice.no){toast("Invoice number is missing.");return}
+    renderPaper();
+    persist();
+    openDocumentPrint($("paper"),"Invoice "+invoice.no,"size:A4 portrait;margin:0");
+  }catch(err){console.error("Invoice print failed",err);toast("Could not prepare invoice PDF: "+err.message)}
+}
+async function savePdfToDrive(){
+  try{
+    const invoice=get();
+    if(!invoice.no){toast("Invoice number is missing.");return}
+    renderPaper();
+    persist();
+    openDocumentPrint($("paper"),"Invoice "+invoice.no,"size:A4 portrait;margin:0");
+    toast("Use the print dialog and choose Save as PDF");
+  }catch(err){console.error(err);toast("Could not prepare PDF: "+err.message)}
+}
+async function saveReceiptToDrive(){
+  try{
+    if(!current){toast("No receipt selected");return}
+    renderReceipt(current);
+    persist();
+    openDocumentPrint($("receiptPaper"),"Receipt "+(current.receiptNo||nextReceiptNumber()),"size:A5 portrait;margin:0");
+    toast("Use the print dialog and choose Save as PDF");
+  }catch(err){console.error(err);toast("Could not prepare receipt PDF: "+err.message)}
+}
+
+function initServiceCatalog(){
+  const cat=document.getElementById("serviceCategory");
+  const brand=document.getElementById("brandModelFilter");
+  const search=document.getElementById("itemSearch");
+  const itemSelect=document.getElementById("catalogItemSelect");
+  const addBtn=document.getElementById("addSelectedCatalogBtn");
+  const add25Btn=document.getElementById("addCategoryItemsBtn");
+  const count=document.getElementById("catalogCount");
+  if(!cat||!brand||!search||!itemSelect)return false;
+
+  // Build category list from the catalog, while preserving the service groups.
+  if(typeof SERVICE_CATALOG === "undefined") return false;
+  const categories=(typeof SERVICE_CATEGORIES!=="undefined"&&Array.isArray(SERVICE_CATEGORIES))?SERVICE_CATEGORIES.slice():Object.keys(SERVICE_CATALOG);
+  cat.innerHTML='<option value="">Select a service category...</option>'+categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
+
+  function buildBrands(){
+    const c=cat.value;
+    const items=SERVICE_CATALOG[c]||[];
+    // For a selected category, derive recognizable manufacturer/model groups.
+    const prefixes=["SONY","CANON","BLACKMAGIC","PANASONIC","FUJIFILM","NIKON","RED","ARRI","DJI","SIGMA","TAMRON","APUTURE","GODOX","ASTERA","NANLITE","SENNHEISER","SHURE","RODE","ZOOM","TASCAM","HOLLYLAND","ATOMOS","TERADEK","BLACKMAGIC","DATAVIDEO","EPSON","PANASONIC","BENQ","OPTOMA","MANFROTTO","SACHTLER","MILLER","AVENGER","KUPO","ZHIYUN"];
+    const groups=[];
+    const catalogGroups=Object.keys(SERVICE_CATALOG);
+    if(catalogGroups.includes(c) && c!=="Equipment Rentals") groups.push(c);
+    for(const item of items){
+      const u=String(item).toUpperCase();
+      const p=prefixes.find(x=>u.startsWith(x+" ")||u.startsWith(x+"-")||u===x);
+      if(p && !groups.includes(p))groups.push(p);
+    }
+    brand.innerHTML='<option value="">All Brands / Models</option>'+groups.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join("");
+  }
+
+  function currentItems(){
+    const c=cat.value;
+    const b=brand.value;
+    let arr=[];
+    if(b){
+      const categoryItems=SERVICE_CATALOG[c]||[];
+      const bu=b.toUpperCase();
+      arr=categoryItems.filter(x=>String(x).toUpperCase().startsWith(bu+" ")||String(x).toUpperCase().startsWith(bu+"-")||String(x).toUpperCase()===bu);
+      // If brand is actually a catalog group, use that group.
+      if(!arr.length && SERVICE_CATALOG[b]) arr=SERVICE_CATALOG[b].slice();
+      // Also search globally for a brand/model group when the selected category has no prefix match.
+      if(!arr.length){
+        for(const key of Object.keys(SERVICE_CATALOG)){
+          if(key.toUpperCase().includes(bu)) { arr=SERVICE_CATALOG[key].slice(); break; }
+        }
+      }
+    }else{
+      arr=(SERVICE_CATALOG[c]||[]).slice();
+    }
+    const q=search.value.trim().toLowerCase();
+    if(q)arr=arr.filter(x=>String(x).toLowerCase().includes(q));
+    return arr;
+  }
+
+  function refresh(){
+    const arr=currentItems();
+    itemSelect.innerHTML=arr.length
+      ? arr.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("")
+      : '<option value="">No matching items</option>';
+    if(count)count.textContent=cat.value?`${arr.length} available items`:'Select a service category';
+  }
+
+  cat.onchange=function(){buildBrands();search.value="";refresh();toggleRentalDetails();toggleEventDate();};
+  brand.onchange=function(){search.value="";refresh();toggleRentalDetails();};
+  search.oninput=refresh;
+  itemSelect.ondblclick=function(){addSelectedCatalogItem();};
+  if(addBtn)addBtn.onclick=addSelectedCatalogItem;
+  if(add25Btn)add25Btn.onclick=addCategoryItems;
+
+  if(!cat.value && categories.length){cat.value=categories[0];}
+  buildBrands();
+  refresh();
+  toggleRentalDetails();
+  toggleEventDate();
+  return true;
+}
+
+function addSelectedCatalogItem(){
+  const name=document.getElementById("catalogItemSelect")?.value||"";
+  if(!name){toast("Select an item first");return false;}
+  addItem(name,1,0);
+  toast("Item added: "+name);
+  return true;
+}
+
+function addCategoryItems(){
+  const arr=(function(){
+    const c=document.getElementById("serviceCategory")?.value||"";
+    const b=document.getElementById("brandModelFilter")?.value||"";
+    if(b && SERVICE_CATALOG[b])return SERVICE_CATALOG[b].slice();
+    const items=SERVICE_CATALOG[c]||[];
+    if(b){const bu=b.toUpperCase();return items.filter(x=>String(x).toUpperCase().startsWith(bu+" ")||String(x).toUpperCase().startsWith(bu+"-"));}
+    return items.slice();
+  })();
+  const names=arr.slice(0,25);
+  names.forEach(n=>addItem(n,1,0));
+  toast(`Added ${names.length} items. Use the search box for more.`);
+}
+
+function setCategory(c){
+  if($("serviceCategory")){$("serviceCategory").value=c;$("itemSearch").value="";$("serviceCategory").dispatchEvent(new Event("change"));}
+}
+
+let authMode="login";
+const AUTH_SESSION="invoice-studio-fbi-server-session";
+let authAccountExists=false;
+let authProfile=null;
+
+async function authRequest(path, method="GET", body=null){
+  const options={method,cache:"no-store",credentials:"same-origin",headers:{}};
+  if(body!==null){options.headers["Content-Type"]="application/json";options.body=JSON.stringify(body)}
+  const res=await fetch(path,options);
+  const raw=await res.text();
+  let data={};try{data=raw?JSON.parse(raw):{}}catch(e){data={error:raw||"Empty server response"}}
+  if(!res.ok || data.ok===false) throw new Error(data.error||("HTTP "+res.status));
+  return data;
+}
+
+async function refreshAuthSession(){
+  try{
+    const me=await authRequest("/api/auth/me");
+    if(me && me.authenticated){
+      authProfile={username:me.username||""};
+      authAccountExists=true;
+      return true;
+    }
+    return false;
+  }catch(e){
+    console.warn("Authentication session check failed",e);
+    return false;
+  }
+}
+async function refreshAuthStatus(){
+  let lastError=null;
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      const status=await authRequest("/api/auth/status");
+      authAccountExists=!!status.accountExists;
+      window.__fbiAuthStatusAvailable=true;
+      return status;
+    }catch(e){
+      lastError=e;
+      await new Promise(r=>setTimeout(r,250*(attempt+1)));
+    }
+  }
+  console.error("Authentication server unavailable",lastError);
+  window.__fbiAuthStatusAvailable=false;
+  authAccountExists=true;
+  return {ok:false,accountExists:true,error:lastError?.message||"Authentication server unavailable"};
+}
+function setAuthMessage(msg,ok=false){const el=$("authMsg");if(!el)return;el.textContent=msg;el.style.color=ok?"#75dfae":"#f0a4a4"}
+async function configureAuthMode(){
+  const status=await refreshAuthStatus();
+  const exists=!!status.accountExists;
+  authMode=exists?"login":"setup";
+  $("authTitle").textContent=exists?"Welcome Back":"Create Your Account";
+  $("authSub").textContent=exists?"Sign in to access your FBI Invoice Studio workspace.":"Create your administrator account to secure this invoice workspace.";
+  $("authSubmit").textContent=exists?"Sign In":"Create Account";
+  $("authConfirmWrap").style.display=exists?"none":"block";
+  $("authPass").autocomplete=exists?"current-password":"new-password";
+  $("authPass").placeholder=exists?"Enter your password":"Create a password (8+ characters)";
+  $("authUser").value=authProfile?.username||"";
+  $("createAccountLink").style.display=exists?"none":"inline-block";
+  if(status.ok===false && window.__fbiAuthStatusAvailable===false){
+    setAuthMessage("Cannot verify the administrator account. Check that the Invoice Studio server is running, then refresh the page.");
+  }else{
+    setAuthMessage("");
+  }
+}
+async function switchToCreateAccount(){
+  const status=await refreshAuthStatus();
+  if(status.accountExists){
+    authMode="login";
+    $("authTitle").textContent="Welcome Back";
+    $("authSub").textContent="Sign in to access your FBI Invoice Studio workspace.";
+    $("authSubmit").textContent="Sign In";
+    $("authConfirmWrap").style.display="none";
+    $("createAccountLink").style.display="none";
+    setAuthMessage("An administrator account already exists. Please sign in.");
+    return;
+  }
+  authMode="setup";
+  $("authTitle").textContent="Create Your Account";
+  $("authSub").textContent="Create your administrator account to secure this invoice workspace.";
+  $("authSubmit").textContent="Create Account";
+  $("authConfirmWrap").style.display="block";
+  $("authPass").value="";$("authPassConfirm").value="";
+  setAuthMessage("");
+}
+function togglePasswordField(id,btn){
+  const input=$(id);if(!input)return;
+  const show=input.type==="password";input.type=show?"text":"password";
+  if(btn){btn.setAttribute("aria-label",show?"Hide password":"Show password");btn.textContent="◉";}
+}
+async function showAuthScreen(){
+  document.body.classList.add("auth-locked");$("authView").hidden=false;
+  await configureAuthMode();
+  setTimeout(()=>$("authUser")?.focus(),80);
+}
+function enterApp(){
+  document.body.classList.remove("auth-locked");
+  try{sessionStorage.setItem(AUTH_SESSION,"1")}catch(e){}
+  try{if(typeof refreshAppUI_==="function")refreshAppUI_()}catch(e){}
+  try{location.hash=location.hash||"#view-dashboard"}catch(e){}
+  try{show("dashboard")}catch(e){}
+}
+async function logoutApp(){
+  try{await authRequest("/api/auth/logout","POST",{})}catch(e){console.warn("Logout request failed",e)}
+  try{sessionStorage.removeItem(AUTH_SESSION)}catch(e){}
+  authProfile=null;
+  await showAuthScreen();
+  toast("Signed out");
+}
+async function showForgotPassword(){
+  $("loginPanel").style.display="none";$("forgotPanel").style.display="block";
+  $("forgotUser").value=$("authUser").value.trim();$("forgotMsg").textContent="";$("forgotMsg").style.color="#f0a4a4";
+  setTimeout(()=>$("forgotUser").focus(),50);
+}
+async function hideForgotPassword(){$("forgotPanel").style.display="none";$("loginPanel").style.display="block";await configureAuthMode()}
+async function resetPasswordWithRecovery(){
+  const username=$("forgotUser").value.trim(),code=$("forgotCode").value.trim(),np=$("forgotNew").value,cp=$("forgotNewConfirm").value;
+  if(!username||!code||!np||!cp){$("forgotMsg").textContent="Complete all fields.";return}
+  if(np.length<8){$("forgotMsg").textContent="Password must contain at least 8 characters.";return}
+  if(np!==cp){$("forgotMsg").textContent="Passwords do not match.";return}
+  try{
+    const a=await authRequest("/api/auth/reset","POST",{username,recoveryCode:code,newPassword:np});
+    authProfile={username};
+    $("forgotMsg").style.color="#75dfae";
+    $("forgotMsg").innerHTML="Password reset successfully.<div class=\"auth-recovery\">Your new recovery code:<code>"+a.recoveryCode+"</code></div>";
+    $("forgotNew").value="";$("forgotNewConfirm").value="";$("forgotCode").value="";
+    authAccountExists=true;
+  }catch(e){$("forgotMsg").textContent=e.message||"Password reset failed. Please try again."}
+}
+async function handleAuth(e){
+  e.preventDefault();
+  const username=$("authUser").value.trim(),password=$("authPass").value;
+  if(username.length<3){setAuthMessage("Username must contain at least 3 characters.");return false}
+  if(password.length<8){setAuthMessage("Password must contain at least 8 characters.");return false}
+  try{
+    if(authMode==="setup"){
+      const confirm=$("authPassConfirm").value;
+      if(password!==confirm){setAuthMessage("Passwords do not match.");return false}
+      const a=await authRequest("/api/auth/setup","POST",{username,password,confirmPassword:confirm});
+      authProfile={username:a.username};authAccountExists=true;
+      await hydrateCloudState();
+      enterApp();
+      setTimeout(()=>alert("ACCOUNT CREATED\n\nYour recovery code is:\n\n"+a.recoveryCode+"\n\nSave this code somewhere safe. You need it to reset your password."),100);
+      return false;
+    }
+    const a=await authRequest("/api/auth/login","POST",{username,password});
+    authProfile={username:a.username};authAccountExists=true;
+    await hydrateCloudState();
+    enterApp();
+  }catch(err){
+    console.error("Authentication request failed",err);
+    setAuthMessage(err.message||"Authentication could not be completed. Please try again.");
+  }
+  return false;
+}
+function paintLoadedState_(){
+  normalizePaymentSettings();
+  ["biz","owner","baddr","bphone","bemail","bnum","defaultPay"].forEach(k=>{if($(k))$(k).value=settings[k]||""});
+  if($("waEnabled"))$("waEnabled").value=settings.waEnabled||"yes";
+  if($("waRecipient"))$("waRecipient").value=settings.waRecipient||"233257407350";
+  if($("waApiUrl"))$("waApiUrl").value=settings.waApiUrl||"/api/whatsapp/invoice-created";
+  if($("waTemplate"))$("waTemplate").value=settings.waTemplate||"hello_world";
+  if($("waLanguage"))$("waLanguage").value=settings.waLanguage||"en_US";
+  if($("waEvent"))$("waEvent").value=settings.waEvent||"created";
+  populateClientSelect();renderClients();dashboard();renderSaved();renderReceipts();initServiceCatalog();
+  const st=$("storageStatus");
+  if(st && !serverDbOnline)st.textContent='Cloud database is not connected. Check your internet connection and server status.';
+}
+let cloudStateHydrated=false;
+async function hydrateCloudState(){
+  const stored=await readPersistentPayload();
+  init(true,stored);
+  initTemplates();
+  initServiceCatalog();
+  paintLoadedState_();
+  const restored=restoreDraft();
+  if(!restored && !data.length && !current) newInvoice();
+  cloudStateHydrated=true;
+  return stored;
+}
+async function startApp(){
+  try{
+    init(true);
+    initTemplates();
+    initServiceCatalog();
+    const authenticated=await refreshAuthSession();
+    if(authenticated){
+      await hydrateCloudState();
+      enterApp();
+    }else{
+      // Do not request private invoice data until authentication succeeds.
+      paintLoadedState_();
+      await showAuthScreen();
+    }
+  }catch(e){
+    console.error("Invoice Studio startup error",e);
+    try{init(true);initServiceCatalog()}catch(ignore){}
+    try{showAuthScreen()}catch(ignore){}
+  }
+}
+
+// Autosave invoice work as a draft so a refresh does not wipe fields that have been entered.
+document.addEventListener("input",function(e){
+  const t=e.target;if(!t)return;
+  if(t.closest("#view-create"))scheduleDraftSave();
+});
+document.addEventListener("change",function(e){
+  const t=e.target;if(!t)return;
+  if(t.closest("#view-create"))scheduleDraftSave();
+});
+
+window.addEventListener("DOMContentLoaded",function(){setTimeout(function(){startApp()},0)});
+window.addEventListener("load",function(){setTimeout(function(){try{initServiceCatalog()}catch(e){console.error("Catalog boot guard",e)}},150)});
+
+/* Standalone final interaction bridge */
+window.addEventListener("load",function(){
+  setTimeout(function(){
+    try{
+      const add=document.getElementById("addSelectedCatalogBtn"), add25=document.getElementById("addCategoryItemsBtn");
+      if(add&&typeof addSelectedCatalogItem==="function")add.onclick=addSelectedCatalogItem;
+      if(add25&&typeof addCategoryItems==="function")add25.onclick=addCategoryItems;
+      initServiceCatalog();
+      if($('no')&&!$('no').value&&!readDraft())newInvoice();
+    }catch(e){console.error("Final interaction bridge",e)}
+  },300);
+});
+<!-- FBI Invoice Studio — Default FBI Logo embedded from user-provided FBI artwork -->
+</script>
+
+<!-- STANDALONE SERVICE CATALOG BOOT: intentionally independent of the main application startup -->
+<script>
+(function(){
+  const CATEGORIES=["Equipment Rentals","Sony Cameras","Canon Cameras","Blackmagic Cameras","Panasonic Cameras","Fujifilm Cameras","Nikon Cameras","RED Cameras","ARRI Cameras","DJI Drones & Cameras","Canon Lenses","Sony Lenses","Sigma Lenses","Tamron Lenses","Cinema Lenses","Aputure Lighting","ARRI Lighting","Nanlite Lighting","Godox Lighting","Astera Lighting","Pro Lighting & Grip","Zhiyun Stabilizers","DJI Stabilizers","Atomos & Monitoring","Wireless Video","Audio - Sennheiser","Audio - Shure","Audio - RODE","Audio - Zoom","Audio - Tascam","Audio - Wireless & Intercom","Blackmagic Live Production","vMix & Streaming","Streaming Hardware","Projectors & Displays","LED Screens & Video Walls","Power & Generators","Production Accessories","Networking","CCTV","Smart Home Automation","Media Works","Live Streaming","Live Production"];
+  const CATALOG={"Networking":["Network Design & Consultation","Network Installation","Network Configuration","LAN Installation","WAN Installation","Structured Cabling","Cat6 UTP Cable","Cat6A UTP Cable","Cat7 Cable","Cat8 Cable","Fiber Optic Cable","Single-Mode Fiber","Multi-Mode Fiber","Fiber Patch Cord","Fiber Pigtail","Fiber Patch Panel","Fiber Termination","Fiber Splicing","Fiber OTDR Testing","RJ45 Connector","Keystone Jack","Patch Panel","Network Rack","Wall Mount Rack","Server Rack","Rack PDU","Cable Manager","Faceplate","Data Outlet","Patch Cord","Cable Tray","Cable Trunking","Network Switch 5-Port","Network Switch 8-Port","Network Switch 16-Port","Network Switch 24-Port","Network Switch 48-Port","PoE Switch 8-Port","PoE Switch 16-Port","PoE Switch 24-Port","PoE Switch 48-Port","Managed Switch","Unmanaged Switch","Layer 2 Switch","Layer 3 Switch","Core Switch","Router","Enterprise Router","Firewall","VPN Router","Wireless Access Point","Wi-Fi 5 Access Point","Wi-Fi 6 Access Point","Wi-Fi 6E Access Point","Wi-Fi 7 Access Point","Point-to-Point Wireless Link","Point-to-Multipoint Wireless Link","Outdoor Access Point","Wi-Fi Controller","Network Server","NAS Storage","Network Printer Setup","Network Testing","Network Troubleshooting","Network Maintenance","IP Addressing & Subnetting","VLAN Configuration","QoS Configuration","VPN Setup","Firewall Configuration","Internet Failover Setup","Dual WAN Setup","Load Balancing Setup","Starlink Network Setup","Network Monitoring Setup"],"CCTV":["CCTV Site Survey","CCTV System Design","CCTV Installation","CCTV Configuration","CCTV Maintenance","CCTV Troubleshooting","IP Camera Installation","Analog Camera Installation","HD-TVI Camera","HD-CVI Camera","AHD Camera","Network Camera","2MP Dome Camera","4MP Dome Camera","5MP Dome Camera","8MP Dome Camera","12MP Dome Camera","2MP Bullet Camera","4MP Bullet Camera","5MP Bullet Camera","8MP Bullet Camera","12MP Bullet Camera","Turret Camera","PTZ Camera","Speed Dome Camera","Outdoor Camera","Indoor Camera","Vandal-Resistant Camera","Night Vision Camera","IR Camera","ColorVu Camera","Starlight Camera","Thermal Camera","ANPR/LPR Camera","Fisheye Camera","Panoramic Camera","Covert Camera","Wireless CCTV Camera","Solar CCTV Camera","Doorbell Camera","Video Door Intercom","CCTV NVR 4-Channel","CCTV NVR 8-Channel","CCTV NVR 16-Channel","CCTV NVR 32-Channel","CCTV NVR 64-Channel","CCTV NVR 128-Channel","DVR 4-Channel","DVR 8-Channel","DVR 16-Channel","DVR 32-Channel","PoE NVR","Enterprise NVR","CCTV Hard Drive 1TB","CCTV Hard Drive 2TB","CCTV Hard Drive 4TB","CCTV Hard Drive 6TB","CCTV Hard Drive 8TB","CCTV Hard Drive 10TB","CCTV Hard Drive 12TB","CCTV Hard Drive 16TB","PoE Injector","PoE Extender","CCTV Monitor","CCTV Viewing Station","CCTV Control Room Setup","CCTV Rack Installation","CCTV UPS","CCTV Power Supply","12V CCTV Power Supply","CCTV Junction Box","Camera Mount","Pole Mount","Wall Mount","Ceiling Mount","PTZ Mount","CCTV Cat6 Cabling","CCTV Fiber Link","CCTV Wireless Bridge","CCTV Remote Viewing Setup","Mobile CCTV App Setup","CCTV Recording Configuration","Motion Detection Setup","Line Crossing Setup","Intrusion Detection Setup","Camera Health Monitoring","Remote CCTV Maintenance"],"Smart Home Automation":["Smart Home Consultation","Smart Home Design","Smart Home Installation","Smart Home Programming","Smart Home Commissioning","Smart Home Maintenance","Smart Home Troubleshooting","Smart Lighting Installation","Smart Switch Installation","Smart Dimmer Installation","Smart Bulb Installation","Smart LED Strip Installation","Smart Scene Controller","Smart Motion Sensor","Smart Door Sensor","Smart Window Sensor","Smart Temperature Sensor","Smart Humidity Sensor","Smart Smoke Detector","Smart CO Detector","Smart Water Leak Sensor","Smart Door Lock","Smart Gate Control","Smart Garage Door Control","Smart Curtain Motor","Smart Blind Motor","Smart Thermostat","Smart AC Controller","Smart TV Integration","Smart Audio Integration","Multi-Room Audio Installation","Smart Speaker Installation","Smart Home Hub","Zigbee Hub","Z-Wave Hub","Matter Hub","Wi-Fi Smart Hub","Home Assistant Setup","Google Home Integration","Amazon Alexa Integration","Apple Home Integration","Smart Home App Setup","Voice Control Setup","Scene Automation","Schedule Automation","Energy Monitoring","Smart Energy Meter","Smart Plug","Smart Relay","Smart IR Blaster","Smart Security Integration","CCTV Smart Home Integration","Video Doorbell Integration","Intercom Integration","Access Control Integration","Electric Fence Integration","Alarm System Integration","Motorized Gate Automation","Gate Intercom","Smart Water Pump Control","Smart Generator Monitoring","Smart Solar Monitoring","Whole-Home Automation","Apartment Automation","Office Automation","Hotel Room Automation","Conference Room Automation"],"Equipment Rentals":["Cinema Camera","Digital Cinema Camera","Broadcast Camera","ENG Camera","Mirrorless Camera","DSLR Camera","Compact Camera","Action Camera","360 Camera","PTZ Camera","Webcam","Drone Camera","DJI Mavic 3 Pro","DJI Mavic 3","DJI Air 2S","DJI Inspire 2","DJI Inspire 3","DJI Matrice Series Drone","FPV Drone","Wide Angle Lens","Ultra Wide Lens","Standard Zoom Lens","Portrait Lens","Prime Lens","Telephoto Lens","Super Telephoto Lens","Macro Lens","Cinema Prime Lens","Cinema Zoom Lens","Anamorphic Lens","Fisheye Lens","Tilt-Shift Lens","24-70mm Lens","24-105mm Lens","70-200mm Lens","100-400mm Lens","200-600mm Lens","50mm Lens","85mm Lens","35mm Lens","16-35mm Lens","Tripod","Video Tripod","Heavy Duty Tripod","Monopod","Fluid Head","Photo Tripod","Tripod Dolly","Camera Slider","Motorized Slider","Camera Gimbal","DJI Ronin Gimbal","DJI RS Gimbal","Shoulder Rig","Cage Rig","Camera Shoulder Mount","Camera Top Handle","Camera Baseplate","Quick Release Plate","Magic Arm","Super Clamp","Suction Mount","Car Mount","Jib","Camera Crane","Steadicam","Follow Focus","Wireless Follow Focus","Matte Box","Lens Support","Lens Adapter","Teleprompter","Camera Rain Cover","Field Monitor","Production Monitor","Director Monitor","Client Monitor","Wireless Video Monitor","Video Assist Recorder","External Recorder","SSD Recorder","SD Card","CFexpress Card","XQD Card","Camera Battery","V-Mount Battery","Gold Mount Battery","Battery Charger","Battery Plate","Media Reader","Card Reader","Camera Power Supply","LED Panel Light","Bi-Color LED Panel","RGB LED Panel","COB LED Light","Fresnel LED Light","Tube Light","RGB Tube Light","LED Mat Light","Spotlight","Follow Spot","HMI Light","Tungsten Light","Daylight Light","Open Face Light","PAR Light","Softbox","Octabox","Stripbox","Lantern Softbox","Beauty Dish","Umbrella","Reflector","Diffuser","Flag","Scrim","Cutter","Barn Doors","Grid","Snoot","Fresnel Attachment","Light Dome","Eggcrate","Bounce Board","Negative Fill","Light Stand","Heavy Duty Light Stand","C-Stand","Baby Stand","Combo Stand","Boom Stand","Overhead Stand","Lighting Rig","Sandbag","Shot Bag","Power Distribution Unit","DMX Controller","DMX Cable","DMX Splitter","DMX Wireless System","Lighting Console","Lighting Desk","Dimming Pack","Follow Spot Stand","Shotgun Microphone","Lavalier Microphone","Wireless Lavalier Microphone","Wireless Handheld Microphone","Handheld Microphone","Dynamic Microphone","Condenser Microphone","Boundary Microphone","Gooseneck Microphone","Headset Microphone","Boom Microphone","Stereo Microphone","Camera Microphone","Interview Microphone","Podcast Microphone","Studio Microphone","Ambience Microphone","Audio Recorder","Field Recorder","Portable Recorder","Audio Mixer","Digital Mixer","Analog Mixer","USB Audio Interface","Wireless Microphone System","Wireless IEM System","IFB System","Intercom System","Production Intercom","Headphones","Monitor Headphones","In-Ear Monitor","Headphone Amplifier","Microphone Stand","Boom Pole","Mic Boom Stand","Desktop Mic Stand","Shock Mount","Microphone Clip","Windshield","Deadcat Wind Cover","Blimp","Pop Filter","Microphone Cable","XLR Cable","DI Box","Audio Snake","Stagebox","Patch Bay","Audio Splitter","Audio Isolator","Headphone Splitter","Apple Box","Grip Head","Grip Arm","Gobo Head","Gobo Arm","Gaffer Tape","Paper Tape","Cloth Tape","Cable Ramp","Cable Protector","Safety Cable","Rigging Rope","Ratchet Strap","Bungee Cord","Production Cart","Camera Cart","Utility Cart","Equipment Trolley","Ladder","Step Ladder","Platform","Backdrop Stand","Backdrop Frame","Background Support","UPS","Power Inverter","Portable Power Station","Generator","Silent Generator","Petrol Generator","Diesel Generator","Extension Cable","Heavy Duty Extension","Power Strip","Distribution Board","Power Conditioner","Voltage Regulator","Surge Protector","Camera Bag","Camera Case","Hard Case","Pelican Case","Lens Case","Memory Card Case","Battery Case","Cable Case","Rain Cover","Cleaning Kit","Sensor Cleaning Kit","Lens Cleaning Kit","Slate/Clapperboard","Timecode Box","Wireless Timecode System","Color Checker","Light Meter","Exposure Meter","Laser Distance Meter","Production Walkie Talkie","Two-Way Radio","Megaphone","SONY FX3","SONY FX30","SONY FX2","SONY FX6","SONY FX9","SONY VENICE","SONY VENICE 2","SONY BURANO","SONY FR7","SONY PXW-Z90V","SONY PXW-Z190","SONY PXW-Z280","SONY PXW-Z450","SONY PXW-FX9","SONY PXW-FX6","SONY PXW-FS7 II","SONY PXW-FS7","SONY PXW-FS5 II","SONY PXW-FS5","SONY HXR-NX80","SONY HXR-NX100","SONY FDR-AX700","SONY FDR-AX100","SONY A1 II","SONY A1","SONY A9 III","SONY A9 II","SONY A7R V","SONY A7R IV","SONY A7R III","SONY A7 IV","SONY A7 III","SONY A7S III","SONY A7S II","SONY A7C II","SONY A7C","SONY A6700","SONY A6600","SONY A6400","SONY A6100","SONY ZV-E1","SONY ZV-E10 II","SONY ZV-E10","SONY ZV-1 II","SONY ZV-1","CANON EOS C400","CANON EOS C80","CANON EOS C70","CANON EOS C300 Mark III","CANON EOS C300 Mark II","CANON EOS C200","CANON EOS C200B","CANON EOS C500 Mark II","CANON EOS C500","CANON EOS C700","CANON EOS R5 C","CANON EOS R5 Mark II","CANON EOS R5","CANON EOS R6 Mark II","CANON EOS R6","CANON EOS R8","CANON EOS R7","CANON EOS R10","CANON EOS R3","CANON EOS R1","CANON EOS R","CANON EOS 5D Mark IV","CANON EOS 6D Mark II","CANON EOS 90D","CANON EOS 80D","CANON EOS 7D Mark II","CANON XF605","CANON XF705","CANON XF405","CANON XF400","CANON XA75","CANON XA70","CANON XA65","CANON XA60","BLACKMAGIC URSA Cine 12K","BLACKMAGIC URSA Mini Pro 12K","BLACKMAGIC URSA Mini Pro 4.6K G2","BLACKMAGIC URSA Mini Pro 4.6K","BLACKMAGIC URSA Broadcast G2","BLACKMAGIC URSA Broadcast","BLACKMAGIC PYXIS 12K","BLACKMAGIC PYXIS 6K","BLACKMAGIC CINEMA CAMERA 6K FULL FRAME","BLACKMAGIC POCKET CINEMA CAMERA 6K G2","BLACKMAGIC POCKET CINEMA CAMERA 6K PRO","BLACKMAGIC POCKET CINEMA CAMERA 6K","BLACKMAGIC POCKET CINEMA CAMERA 4K","BLACKMAGIC MICRO STUDIO CAMERA 4K G2","BLACKMAGIC MICRO STUDIO CAMERA 4K","PANASONIC LUMIX GH7","PANASONIC LUMIX GH6","PANASONIC LUMIX GH5 II","PANASONIC LUMIX GH5","PANASONIC LUMIX S1H","PANASONIC LUMIX S5IIX","PANASONIC LUMIX S5II","PANASONIC LUMIX S5","PANASONIC LUMIX S1","PANASONIC LUMIX S1R","PANASONIC AG-CX350","PANASONIC AG-CX370","PANASONIC AG-CX10","PANASONIC HC-X2","PANASONIC HC-X20","PANASONIC AJ-PX380","PANASONIC AK-UC4000","PANASONIC AK-UC3300","PANASONIC AK-UC3000","FUJIFILM GFX100 II","FUJIFILM GFX100S II","FUJIFILM GFX100S","FUJIFILM X-H2S","FUJIFILM X-H2","FUJIFILM X-T5","FUJIFILM X-T4","FUJIFILM X-S20","FUJIFILM X-S10","FUJIFILM X-T30 II","FUJIFILM X100VI","NIKON Z9","NIKON Z8","NIKON Z6 III","NIKON Z6 II","NIKON Z7 II","NIKON Zf","NIKON Z50 II","NIKON Z50","NIKON D850","NIKON D780","NIKON D6","NIKON D5","NIKON D7500","NIKON D500","RED V-RAPTOR 8K VV","RED V-RAPTOR 8K S35","RED V-RAPTOR XL 8K VV","RED V-RAPTOR XL 6K S35","RED KOMODO-X","RED KOMODO 6K","RED MONSTRO 8K VV","RED HELIUM 8K","RED GEMINI 5K","ARRI ALEXA 35","ARRI ALEXA 35 Xtreme","ARRI ALEXA 265","ARRI ALEXA  Mini LF","ARRI ALEXA LF","ARRI ALEXA 65","ARRI ALEXA Mini","ARRI AMIRA","ARRI AMIRA Live","ARRI ALEXA 35 Live","ARRI ALEXA 35 Live Xtreme","DJI Mavic 4 Pro","DJI Mavic 3 Cine","DJI Mavic 3 Classic","DJI Mavic 3 Enterprise","DJI Mavic 2 Pro","DJI Mavic Air 2","DJI Air 3","DJI Air 3S","DJI Mini 4 Pro","DJI Mini 3 Pro","DJI Matrice 350 RTK","DJI Matrice 300 RTK","DJI Matrice 30T","DJI Avata 2","DJI Avata","DJI Ronin 4D 8K","DJI Ronin 4D 6K","DJI Osmo Pocket 3","DJI Osmo Action 5 Pro","DJI Osmo Action 4","DJI Osmo Mobile 6","DJI RS 4 Pro","DJI RS 4","DJI RS 3 Pro","DJI RS 3","DJI RS 2","CANON RF 15-35mm F2.8L IS USM","CANON RF 24-70mm F2.8L IS USM","CANON RF 24-105mm F2.8L IS USM","CANON RF 24-105mm F4L IS USM","CANON RF 70-200mm F2.8L IS USM","CANON RF 70-200mm F4L IS USM","CANON RF 100-500mm F4.5-7.1L IS USM","CANON RF 100-300mm F2.8L IS USM","CANON RF 200-800mm F6.3-9 IS USM","CANON RF 50mm F1.2L USM","CANON RF 85mm F1.2L USM","CANON RF 85mm F2 Macro IS STM","CANON RF 35mm F1.4L VCM","CANON RF 35mm F1.8 Macro IS STM","CANON RF 24mm F1.8 Macro IS STM","CANON EF 16-35mm F2.8L III USM","CANON EF 24-70mm F2.8L II USM","CANON EF 24-105mm F4L IS II USM","CANON EF 70-200mm F2.8L IS III USM","CANON EF 70-200mm F2.8L IS II USM","CANON EF 70-200mm F4L IS II USM","CANON EF 100-400mm F4.5-5.6L IS II USM","CANON EF 100-400mm F4.5-5.6L IS USM","CANON EF 50mm F1.2L USM","CANON EF 50mm F1.4 USM","CANON EF 85mm F1.2L II USM","CANON EF 85mm F1.8 USM","CANON EF 35mm F1.4L II USM","CANON EF 24-70mm F2.8L USM","SONY FE 12-24mm F2.8 GM","SONY FE 12-24mm F4 G","SONY FE 16-35mm F2.8 GM II","SONY FE 16-35mm F2.8 GM","SONY FE 16-35mm F4 ZA OSS","SONY FE 20-70mm F4 G","SONY FE 24-50mm F2.8 G","SONY FE 24-70mm F2.8 GM II","SONY FE 24-70mm F2.8 GM","SONY FE 24-105mm F4 G OSS","SONY FE 70-200mm F2.8 GM OSS II","SONY FE 70-200mm F2.8 GM OSS","SONY FE 70-200mm F4 G OSS II","SONY FE 100-400mm GM OSS","SONY FE 200-600mm G OSS","SONY FE 50mm F1.2 GM","SONY FE 50mm F1.4 GM","SONY FE 35mm F1.4 GM","SONY FE 35mm F1.8","SONY FE 85mm F1.4 GM II","SONY FE 85mm F1.4 GM","SONY FE 85mm F1.8","SONY FE 90mm F2.8 Macro G OSS","SONY FE 135mm F1.8 GM","SIGMA 14-24mm F2.8 DG DN Art","SIGMA 16-28mm F2.8 DG DN","SIGMA 24-70mm F2.8 DG DN II Art","SIGMA 24-70mm F2.8 DG DN Art","SIGMA 28-45mm F1.8 DG DN Art","SIGMA 28-70mm F2.8 DG DN","SIGMA 35mm F1.4 DG DN Art","SIGMA 50mm F1.2 DG DN Art","SIGMA 50mm F1.4 DG DN Art","SIGMA 85mm F1.4 DG DN Art","SIGMA 105mm F2.8 DG DN Macro Art","SIGMA 135mm F1.8 DG HSM Art","SIGMA 60-600mm F4.5-6.3 DG DN OS Sports","SIGMA 100-400mm F5-6.3 DG DN OS","SIGMA 150-600mm F5-6.3 DG DN OS Sports","SIGMA 18-50mm F2.8 DC DN","TAMRON 17-50mm F4 Di III VXD","TAMRON 17-70mm F2.8 Di III-A VC RXD","TAMRON 20-40mm F2.8 Di III VXD","TAMRON 20-400mm F3.5-6.3 Di III VC VXD","TAMRON 28-75mm F2.8 G2","TAMRON 28-200mm F2.8-5.6 Di III RXD","TAMRON 35-150mm F2-2.8 Di III VXD","TAMRON 50-300mm F4.5-6.3 Di III VC VXD","TAMRON 70-180mm F2.8 G2","TAMRON 70-300mm F4.5-6.3 Di III RXD","TAMRON 150-500mm F5-6.7 Di III VC VXD","COOKE S4/i Prime Set","COOKE S7/i Prime Set","COOKE S8/i Prime Set","COOKE ANAMORPHIC/i Set","ZEISS CP.3 Prime Set","ZEISS Supreme Prime Set","ZEISS Supreme Prime Radiance Set","ZEISS CP.2 Prime Set","ARRI Master Prime Set","ARRI Signature Prime Set","ARRI Signature Zoom 45-135","ARRI Signature Zoom 65-300","ARRI Ultra Prime Set","ANGENIEUX Optimo 15-40","ANGENIEUX Optimo 24-290","ANGENIEUX Optimo Ultra 12x","ANGENIEUX EZ-1 30-90","ANGENIEUX EZ-2 15-40","FUJINON Premista 19-45","FUJINON Premista 28-100","FUJINON Premista 80-250","FUJINON Cabrio 19-90","FUJINON Cabrio 20-120","FUJINON Cabrio 25-300","SIGMA FF High Speed Prime Set","DZOFilm Vespid Prime Set","DZOFilm Catta Zoom Set","TOKINA Vista Prime Set","LAOWA Proteus 2x Anamorphic Set","LAOWA Ranger S35 Zoom Set","BLURING 1.8x Anamorphic Set","APUTURE LS 60D","APUTURE LS 60X","APUTURE LS 120D II","APUTURE LS 120D","APUTURE LS 1200D Pro","APUTURE LS 1200X Pro","APUTURE LS 600D Pro","APUTURE LS 600C Pro","APUTURE LS 300D II","APUTURE LS 300X","APUTURE LS 300D","APUTURE LS 300C","APUTURE NOVA P300C","APUTURE NOVA P600C","APUTURE NOVA P600C Pro","APUTURE INFINIBAR PB3","APUTURE INFINIBAR PB6","APUTURE INFINIBAR PB12","APUTURE INFINIBAR PB24","APUTURE B7C","APUTURE B7C 8-Light Kit","APUTURE STORM 80C","APUTURE STORM 1000C","APUTURE STORM 1200X","APUTURE AMARAN 100D","APUTURE AMARAN 100X","APUTURE AMARAN 150C","APUTURE AMARAN 200D","APUTURE AMARAN 200X","APUTURE AMARAN 300C","APUTURE AMARAN P60C","APUTURE AMARAN P60X","APUTURE AMARAN F22C","APUTURE AMARAN F21C","APUTURE AMARAN T2C","APUTURE AMARAN T4C","APUTURE AMARAN PT2C","APUTURE AMARAN PT4C","ARRI SkyPanel S30-C","ARRI SkyPanel S60-C","ARRI SkyPanel S120-C","ARRI SkyPanel S360-C","ARRI SkyPanel X21","ARRI SkyPanel X22","ARRI SkyPanel X23","ARRI Orbiter","ARRI L7-C","ARRI L5-C","ARRI L10-C","ARRI L-Series L7-C","ARRI M18","ARRI M40","ARRI M90","ARRI M40 HMI","ARRI D12","ARRI D25","ARRI True Blue D Series","NANLITE Forza 60B II","NANLITE Forza 60C","NANLITE Forza 150B","NANLITE Forza 300B II","NANLITE Forza 300C","NANLITE Forza 500B II","NANLITE Forza 500C","NANLITE Forza 720B","NANLITE Forza 720C","NANLITE PavoTube II 6C","NANLITE PavoTube II 15C","NANLITE PavoTube II 30C","NANLITE PavoTube II 60C","NANLITE PavoSlim 60C","NANLITE PavoSlim 120C","NANLITE MixPanel 60","NANLITE MixPanel 150","GODOX SL60IIBi","GODOX SL100Bi","GODOX SL150III Bi","GODOX SL200III Bi","GODOX SL300III Bi","GODOX KNOWLED M200Bi","GODOX KNOWLED M300Bi","GODOX KNOWLED M600Bi","GODOX KNOWLED M600D","GODOX KNOWLED M1200Bi","GODOX KNOWLED P600Bi","GODOX TL30","GODOX TL60","GODOX TL120","GODOX KNOWLED MG1200Bi","GODOX AD200Pro","GODOX AD300Pro","GODOX AD400Pro","GODOX AD600Pro","GODOX AD600B","GODOX AD600BM","GODOX V1","GODOX V1Pro","GODOX V860III","GODOX TT685II","GODOX QT600II","GODOX SK400II","ASTERA AX1","ASTERA AX2","ASTERA AX3","ASTERA AX5","ASTERA AX9 PowerPAR","ASTERA AX10 PowerPAR","ASTERA NYX Bulb","ASTERA NYX Bulb 8-Light Kit","ASTERA TITAN Tube","ASTERA HELIOS Tube","ASTERA HYDRA Panel","ASTERA ART7","ASTERA ART3","MANFROTTO 055","MANFROTTO 190","MANFROTTO 504HD","MANFROTTO 509HD","MANFROTTO 535","MANFROTTO 645","MANFROTTO 536","MANFROTTO 546B","MANFROTTO 755XB","MANFROTTO Nitrotech 612","MANFROTTO 504X","SACHTLER ACE XL","SACHTLER FLOWTECH 75","SACHTLER FLOWTECH 100","SACHTLER 18P","SACHTLER 20P","SACHTLER 25","SACHTLER FSB 6","SACHTLER FSB 8","MILLER DS10","MILLER DS20","MILLER Compass 12","MILLER ArrowX 5","MILLER ArrowX 7","MILLER ArrowX 9","AVENGER C-Stand","AVENGER A2033D","AVENGER A2018D","AVENGER A2020D","AVENGER A4050CS","AVENGER D600","KUPO C-Stand","KUPO Master C-Stand","KUPO Baby Stand","KUPO Junior Stand","ZHIYUN CRANE 4","ZHIYUN CRANE 3S","ZHIYUN CRANE 3 LAB","ZHIYUN CRANE M3S","ZHIYUN CRANE M3","ZHIYUN WEEBILL 3S","ZHIYUN WEEBILL 3","ZHIYUN WEEBILL 2","ZHIYUN WEEBILL S","ZHIYUN SMOOTH 5S","ZHIYUN SMOOTH 5","DJI RSC 2","DJI Ronin-S","DJI Ronin-SC","DJI Ronin 2","DJI Ronin 4D-6K","DJI Ronin 4D-8K","ATOMOS NINJA V","ATOMOS NINJA V+","ATOMOS NINJA ULTRA","ATOMOS NINJA ULTRA 5","ATOMOS SHOGUN CONNECT","ATOMOS SHOGUN 7","ATOMOS SHOGUN INFERNO","ATOMOS SUMO 19","ATOMOS SUMO 19 SE","ATOMOS NEON 17","ATOMOS NEON 24","BLACKMAGIC VIDEO ASSIST 5 3G","BLACKMAGIC VIDEO ASSIST 7 3G","BLACKMAGIC VIDEO ASSIST 5 12G HDR","BLACKMAGIC VIDEO ASSIST 7 12G HDR","FEELWORLD LUT7","FEELWORLD LUT8","FEELWORLD LUT6","LILLIPUT A7S","LILLIPUT A11","LILLIPUT Q28","SMALLHD 502","SMALLHD 703","SMALLHD 1303","SMALLHD 1703","SMALLHD Cine 7","SMALLHD Indie 7","SMALLHD Ultra 5","SMALLHD Ultra 7","SMALLHD Ultra 10","TERADEK BOLT 4K LT","TERADEK BOLT 4K 750","TERADEK BOLT 6 LT","TERADEK BOLT 6 XT","TERADEK BOLT 6 750","TERADEK BOLT 6 1500","HOLLYLAND MARS 300 PRO","HOLLYLAND MARS 400S Pro","HOLLYLAND MARS 4K","HOLLYLAND COSMO C1","HOLLYLAND COSMO C2","HOLLYLAND PYRO H","HOLLYLAND PYRO S","HOLLYLAND PYRO 7","ACCSOON CINEVIEW HE","ACCSOON CINEVIEW SE","ACCSOON WITNESS 4K","VAXIS ATOM 500","VAXIS STORM 800","VAXIS STORM 1000","SENNHEISER EW-D","SENNHEISER EW-DX","SENNHEISER EW 100 G4","SENNHEISER EW 112P G4","SENNHEISER EW 122P G4","SENNHEISER EW 135 G4","SENNHEISER EW 145 G4","SENNHEISER EW 165 G4","SENNHEISER AVX","SENNHEISER MKH 416","SENNHEISER MKH 50","SENNHEISER MKH 60","SENNHEISER MKH 70","SENNHEISER MKE 600","SENNHEISER MKE 400","SENNHEISER HD 25","SENNHEISER HD 280 PRO","SENNHEISER HD 300 PRO","SENNHEISER HMD 26","SHURE SM58","SHURE SM57","SHURE SM7B","SHURE SM81","SHURE Beta 58A","SHURE Beta 87A","SHURE KSM32","SHURE KSM44A","SHURE KSM8","SHURE BLX24","SHURE SLX-D","SHURE QLX-D","SHURE ULX-D","SHURE Axient Digital","SHURE PSM 300","SHURE PSM 900","SHURE PSM 1000","SHURE MXA310","SHURE MXA920","RODE Wireless PRO","RODE Wireless GO II","RODE Wireless GO 3","RODE Wireless ME","RODE VideoMic Pro+","RODE VideoMic NTG","RODE NTG3","RODE NTG4+","RODE NTG5","RODE NT1","RODE NT1 5th Gen","RODE PodMic","RODE PodMic USB","RODECaster Pro","RODECaster Pro II","RODECaster Duo","RODECaster Video","RODELink Filmmaker Kit","ZOOM H1n","ZOOM H2n","ZOOM H4n Pro","ZOOM H5","ZOOM H6","ZOOM H6essential","ZOOM H8","ZOOM F2-BT","ZOOM F3","ZOOM F4","ZOOM F6","ZOOM F8n Pro","ZOOM F8n","ZOOM PodTrak P4","ZOOM PodTrak P8","ZOOM LiveTrak L-8","ZOOM LiveTrak L-12","ZOOM LiveTrak L-20","ZOOM LiveTrak L-20R","TASCAM DR-05X","TASCAM DR-07X","TASCAM DR-40X","TASCAM DR-60DmkII","TASCAM DR-70D","TASCAM DR-10L","TASCAM Portacapture X6","TASCAM Portacapture X8","TASCAM Mixcast 4","TASCAM Model 12","TASCAM Model 16","TASCAM Model 24","HOLLYLAND LARK MAX","HOLLYLAND LARK M2","HOLLYLAND LARK M2S","HOLLYLAND LARK 150","HOLLYLAND M1","DJI Mic 2","DJI Mic Mini","DJI Mic","DJI Mic 2 Transmitter","ACCSOON WMS300 PRO","DEITY THEOS","DEITY W.LAV PRO","DEITY V-Mic D4","DEITY S-Mic 2","COMICA BoomX-D","COMICA BoomX-U QUA","Eartec UltraLITE","Eartec UltraLITE Single","HOLLYLAND Solidcom C1","HOLLYLAND Solidcom C1 Pro","HOLLYLAND Solidcom SE","HOLLYLAND Mars T1000","RIEDEL Bolero","BLACKMAGIC ATEM Mini","BLACKMAGIC ATEM Mini Pro","BLACKMAGIC ATEM Mini Pro ISO","BLACKMAGIC ATEM Mini Extreme","BLACKMAGIC ATEM Mini Extreme ISO","BLACKMAGIC ATEM SDI","BLACKMAGIC ATEM SDI Pro ISO","BLACKMAGIC ATEM SDI Extreme ISO","BLACKMAGIC ATEM Television Studio HD","BLACKMAGIC ATEM Television Studio 4K8","BLACKMAGIC ATEM Television Studio 4K8 HDR","BLACKMAGIC ATEM 1 M/E Constellation HD","BLACKMAGIC ATEM 2 M/E Constellation HD","BLACKMAGIC ATEM 3 M/E Constellation 4K","BLACKMAGIC ATEM 2 M/E Production Studio 4K","BLACKMAGIC ATEM Television Studio 4K Pro","BLACKMAGIC ATEM Camera Control Panel","BLACKMAGIC ATEM Advanced Panel 20","BLACKMAGIC ATEM Advanced Panel 30","BLACKMAGIC HyperDeck Studio HD Plus","BLACKMAGIC HyperDeck Studio 4K Pro","BLACKMAGIC HyperDeck Studio 4K Mini","BLACKMAGIC Web Presenter HD","BLACKMAGIC Web Presenter 4K","BLACKMAGIC UltraStudio Recorder 3G","BLACKMAGIC UltraStudio 4K Mini","BLACKMAGIC UltraStudio 4K Extreme 3","VMIX HD","VMIX 4K","VMIX PRO","VMIX MAX","OBS STUDIO","WIRECAST PRO","WIRECAST STUDIO","STREAMDECK MINI","STREAMDECK MK.2","STREAMDECK XL","STREAMDECK PLUS","EPCAMMOBILE PRODUCTION PC","STREAMING PC","STREAMING LAPTOP","DATAVIDEO HS-1300","DATAVIDEO HS-1600T","DATAVIDEO HS-2800","DATAVIDEO SE-650","DATAVIDEO SE-700","DATAVIDEO SE-1200MU","DATAVIDEO KMU-100","DATAVIDEO NVS-33","DATAVIDEO NVS-40","DATAVIDEO PTC-140","DATAVIDEO PTC-280","DATAVIDEO PTC-300","EPIPHAN PEARL MINI","EPIPHAN PEARL NANO","EPIPHAN PEARL-2","EPIPHAN AVIO","KILOVIEW P1","KILOVIEW E1","KILOVIEW E2","KILOVIEW E3","KILOVIEW CUBE X1","KILOVIEW CUBE X2","LIVEU SOLO","LIVEU SOLO PRO","LIVEU LU300S","LIVEU LU600","LIVEU LU800","TERADEK CUBE","TERADEK VIDIU GO","TERADEK VIDIU PRO","TERADEK BOND 657","MAGEWELL ULTRA STREAM HDMI","MAGEWELL ULTRA STREAM SDI","MAGEWELL ULTRA ENCODER","MAGEWELL USB CAPTURE HDMI GEN 2","MAGEWELL USB CAPTURE SDI PLUS","EPSON EB-L530U","EPSON EB-L630U","EPSON EB-L730U","EPSON EB-L770U","EPSON EB-PU1007W","EPSON EB-PU2010B","PANASONIC PT-VMZ51","PANASONIC PT-VMZ61","PANASONIC PT-VMZ71","PANASONIC PT-RZ690","PANASONIC PT-RZ990","BENQ LU930","BENQ LU935","BENQ LK936ST","BENQ LH730","OPTOMA ZU607T","OPTOMA ZU920TST","OPTOMA ZU920T","SONY VPL-PHZ51","SONY VPL-PHZ61","SONY VPL-FHZ85","SONY VPL-FHZ101","ABsen PL3.9","ABsen PL4.8","ABsen PL2.9","ROE Black Onyx 2.8","ROE CB5","ROE Vanish V8","INFILED DB2.6","INFILED AR2.6","INFILED AR3.9","INFILED DB3.9","UNILUMIN Upad IV","UNILUMIN Upad III","UNILUMIN Upad XL","LEYARD TVF Series","LEYARD VEM Series","DAKTRONICS Outdoor LED","NOVASTAR MCTRL4K","NOVASTAR H Series","NOVASTAR VX1000","NOVASTAR VX400S","NOVASTAR VX600","COLORLIGHT X4","COLORLIGHT X7","COLORLIGHT X20","Brompton Tessera SX40","Brompton Tessera S8","Brompton Tessera S4","Brompton Tessera XD","HONDA EU22i","HONDA EU30iS","HONDA EU70iS","HONDA EG6500","HONDA EB10000","YAMAHA EF2200iS","YAMAHA EF3000iSE","YAMAHA EF7200DE","GENELEC POWER GENERATOR","KOHLER GENERATOR","CUMMINS GENERATOR","PERKINS GENERATOR","FG WILSON GENERATOR","CAT GENERATOR","JCB GENERATOR","SILENT GENERATOR 10KVA","SILENT GENERATOR 20KVA","SILENT GENERATOR 30KVA","ECOFLOW DELTA 2","ECOFLOW DELTA 2 MAX","ECOFLOW DELTA PRO","BLUETTI AC200MAX","BLUETTI AC300","BLUETTI EP500PRO","DJI POWER 1000","DJI POWER 500","V-MOUNT BATTERY 99Wh","V-MOUNT BATTERY 150Wh","V-MOUNT BATTERY 190Wh","GOLD MOUNT BATTERY 150Wh","GOLD MOUNT BATTERY 190Wh","CORE SWX","FXLION","PELICAN 1510","PELICAN 1535","PELICAN 1615","PELICAN 1650","PELICAN 1690","PELICAN AIR 1615","NANUK 935","NANUK 938","PORTABRACE CAMERA BAG","LOWEPRO PROTactic","THINK TANK AIRPORT","MANFROTTO PRO LIGHT","KATA CAMERA BAG","SLATE / CLAPPERBOARD","TENTACLE SYNC E","TENTACLE TRACK E","DEITY TC-1","ATOMOS ULTRA SYNC ONE","TIMELOCKIT PLUS","ZOOM F2","COLORCHECKER PASSPORT VIDEO 2","X-RITE COLORCHECKER","SEKONIC L-858D","SEKONIC L-308X","GOSSEN DIGIFLASH","RODE BLIMP","RYCOTE BLIMP","RYCOTE SOFTIE","RYCOTE DEADCAT","K-Tek BOOM POLE","K-Tek CLASSICPRO BOOM POLE","MANFROTTO MAGIC ARM","SUPER CLAMP","CARDINI CLAMP","KESSLER SLIDER","EDELKRONE SLIDERPLUS","EDELKRONE JIBONE","DJI RONIN 4D FLEX","CAMERA CAGE","SHOULDER RIG","BASEPLATE","FOLLOW FOCUS","WIRELESS FOLLOW FOCUS","MATTE BOX","ND FILTER SET","POLARIZER FILTER","VARIABLE ND FILTER","BLACK PROMIST 1/8","BLACK PROMIST 1/4","BLACK PROMIST 1/2","DIFFUSION FILTER SET","CAMERA RAIN COVER","CAMERA SNOW COVER","LENS RAIN COVER"],"Media Works":["Photography Coverage","Videography Coverage","Corporate Photography","Corporate Videography","Event Photography","Event Videography","Wedding Photography","Wedding Videography","Funeral Photography","Funeral Videography","Product Photography","Product Videography","Fashion Photography","Fashion Videography","Real Estate Photography","Real Estate Videography","Food Photography","Food Videography","Commercial Photography","Commercial Video","TV Commercial","Social Media Commercial","Brand Film","Corporate Documentary","Documentary Production","Short Film Production","Feature Film Production","Music Video Production","Interview Production","Talk Show Production","Podcast Production","YouTube Production","Content Creation","Same-Day Edit","Same-Day Video Delivery","Highlight Video","Event Recap Video","After Movie","Promotional Video","Explainer Video","Training Video","Testimonial Video","Drone Photography","Drone Videography","Aerial Survey","Aerial Mapping","Video Editing","Photo Editing","Color Grading","Motion Graphics","2D Animation","3D Animation","Logo Animation","Title Design","Lower Third Design","Subtitles/Captions","Sound Design","Audio Editing","Voice Over Recording","Voice Over Production","Scriptwriting","Storyboard Development","Creative Direction","Art Direction","Production Management","Location Scouting","Casting","Makeup & Hair","Styling","Set Design","Props Sourcing","Post Production","Media Archiving","Video Conversion","Photo Album Design","Photobook Finishing"],"Live Streaming":["Live Streaming Setup","Single Camera Streaming","Dual Camera Streaming","3-Camera Streaming","4-Camera Streaming","5-Camera Streaming","Multi-Camera Streaming","Church Live Stream","Funeral Live Stream","Wedding Live Stream","Corporate Live Stream","Concert Live Stream","Conference Live Stream","Sports Live Stream","Hybrid Event Streaming","Virtual Event Production","Webinar Production","Facebook Live Streaming","YouTube Live Streaming","Instagram Live Streaming","LinkedIn Live Streaming","TikTok Live Streaming","Multi-Platform Streaming","RTMP Streaming","SRT Streaming","NDI Streaming","RTMP Server Setup","CDN Setup","Streaming Encoder","Hardware Encoder","Software Encoder","vMix Production","OBS Production","Wirecast Production","StreamYard Production","Video Capture Card","HDMI Capture Card","SDI Capture Card","USB Capture Device","HDMI Splitter","SDI Splitter","HDMI Converter","SDI Converter","HDMI to SDI Converter","SDI to HDMI Converter","HDMI Extender","SDI Fiber Extender","Wireless Video Transmitter","Wireless Video Receiver","Bonded Internet Streaming","4G LTE Bonding","5G Bonding","Starlink Streaming Internet","Dedicated Internet","Streaming Backup Internet","Streaming Laptop","Streaming Desktop","Streaming PC","Streaming Monitor","Stream Deck Controller","Graphics Playback","Lower Thirds","Live Scoreboard","Live Titles","Live Replay","Live Graphics","Remote Guest Integration","Zoom Integration","Teams","Teams Integration","Google Meet","Google Meet Integration","Live Chat Moderation","Streaming Recording","Cloud Recording","Stream Health Monitoring"],"Live Production":["Live Production Package","Single Camera Production","2-Camera Production","3-Camera Production","4-Camera Production","5-Camera Production","6-Camera Production","8-Camera Production","Multi-Camera Broadcast","Outside Broadcast","OB Production","Studio Production","Church Broadcast Production","Funeral Broadcast Production","Wedding Broadcast Production","Concert Production","Conference Production","Corporate Event Production","Sports Production","Award Show Production","Stage Production","Talk Show Production","Panel Production","Video Director","Technical Director","Vision Mixer","Production Assistant","Camera Operator","Director of Photography","Floor Manager","Stage Manager","Audio Engineer","Lighting Technician","Streaming Engineer","Replay Operator","Graphics Operator","VTR Operator","DIT","Camera Shader","Broadcast Engineer","Production Manager","Video Switcher","Broadcast Switcher","SDI Switcher","HDMI Switcher","IP Video Switcher","ATEM Switcher","Video Router","SDI Router","HDMI Router","Multiviewer","Frame Synchronizer","Signal Converter","Signal Distribution","Video Scaler","Video Processor","LED Screen Processor","LED Video Wall","LED Screen","Projector","Projection Screen","Confidence Monitor","Program Monitor","Preview Monitor","Director Monitor","Stage Monitor","Teleprompter","Replay System","Recording Deck","HyperDeck Recorder","ISO Recorder","Audio Mixer","Digital Mixing Console","Stagebox","Digital Snake","PA System","Line Array Speaker","Powered Speaker","Subwoofer","Stage Monitor Speaker","Front Fill Speaker","Delay Speaker","Wireless Microphone Package","Wired Microphone Package","Intercom Package","Production Comms","Talkback System","Timecode System","Tally System","Camera CCU","Camera Control Unit","Camera Fiber System","Broadcast Fiber","SDI Cable Package","HDMI Cable Package","BNC Cable","XLR Cable Package","Power Cable Package","Camera Control","Multiview Monitoring","Graphics System","Media Server","Playback Server","Production Laptop","Production Desktop","UPS Backup","Generator Backup","Power Distribution","Stage Lighting Package","Moving Head Light","LED Wash Light","LED PAR","Profile Light","Ellipsoidal Light","Fresnel Light","Follow Spot","Haze Machine","Fog Machine","Atmosphere Machine","Truss","Lighting Truss","Ground Support Truss","Stage Deck","Stage Riser","Pipe and Drape","Crowd Barrier"],"Sony Cameras":["SONY FX3","SONY FX30","SONY FX2","SONY FX6","SONY FX9","SONY VENICE","SONY VENICE 2","SONY BURANO","SONY FR7","SONY PXW-Z90V","SONY PXW-Z190","SONY PXW-Z280","SONY PXW-Z450","SONY PXW-FX9","SONY PXW-FX6","SONY PXW-FS7 II","SONY PXW-FS7","SONY PXW-FS5 II","SONY PXW-FS5","SONY HXR-NX80","SONY HXR-NX100","SONY FDR-AX700","SONY FDR-AX100","SONY A1 II","SONY A1","SONY A9 III","SONY A9 II","SONY A7R V","SONY A7R IV","SONY A7R III","SONY A7 IV","SONY A7 III","SONY A7S III","SONY A7S II","SONY A7C II","SONY A7C","SONY A6700","SONY A6600","SONY A6400","SONY A6100","SONY ZV-E1","SONY ZV-E10 II","SONY ZV-E10","SONY ZV-1 II","SONY ZV-1"],"Canon Cameras":["CANON EOS C400","CANON EOS C80","CANON EOS C70","CANON EOS C300 Mark III","CANON EOS C300 Mark II","CANON EOS C200","CANON EOS C200B","CANON EOS C500 Mark II","CANON EOS C500","CANON EOS C700","CANON EOS R5 C","CANON EOS R5 Mark II","CANON EOS R5","CANON EOS R6 Mark II","CANON EOS R6","CANON EOS R8","CANON EOS R7","CANON EOS R10","CANON EOS R3","CANON EOS R1","CANON EOS R","CANON EOS 5D Mark IV","CANON EOS 6D Mark II","CANON EOS 90D","CANON EOS 80D","CANON EOS 7D Mark II","CANON XF605","CANON XF705","CANON XF405","CANON XF400","CANON XA75","CANON XA70","CANON XA65","CANON XA60"],"Blackmagic Cameras":["BLACKMAGIC URSA Cine 12K","BLACKMAGIC URSA Mini Pro 12K","BLACKMAGIC URSA Mini Pro 4.6K G2","BLACKMAGIC URSA Mini Pro 4.6K","BLACKMAGIC URSA Broadcast G2","BLACKMAGIC URSA Broadcast","BLACKMAGIC PYXIS 12K","BLACKMAGIC PYXIS 6K","BLACKMAGIC CINEMA CAMERA 6K FULL FRAME","BLACKMAGIC POCKET CINEMA CAMERA 6K G2","BLACKMAGIC POCKET CINEMA CAMERA 6K PRO","BLACKMAGIC POCKET CINEMA CAMERA 6K","BLACKMAGIC POCKET CINEMA CAMERA 4K","BLACKMAGIC MICRO STUDIO CAMERA 4K G2","BLACKMAGIC MICRO STUDIO CAMERA 4K"],"Panasonic Cameras":["PANASONIC LUMIX GH7","PANASONIC LUMIX GH6","PANASONIC LUMIX GH5 II","PANASONIC LUMIX GH5","PANASONIC LUMIX S1H","PANASONIC LUMIX S5IIX","PANASONIC LUMIX S5II","PANASONIC LUMIX S5","PANASONIC LUMIX S1","PANASONIC LUMIX S1R","PANASONIC AG-CX350","PANASONIC AG-CX370","PANASONIC AG-CX10","PANASONIC HC-X2","PANASONIC HC-X20","PANASONIC AJ-PX380","PANASONIC AK-UC4000","PANASONIC AK-UC3300","PANASONIC AK-UC3000"],"Fujifilm Cameras":["FUJIFILM GFX100 II","FUJIFILM GFX100S II","FUJIFILM GFX100S","FUJIFILM X-H2S","FUJIFILM X-H2","FUJIFILM X-T5","FUJIFILM X-T4","FUJIFILM X-S20","FUJIFILM X-S10","FUJIFILM X-T30 II","FUJIFILM X100VI"],"Nikon Cameras":["NIKON Z9","NIKON Z8","NIKON Z6 III","NIKON Z6 II","NIKON Z7 II","NIKON Zf","NIKON Z50 II","NIKON Z50","NIKON D850","NIKON D780","NIKON D6","NIKON D5","NIKON D7500","NIKON D500"],"RED Cameras":["RED V-RAPTOR 8K VV","RED V-RAPTOR 8K S35","RED V-RAPTOR XL 8K VV","RED V-RAPTOR XL 6K S35","RED KOMODO-X","RED KOMODO 6K","RED MONSTRO 8K VV","RED HELIUM 8K","RED GEMINI 5K"],"ARRI Cameras":["ARRI ALEXA 35","ARRI ALEXA 35 Xtreme","ARRI ALEXA 265","ARRI ALEXA  Mini LF","ARRI ALEXA LF","ARRI ALEXA 65","ARRI ALEXA Mini","ARRI AMIRA","ARRI AMIRA Live","ARRI ALEXA 35 Live","ARRI ALEXA 35 Live Xtreme"],"DJI Drones & Cameras":["DJI Mavic 4 Pro","DJI Mavic 3 Pro","DJI Mavic 3 Cine","DJI Mavic 3 Classic","DJI Mavic 3 Enterprise","DJI Mavic 2 Pro","DJI Mavic Air 2","DJI Air 2S","DJI Air 3","DJI Air 3S","DJI Mini 4 Pro","DJI Mini 3 Pro","DJI Inspire 3","DJI Inspire 2","DJI Matrice 350 RTK","DJI Matrice 300 RTK","DJI Matrice 30T","DJI Avata 2","DJI Avata","DJI Ronin 4D 8K","DJI Ronin 4D 6K","DJI Osmo Pocket 3","DJI Osmo Action 5 Pro","DJI Osmo Action 4","DJI Osmo Mobile 6","DJI RS 4 Pro","DJI RS 4","DJI RS 3 Pro","DJI RS 3","DJI RS 2"],"Canon Lenses":["CANON RF 15-35mm F2.8L IS USM","CANON RF 24-70mm F2.8L IS USM","CANON RF 24-105mm F2.8L IS USM","CANON RF 24-105mm F4L IS USM","CANON RF 70-200mm F2.8L IS USM","CANON RF 70-200mm F4L IS USM","CANON RF 100-500mm F4.5-7.1L IS USM","CANON RF 100-300mm F2.8L IS USM","CANON RF 200-800mm F6.3-9 IS USM","CANON RF 50mm F1.2L USM","CANON RF 85mm F1.2L USM","CANON RF 85mm F2 Macro IS STM","CANON RF 35mm F1.4L VCM","CANON RF 35mm F1.8 Macro IS STM","CANON RF 24mm F1.8 Macro IS STM","CANON EF 16-35mm F2.8L III USM","CANON EF 24-70mm F2.8L II USM","CANON EF 24-105mm F4L IS II USM","CANON EF 70-200mm F2.8L IS III USM","CANON EF 70-200mm F2.8L IS II USM","CANON EF 70-200mm F4L IS II USM","CANON EF 100-400mm F4.5-5.6L IS II USM","CANON EF 100-400mm F4.5-5.6L IS USM","CANON EF 50mm F1.2L USM","CANON EF 50mm F1.4 USM","CANON EF 85mm F1.2L II USM","CANON EF 85mm F1.8 USM","CANON EF 35mm F1.4L II USM","CANON EF 24-70mm F2.8L USM"],"Sony Lenses":["SONY FE 12-24mm F2.8 GM","SONY FE 12-24mm F4 G","SONY FE 16-35mm F2.8 GM II","SONY FE 16-35mm F2.8 GM","SONY FE 16-35mm F4 ZA OSS","SONY FE 20-70mm F4 G","SONY FE 24-50mm F2.8 G","SONY FE 24-70mm F2.8 GM II","SONY FE 24-70mm F2.8 GM","SONY FE 24-105mm F4 G OSS","SONY FE 70-200mm F2.8 GM OSS II","SONY FE 70-200mm F2.8 GM OSS","SONY FE 70-200mm F4 G OSS II","SONY FE 100-400mm GM OSS","SONY FE 200-600mm G OSS","SONY FE 100-400mm GM OSS","SONY FE 50mm F1.2 GM","SONY FE 50mm F1.4 GM","SONY FE 35mm F1.4 GM","SONY FE 35mm F1.8","SONY FE 85mm F1.4 GM II","SONY FE 85mm F1.4 GM","SONY FE 85mm F1.8","SONY FE 90mm F2.8 Macro G OSS","SONY FE 135mm F1.8 GM"],"Sigma Lenses":["SIGMA 14-24mm F2.8 DG DN Art","SIGMA 16-28mm F2.8 DG DN","SIGMA 24-70mm F2.8 DG DN II Art","SIGMA 24-70mm F2.8 DG DN Art","SIGMA 28-45mm F1.8 DG DN Art","SIGMA 28-70mm F2.8 DG DN","SIGMA 35mm F1.4 DG DN Art","SIGMA 50mm F1.2 DG DN Art","SIGMA 50mm F1.4 DG DN Art","SIGMA 85mm F1.4 DG DN Art","SIGMA 105mm F2.8 DG DN Macro Art","SIGMA 135mm F1.8 DG HSM Art","SIGMA 60-600mm F4.5-6.3 DG DN OS Sports","SIGMA 100-400mm F5-6.3 DG DN OS","SIGMA 150-600mm F5-6.3 DG DN OS Sports","SIGMA 18-50mm F2.8 DC DN"],"Tamron Lenses":["TAMRON 17-50mm F4 Di III VXD","TAMRON 17-70mm F2.8 Di III-A VC RXD","TAMRON 20-40mm F2.8 Di III VXD","TAMRON 20-400mm F3.5-6.3 Di III VC VXD","TAMRON 28-75mm F2.8 G2","TAMRON 28-200mm F2.8-5.6 Di III RXD","TAMRON 35-150mm F2-2.8 Di III VXD","TAMRON 50-300mm F4.5-6.3 Di III VC VXD","TAMRON 70-180mm F2.8 G2","TAMRON 70-300mm F4.5-6.3 Di III RXD","TAMRON 150-500mm F5-6.7 Di III VC VXD"],"Cinema Lenses":["COOKE S4/i Prime Set","COOKE S7/i Prime Set","COOKE S8/i Prime Set","COOKE ANAMORPHIC/i Set","ZEISS CP.3 Prime Set","ZEISS Supreme Prime Set","ZEISS Supreme Prime Radiance Set","ZEISS CP.2 Prime Set","ARRI Master Prime Set","ARRI Signature Prime Set","ARRI Signature Zoom 45-135","ARRI Signature Zoom 65-300","ARRI Ultra Prime Set","ANGENIEUX Optimo 15-40","ANGENIEUX Optimo 24-290","ANGENIEUX Optimo Ultra 12x","ANGENIEUX EZ-1 30-90","ANGENIEUX EZ-2 15-40","FUJINON Premista 19-45","FUJINON Premista 28-100","FUJINON Premista 80-250","FUJINON Cabrio 19-90","FUJINON Cabrio 20-120","FUJINON Cabrio 25-300","SIGMA FF High Speed Prime Set","DZOFilm Vespid Prime Set","DZOFilm Catta Zoom Set","TOKINA Vista Prime Set","LAOWA Proteus 2x Anamorphic Set","LAOWA Ranger S35 Zoom Set","BLURING 1.8x Anamorphic Set"],"Aputure Lighting":["APUTURE LS 60D","APUTURE LS 60X","APUTURE LS 120D II","APUTURE LS 120D","APUTURE LS 1200D Pro","APUTURE LS 1200X Pro","APUTURE LS 600D Pro","APUTURE LS 600C Pro","APUTURE LS 300D II","APUTURE LS 300X","APUTURE LS 300D","APUTURE LS 300C","APUTURE NOVA P300C","APUTURE NOVA P600C","APUTURE NOVA P600C Pro","APUTURE INFINIBAR PB3","APUTURE INFINIBAR PB6","APUTURE INFINIBAR PB12","APUTURE INFINIBAR PB24","APUTURE B7C","APUTURE B7C 8-Light Kit","APUTURE STORM 80C","APUTURE STORM 1000C","APUTURE STORM 1200X","APUTURE AMARAN 100D","APUTURE AMARAN 100X","APUTURE AMARAN 150C","APUTURE AMARAN 200D","APUTURE AMARAN 200X","APUTURE AMARAN 300C","APUTURE AMARAN P60C","APUTURE AMARAN P60X","APUTURE AMARAN F22C","APUTURE AMARAN F21C","APUTURE AMARAN T2C","APUTURE AMARAN T4C","APUTURE AMARAN PT2C","APUTURE AMARAN PT4C"],"ARRI Lighting":["ARRI SkyPanel S30-C","ARRI SkyPanel S60-C","ARRI SkyPanel S120-C","ARRI SkyPanel S360-C","ARRI SkyPanel X21","ARRI SkyPanel X22","ARRI SkyPanel X23","ARRI Orbiter","ARRI L7-C","ARRI L5-C","ARRI L10-C","ARRI L-Series L7-C","ARRI M18","ARRI M40","ARRI M90","ARRI M40 HMI","ARRI D12","ARRI D25","ARRI True Blue D Series"],"Nanlite Lighting":["NANLITE Forza 60B II","NANLITE Forza 60C","NANLITE Forza 150B","NANLITE Forza 300B II","NANLITE Forza 300C","NANLITE Forza 500B II","NANLITE Forza 500C","NANLITE Forza 720B","NANLITE Forza 720C","NANLITE PavoTube II 6C","NANLITE PavoTube II 15C","NANLITE PavoTube II 30C","NANLITE PavoTube II 60C","NANLITE PavoSlim 60C","NANLITE PavoSlim 120C","NANLITE MixPanel 60","NANLITE MixPanel 150"],"Godox Lighting":["GODOX SL60IIBi","GODOX SL100Bi","GODOX SL150III Bi","GODOX SL200III Bi","GODOX SL300III Bi","GODOX KNOWLED M200Bi","GODOX KNOWLED M300Bi","GODOX KNOWLED M600Bi","GODOX KNOWLED M600D","GODOX KNOWLED M1200Bi","GODOX KNOWLED P600Bi","GODOX TL30","GODOX TL60","GODOX TL120","GODOX KNOWLED MG1200Bi","GODOX AD200Pro","GODOX AD300Pro","GODOX AD400Pro","GODOX AD600Pro","GODOX AD600B","GODOX AD600BM","GODOX V1","GODOX V1Pro","GODOX V860III","GODOX TT685II","GODOX QT600II","GODOX SK400II"],"Astera Lighting":["ASTERA AX1","ASTERA AX2","ASTERA AX3","ASTERA AX5","ASTERA AX9 PowerPAR","ASTERA AX10 PowerPAR","ASTERA NYX Bulb","ASTERA NYX Bulb 8-Light Kit","ASTERA TITAN Tube","ASTERA HELIOS Tube","ASTERA HYDRA Panel","ASTERA ART7","ASTERA ART3"],"Pro Lighting & Grip":["MANFROTTO 055","MANFROTTO 190","MANFROTTO 504HD","MANFROTTO 509HD","MANFROTTO 535","MANFROTTO 645","MANFROTTO 536","MANFROTTO 546B","MANFROTTO 755XB","MANFROTTO Nitrotech 612","MANFROTTO 504X","SACHTLER ACE XL","SACHTLER FLOWTECH 75","SACHTLER FLOWTECH 100","SACHTLER 18P","SACHTLER 20P","SACHTLER 25","SACHTLER FSB 6","SACHTLER FSB 8","MILLER DS10","MILLER DS20","MILLER Compass 12","MILLER ArrowX 5","MILLER ArrowX 7","MILLER ArrowX 9","AVENGER C-Stand","AVENGER A2033D","AVENGER A2018D","AVENGER A2020D","AVENGER A4050CS","AVENGER D600","KUPO C-Stand","KUPO Master C-Stand","KUPO Baby Stand","KUPO Junior Stand"],"Zhiyun Stabilizers":["ZHIYUN CRANE 4","ZHIYUN CRANE 3S","ZHIYUN CRANE 3 LAB","ZHIYUN CRANE M3S","ZHIYUN CRANE M3","ZHIYUN WEEBILL 3S","ZHIYUN WEEBILL 3","ZHIYUN WEEBILL 2","ZHIYUN WEEBILL S","ZHIYUN SMOOTH 5S","ZHIYUN SMOOTH 5"],"DJI Stabilizers":["DJI RS 4 Pro","DJI RS 4","DJI RS 3 Pro","DJI RS 3","DJI RS 2","DJI RSC 2","DJI Ronin-S","DJI Ronin-SC","DJI Ronin 2","DJI Ronin 4D-6K","DJI Ronin 4D-8K"],"Atomos & Monitoring":["ATOMOS NINJA V","ATOMOS NINJA V+","ATOMOS NINJA ULTRA","ATOMOS NINJA ULTRA 5","ATOMOS SHOGUN CONNECT","ATOMOS SHOGUN 7","ATOMOS SHOGUN INFERNO","ATOMOS SUMO 19","ATOMOS SUMO 19 SE","ATOMOS NEON 17","ATOMOS NEON 24","BLACKMAGIC VIDEO ASSIST 5 3G","BLACKMAGIC VIDEO ASSIST 7 3G","BLACKMAGIC VIDEO ASSIST 5 12G HDR","BLACKMAGIC VIDEO ASSIST 7 12G HDR","FEELWORLD LUT7","FEELWORLD LUT8","FEELWORLD LUT6","LILLIPUT A7S","LILLIPUT A11","LILLIPUT Q28","SMALLHD 502","SMALLHD 703","SMALLHD 1303","SMALLHD 1703","SMALLHD Cine 7","SMALLHD Indie 7","SMALLHD Ultra 5","SMALLHD Ultra 7","SMALLHD Ultra 10"],"Wireless Video":["TERADEK BOLT 4K LT","TERADEK BOLT 4K 750","TERADEK BOLT 6 LT","TERADEK BOLT 6 XT","TERADEK BOLT 6 750","TERADEK BOLT 6 1500","HOLLYLAND MARS 300 PRO","HOLLYLAND MARS 400S Pro","HOLLYLAND MARS 4K","HOLLYLAND COSMO C1","HOLLYLAND COSMO C2","HOLLYLAND PYRO H","HOLLYLAND PYRO S","HOLLYLAND PYRO 7","ACCSOON CINEVIEW HE","ACCSOON CINEVIEW SE","ACCSOON WITNESS 4K","VAXIS ATOM 500","VAXIS STORM 800","VAXIS STORM 1000"],"Audio - Sennheiser":["SENNHEISER EW-D","SENNHEISER EW-DX","SENNHEISER EW 100 G4","SENNHEISER EW 112P G4","SENNHEISER EW 122P G4","SENNHEISER EW 135 G4","SENNHEISER EW 145 G4","SENNHEISER EW 165 G4","SENNHEISER AVX","SENNHEISER MKH 416","SENNHEISER MKH 50","SENNHEISER MKH 60","SENNHEISER MKH 70","SENNHEISER MKE 600","SENNHEISER MKE 400","SENNHEISER HD 25","SENNHEISER HD 280 PRO","SENNHEISER HD 300 PRO","SENNHEISER HMD 26"],"Audio - Shure":["SHURE SM58","SHURE SM57","SHURE SM7B","SHURE SM81","SHURE Beta 58A","SHURE Beta 87A","SHURE KSM32","SHURE KSM44A","SHURE KSM8","SHURE BLX24","SHURE SLX-D","SHURE QLX-D","SHURE ULX-D","SHURE Axient Digital","SHURE PSM 300","SHURE PSM 900","SHURE PSM 1000","SHURE MXA310","SHURE MXA920"],"Audio - RODE":["RODE Wireless PRO","RODE Wireless GO II","RODE Wireless GO 3","RODE Wireless ME","RODE VideoMic Pro+","RODE VideoMic NTG","RODE NTG3","RODE NTG4+","RODE NTG5","RODE NT1","RODE NT1 5th Gen","RODE PodMic","RODE PodMic USB","RODECaster Pro","RODECaster Pro II","RODECaster Duo","RODECaster Video","RODELink Filmmaker Kit"],"Audio - Zoom":["ZOOM H1n","ZOOM H2n","ZOOM H4n Pro","ZOOM H5","ZOOM H6","ZOOM H6essential","ZOOM H8","ZOOM F2-BT","ZOOM F3","ZOOM F4","ZOOM F6","ZOOM F8n Pro","ZOOM F8n","ZOOM PodTrak P4","ZOOM PodTrak P8","ZOOM LiveTrak L-8","ZOOM LiveTrak L-12","ZOOM LiveTrak L-20","ZOOM LiveTrak L-20R"],"Audio - Tascam":["TASCAM DR-05X","TASCAM DR-07X","TASCAM DR-40X","TASCAM DR-60DmkII","TASCAM DR-70D","TASCAM DR-10L","TASCAM Portacapture X6","TASCAM Portacapture X8","TASCAM Mixcast 4","TASCAM Model 12","TASCAM Model 16","TASCAM Model 24"],"Audio - Wireless & Intercom":["HOLLYLAND LARK MAX","HOLLYLAND LARK M2","HOLLYLAND LARK M2S","HOLLYLAND LARK 150","HOLLYLAND M1","RODE Wireless PRO","RODE Wireless GO II","DJI Mic 2","DJI Mic Mini","DJI Mic","DJI Mic 2 Transmitter","ACCSOON WMS300 PRO","DEITY THEOS","DEITY W.LAV PRO","DEITY V-Mic D4","DEITY S-Mic 2","COMICA BoomX-D","COMICA BoomX-U QUA","Eartec UltraLITE","Eartec UltraLITE Single","HOLLYLAND Solidcom C1","HOLLYLAND Solidcom C1 Pro","HOLLYLAND Solidcom SE","HOLLYLAND Mars T1000","RIEDEL Bolero"],"Blackmagic Live Production":["BLACKMAGIC ATEM Mini","BLACKMAGIC ATEM Mini Pro","BLACKMAGIC ATEM Mini Pro ISO","BLACKMAGIC ATEM Mini Extreme","BLACKMAGIC ATEM Mini Extreme ISO","BLACKMAGIC ATEM SDI","BLACKMAGIC ATEM SDI Pro ISO","BLACKMAGIC ATEM SDI Extreme ISO","BLACKMAGIC ATEM Television Studio HD","BLACKMAGIC ATEM Television Studio 4K8","BLACKMAGIC ATEM Television Studio 4K8 HDR","BLACKMAGIC ATEM 1 M/E Constellation HD","BLACKMAGIC ATEM 2 M/E Constellation HD","BLACKMAGIC ATEM 3 M/E Constellation 4K","BLACKMAGIC ATEM 2 M/E Production Studio 4K","BLACKMAGIC ATEM Television Studio 4K Pro","BLACKMAGIC ATEM Camera Control Panel","BLACKMAGIC ATEM Advanced Panel 20","BLACKMAGIC ATEM Advanced Panel 30","BLACKMAGIC HyperDeck Studio HD Plus","BLACKMAGIC HyperDeck Studio 4K Pro","BLACKMAGIC HyperDeck Studio 4K Mini","BLACKMAGIC Web Presenter HD","BLACKMAGIC Web Presenter 4K","BLACKMAGIC UltraStudio Recorder 3G","BLACKMAGIC UltraStudio 4K Mini","BLACKMAGIC UltraStudio 4K Extreme 3"],"vMix & Streaming":["VMIX HD","VMIX 4K","VMIX PRO","VMIX MAX","OBS STUDIO","WIRECAST PRO","WIRECAST STUDIO","STREAMDECK MINI","STREAMDECK MK.2","STREAMDECK XL","STREAMDECK PLUS","EPCAMMOBILE PRODUCTION PC","STREAMING PC","STREAMING LAPTOP"],"Streaming Hardware":["DATAVIDEO HS-1300","DATAVIDEO HS-1600T","DATAVIDEO HS-2800","DATAVIDEO SE-650","DATAVIDEO SE-700","DATAVIDEO SE-1200MU","DATAVIDEO KMU-100","DATAVIDEO NVS-33","DATAVIDEO NVS-40","DATAVIDEO PTC-140","DATAVIDEO PTC-280","DATAVIDEO PTC-300","EPIPHAN PEARL MINI","EPIPHAN PEARL NANO","EPIPHAN PEARL-2","EPIPHAN AVIO","KILOVIEW P1","KILOVIEW E1","KILOVIEW E2","KILOVIEW E3","KILOVIEW CUBE X1","KILOVIEW CUBE X2","LIVEU SOLO","LIVEU SOLO PRO","LIVEU LU300S","LIVEU LU600","LIVEU LU800","TERADEK CUBE","TERADEK VIDIU GO","TERADEK VIDIU PRO","TERADEK BOND 657","MAGEWELL ULTRA STREAM HDMI","MAGEWELL ULTRA STREAM SDI","MAGEWELL ULTRA ENCODER","MAGEWELL USB CAPTURE HDMI GEN 2","MAGEWELL USB CAPTURE SDI PLUS"],"Projectors & Displays":["EPSON EB-L530U","EPSON EB-L630U","EPSON EB-L730U","EPSON EB-L770U","EPSON EB-PU1007W","EPSON EB-PU2010B","PANASONIC PT-VMZ51","PANASONIC PT-VMZ61","PANASONIC PT-VMZ71","PANASONIC PT-RZ690","PANASONIC PT-RZ990","BENQ LU930","BENQ LU935","BENQ LK936ST","BENQ LH730","OPTOMA ZU607T","OPTOMA ZU920TST","OPTOMA ZU920T","SONY VPL-PHZ51","SONY VPL-PHZ61","SONY VPL-FHZ85","SONY VPL-FHZ101"],"LED Screens & Video Walls":["ABsen PL3.9","ABsen PL4.8","ABsen PL2.9","ROE Black Onyx 2.8","ROE CB5","ROE Vanish V8","INFILED DB2.6","INFILED AR2.6","INFILED AR3.9","INFILED DB3.9","UNILUMIN Upad IV","UNILUMIN Upad III","UNILUMIN Upad XL","LEYARD TVF Series","LEYARD VEM Series","DAKTRONICS Outdoor LED","NOVASTAR MCTRL4K","NOVASTAR H Series","NOVASTAR VX1000","NOVASTAR VX400S","NOVASTAR VX600","COLORLIGHT X4","COLORLIGHT X7","COLORLIGHT X20","Brompton Tessera SX40","Brompton Tessera S8","Brompton Tessera S4","Brompton Tessera XD"],"Power & Generators":["HONDA EU22i","HONDA EU30iS","HONDA EU70iS","HONDA EG6500","HONDA EB10000","YAMAHA EF2200iS","YAMAHA EF3000iSE","YAMAHA EF7200DE","GENELEC POWER GENERATOR","KOHLER GENERATOR","CUMMINS GENERATOR","PERKINS GENERATOR","FG WILSON GENERATOR","CAT GENERATOR","JCB GENERATOR","SILENT GENERATOR 10KVA","SILENT GENERATOR 20KVA","SILENT GENERATOR 30KVA","ECOFLOW DELTA 2","ECOFLOW DELTA 2 MAX","ECOFLOW DELTA PRO","BLUETTI AC200MAX","BLUETTI AC300","BLUETTI EP500PRO","DJI POWER 1000","DJI POWER 500","V-MOUNT BATTERY 99Wh","V-MOUNT BATTERY 150Wh","V-MOUNT BATTERY 190Wh","GOLD MOUNT BATTERY 150Wh","GOLD MOUNT BATTERY 190Wh","CORE SWX","FXLION"],"Production Accessories":["PELICAN 1510","PELICAN 1535","PELICAN 1615","PELICAN 1650","PELICAN 1690","PELICAN AIR 1615","NANUK 935","NANUK 938","PORTABRACE CAMERA BAG","LOWEPRO PROTactic","THINK TANK AIRPORT","MANFROTTO PRO LIGHT","KATA CAMERA BAG","SLATE / CLAPPERBOARD","TENTACLE SYNC E","TENTACLE TRACK E","DEITY TC-1","ATOMOS ULTRA SYNC ONE","TIMELOCKIT PLUS","ZOOM F2","COLORCHECKER PASSPORT VIDEO 2","X-RITE COLORCHECKER","SEKONIC L-858D","SEKONIC L-308X","GOSSEN DIGIFLASH","RODE BLIMP","RYCOTE BLIMP","RYCOTE SOFTIE","RYCOTE DEADCAT","K-Tek BOOM POLE","K-Tek CLASSICPRO BOOM POLE","MANFROTTO MAGIC ARM","SUPER CLAMP","CARDINI CLAMP","KESSLER SLIDER","EDELKRONE SLIDERPLUS","EDELKRONE JIBONE","DJI RONIN 4D FLEX","CAMERA CAGE","SHOULDER RIG","BASEPLATE","FOLLOW FOCUS","WIRELESS FOLLOW FOCUS","MATTE BOX","ND FILTER SET","POLARIZER FILTER","VARIABLE ND FILTER","BLACK PROMIST 1/8","BLACK PROMIST 1/4","BLACK PROMIST 1/2","DIFFUSION FILTER SET","CAMERA RAIN COVER","CAMERA SNOW COVER","LENS RAIN COVER"]};
+  function bootCatalog(){
+    const cat=document.getElementById('serviceCategory');
+    const brand=document.getElementById('brandModelFilter');
+    const search=document.getElementById('itemSearch');
+    const items=document.getElementById('catalogItemSelect');
+    const count=document.getElementById('catalogCount');
+    if(!cat||!brand||!search||!items) return false;
+    const current=cat.value;
+    cat.innerHTML='<option value="">Select a service category...</option>'+CATEGORIES.map(x=>'<option value="'+String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')+'">'+String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</option>').join('');
+    if(current && CATEGORIES.indexOf(current)>=0) cat.value=current;
+    function esc(v){return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+    function buildBrands(){
+      const c=cat.value; const arr=CATALOG[c]||[];
+      const prefixes=['SONY','CANON','BLACKMAGIC','PANASONIC','FUJIFILM','NIKON','RED','ARRI','DJI','SIGMA','TAMRON','APUTURE','GODOX','ASTERA','NANLITE','SENNHEISER','SHURE','RODE','ZOOM','TASCAM','HOLLYLAND','ATOMOS','TERADEK','DATAVIDEO','EPSON','BENQ','OPTOMA','MANFROTTO','SACHTLER','MILLER','AVENGER','KUPO','ZHIYUN','GOOGLE MEET','TEAMS'];
+      const groups=[];
+      arr.forEach(v=>{const u=String(v).toUpperCase(); const p=prefixes.find(x=>u===x||u.startsWith(x+' ')||u.startsWith(x+'-')); if(p&&!groups.includes(p))groups.push(p)});
+      brand.innerHTML='<option value="">All Brands / Models</option>'+groups.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
+    }
+    function refresh(){
+      const c=cat.value, b=brand.value, q=search.value.trim().toLowerCase();
+      let arr=(CATALOG[c]||[]).slice();
+      if(b){const bu=b.toLowerCase();arr=arr.filter(x=>String(x).toLowerCase().startsWith(bu+' ')||String(x).toLowerCase().startsWith(bu+'-')||String(x).toLowerCase()===bu)}
+      if(q)arr=arr.filter(x=>String(x).toLowerCase().includes(q));
+      items.innerHTML=arr.length?arr.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join(''):'<option value="">No matching items</option>';
+      if(count)count.textContent=arr.length+' available items';
+    }
+    cat.onchange=function(){buildBrands();search.value='';refresh();};
+    brand.onchange=function(){refresh();};
+    search.oninput=function(){refresh();};
+    if(!cat.value && CATEGORIES.length)cat.value=CATEGORIES[0];
+    buildBrands(); refresh();
+    const add=document.getElementById('addSelectedCatalogBtn');
+    if(add) add.onclick=function(){const name=items.value;if(!name){alert('Please select an item first.');return;} if(typeof window.addItem==='function'){window.addItem(name,1,0); if(typeof window.toast==='function')window.toast('Item added: '+name);} };
+    const add25=document.getElementById('addCategoryItemsBtn');
+    if(add25) add25.onclick=function(){const c=cat.value,b=brand.value;let arr=(CATALOG[c]||[]).slice();if(b){const bu=b.toLowerCase();arr=arr.filter(x=>String(x).toLowerCase().startsWith(bu+' ')||String(x).toLowerCase().startsWith(bu+'-')||String(x).toLowerCase()===bu)}arr.slice(0,25).forEach(n=>{if(typeof window.addItem==='function')window.addItem(n,1,0)});if(typeof window.toast==='function')window.toast('Added '+Math.min(25,arr.length)+' items');};
+    return true;
+  }
+  function tryBoot(){try{if(!bootCatalog())setTimeout(tryBoot,250);}catch(e){console.error('Standalone catalog boot failed',e);setTimeout(tryBoot,500);}}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',tryBoot);else tryBoot();
+  window.addEventListener('load',tryBoot);
+})();
+</script>
+</body>
+</html>
