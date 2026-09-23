@@ -176,12 +176,21 @@ function readPersistentPayload(){
       return readPersistentPayloadSync();
     });
 }
+let serverDraftQueue=Promise.resolve();
+
 function clearPersistentDraft(){
   safeStorageRemove(window.localStorage,DRAFT_KEY);safeStorageRemove(window.sessionStorage,DRAFT_KEY);
   try{
     const state=readWindowNameState();
     if(state){state.draft=null;window.name="FBI-INVOICE-STUDIO-STATE:"+JSON.stringify(state)}
   }catch(e){}
+  if(location.protocol!=="file:"){
+    serverDraftQueue=serverDraftQueue.then(async()=>{
+      try{
+        await fetch('/api/draft',{method:'DELETE',cache:'no-store',credentials:'same-origin'});
+      }catch(e){}
+    });
+  }
 }
 function readDraft(){
   const raws=[safeStorageGet(window.localStorage,DRAFT_KEY),safeStorageGet(window.sessionStorage,DRAFT_KEY)];
@@ -191,10 +200,24 @@ function readDraft(){
 }
 function writeDraft(draft){
   try{
-    const json=JSON.stringify(draft);
+    const entry={savedAt:Date.now(),draft};
+    const json=JSON.stringify(entry);
     safeStorageSet(window.localStorage,DRAFT_KEY,json);
     safeStorageSet(window.sessionStorage,DRAFT_KEY,json);
-    try{const state=readWindowNameState()||{};setWindowNameState(state.app?JSON.stringify(state.app):null,JSON.parse(json))}catch(e){}
+    try{const state=readWindowNameState()||{};setWindowNameState(state.app?JSON.stringify(state.app):null,entry)}catch(e){}
+    if(location.protocol!=="file:"){
+      serverDraftQueue=serverDraftQueue.then(async()=>{
+        try{
+          const res=await fetch('/api/draft',{method:'PUT',headers:{'Content-Type':'application/json'},body:json,cache:'no-store',credentials:'same-origin'});
+          if(!res.ok)throw new Error('HTTP '+res.status);
+          const body=await res.json().catch(()=>({}));
+          if(body.ok===false)throw new Error(body.error||'Cloud draft save failed');
+          const st=$('storageStatus');if(st)st.textContent='Cloud database connected. Your current work is also saved as a draft.';
+        }catch(e){
+          console.warn('Cloud draft save failed:',e);
+        }
+      });
+    }
   }catch(e){}
 }
 let draftSaveTimer=null;
@@ -206,10 +229,10 @@ function collectDraft(){
 }
 function scheduleDraftSave(){
   clearTimeout(draftSaveTimer);
-  draftSaveTimer=setTimeout(()=>{try{const d=collectDraft();if(d)writeDraft({savedAt:Date.now(),draft:d})}catch(e){}},180);
+  draftSaveTimer=setTimeout(()=>{try{const d=collectDraft();if(d)writeDraft(d)}catch(e){}},180);
 }
-function restoreDraft(){
-  const entry=readDraft();if(!entry?.draft)return false;
+function applyDraftEntry(entry,showMessage){
+  if(!entry?.draft)return false;
   const x=entry.draft;
   try{
     current=x.id?(data.find(a=>a.id===x.id)||null):null;
@@ -229,9 +252,28 @@ function restoreDraft(){
     if($('brandModelFilter')&&x.serviceBrand){$('brandModelFilter').value=x.serviceBrand;$('brandModelFilter').dispatchEvent(new Event('change'))}
     if($('catalogItemSelect')&&x.serviceItem)$('catalogItemSelect').value=x.serviceItem;
     toggleEventDate();toggleRentalDetails();calc();updatePaymentBalancePreview();show('create');
-    toast('Your unsaved work was restored.');
+    if(showMessage)toast(showMessage);
     return true;
   }catch(e){console.warn('Draft restore failed',e);return false}
+}
+function restoreDraft(){
+  return applyDraftEntry(readDraft(),'Your saved work was restored.');
+}
+async function restoreCloudDraft(){
+  if(location.protocol==="file:")return false;
+  try{
+    const res=await fetch('/api/draft',{cache:'no-store',credentials:'same-origin'});
+    if(!res.ok)return false;
+    const body=await res.json();
+    const cloudEntry=body?.draft;
+    if(!cloudEntry?.draft)return false;
+    const localEntry=readDraft();
+    if(localEntry?.savedAt && Number(localEntry.savedAt)>=Number(cloudEntry.savedAt||0))return false;
+    return applyDraftEntry(cloudEntry,'Your cloud-saved work was restored.');
+  }catch(e){
+    console.warn('Cloud draft restore failed:',e);
+    return false;
+  }
 }
 function loadStudioFromDrive(){ return false; }
 function gsRun_(method,payload){ return Promise.resolve(null); }
