@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Invoice Studio | FBI</title>
+<style>
+:root{--bg:#08090c;--panel:#11141b;--panel2:#171b23;--border:#2b303c;--muted:#858e9f;--text:#f7f8fb;--accent:#bd1b63;--green:#43d18b}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+body{display:flex;min-height:100vh}button,input,textarea,select{font:inherit}button{cursor:pointer}
+.side{width:240px;background:#101219;border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:100vh}
+.brand{padding:19px 18px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;font-weight:900}.dot{width:11px;height:11px;border-radius:50%;background:#c71954;box-shadow:0 0 18px #c719544d}.brand small{display:block;color:var(--muted);font-size:10px;font-weight:500;margin-top:2px}
+.nav{padding:8px 0}.nav button{width:100%;padding:12px 18px;text-align:left;border:0;border-left:3px solid transparent;background:none;color:#939baa;font-size:13px}.nav button:hover,.nav button.active{background:#1a1d26;color:#fff;border-left-color:#c71954}
+.sidefoot{margin-top:auto;border-top:1px solid var(--border);padding:14px 18px;color:#646d7d;font-size:10px;line-height:1.5}
+.main{flex:1;min-width:0}.top{position:sticky;top:0;z-index:20;padding:14px 24px;background:#11141bf2;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}.top h1{font-size:17px;margin:0}.top small{color:var(--muted)}
+.view{display:none;padding:24px}.view.active{display:block}
+/* Native navigation fallback */
+/* Tab navigation is controlled exclusively by .view.active; URL hash targets must not override it. */
+.nav .nav-link{display:block;width:100%;padding:12px 18px;text-align:left;border:0;border-left:3px solid transparent;background:none;color:#939baa;font-size:13px;text-decoration:none;cursor:pointer}.nav .nav-link:hover,.nav .nav-link.active{background:#1a1d26;color:#fff;border-left-color:#c71954}
+.btn{padding:9px 13px;border-radius:8px;border:1px solid #343a48;background:#1a1e27;color:#fff;font-size:11px;font-weight:800}.primary{background:#a80e4d;border-color:#bd1b63}.danger{color:#ff9aa8;background:#28151d;border-color:#4d2733}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{background:linear-gradient(180deg,#171b23,#13161d);border:1px solid var(--border);border-radius:12px;padding:17px;margin-bottom:16px}.card h3{margin:0 0 13px;color:#e63d7e;font-size:12px;text-transform:uppercase;letter-spacing:.7px}
+label{display:block;color:#a0a8b7;font-size:11px;margin:10px 0 5px}input,textarea,select{width:100%;background:#0b0d12;color:#fff;border:1px solid #303642;border-radius:7px;padding:9px 10px;font-size:12px;outline:none}textarea{resize:vertical}.row{display:flex;gap:9px}.row>*{flex:1}
+.items-head,.item{display:grid;grid-template-columns:2.5fr .65fr 1fr 1fr 35px;gap:8px;align-items:end}.items-head{color:#808896;font-size:9px;text-transform:uppercase;padding:0 8px 5px}.item{padding:8px;border:1px solid #2b303b;background:#10131a;border-radius:8px;margin-bottom:7px}.item .rm{height:35px;border:1px solid #4d2733;background:#28151d;color:#ff9aa8;border-radius:7px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}.stat{padding:16px;background:linear-gradient(180deg,#171b23,#13161d);border:1px solid var(--border);border-radius:12px}.stat span{font-size:10px;color:#818a9a;text-transform:uppercase;letter-spacing:.7px}.stat b{display:block;font-size:23px;margin-top:6px}.stat .accent{color:#e63d7e}.dashboard-stats{grid-template-columns:repeat(4,1fr)}.stat small{display:block;color:#6f7888;font-size:9px;margin-top:5px}.dashboard-main-grid{margin-top:16px}.overview-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.overview-item{background:#0f1218;border:1px solid #2b303b;border-radius:8px;padding:11px}.overview-item span{display:block;color:#7e8796;font-size:9px;text-transform:uppercase}.overview-item b{display:block;margin-top:5px;font-size:14px}.dashboard-section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.dashboard-section-head h3{margin-bottom:0}.dashboard-section-head small{color:#737c8b;font-size:10px}.invoice-table-wrap{overflow:auto}.dashboard-table{width:100%;border-collapse:collapse;min-width:850px;font-size:10px}.dashboard-table th{color:#737c8b;text-align:left;text-transform:uppercase;font-size:8px;border-bottom:1px solid #303642;padding:8px}.dashboard-table td{border-bottom:1px solid #252b35;padding:10px 8px;vertical-align:middle}.dashboard-table td:nth-last-child(2),.dashboard-table th:nth-last-child(2){text-align:right}.status-pill{display:inline-flex;align-items:center;padding:4px 7px;border-radius:999px;font-size:8px;font-weight:900;white-space:nowrap}.status-draft{background:#252932;color:#b7bfca}.status-sent{background:#17283b;color:#72b8ff}.status-paid{background:#163126;color:#63e5a3}.status-partial{background:#382b13;color:#f2c15d}.status-overdue{background:#3b1820;color:#ff8e9e}.attention-item,.due-item{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid #282e38}.attention-item:last-child,.due-item:last-child{border-bottom:0}.attention-icon{width:28px;height:28px;border-radius:8px;background:#21161b;display:grid;place-items:center}.attention-item .grow,.due-item .grow{min-width:0}.attention-item b,.due-item b{display:block;font-size:10px}.attention-item small,.due-item small{display:block;color:#747d8c;font-size:9px;margin-top:2px}.summary-lines>div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #282e38;font-size:10px}.summary-lines span{color:#7d8695}.summary-lines b{text-align:right}.due-overdue{color:#ff8e9e}.due-soon{color:#f2c15d}.due-normal{color:#7bb7ff}
+.recent{margin-top:18px}.saved{display:flex;gap:9px;align-items:center;border:1px solid #2b303b;background:#10131a;border-radius:8px;padding:10px;margin-bottom:7px;font-size:11px}.saved .grow{flex:1;font-weight:800}.saved .meta{color:#717988;font-weight:400}
+.toast{position:fixed;right:20px;bottom:20px;background:#171b23;border:1px solid #414856;border-radius:8px;padding:11px 14px;font-size:11px;opacity:0;transform:translateY(8px);transition:.25s;z-index:99}.toast.show{opacity:1;transform:none}
+.preview-wrap{background:#222;padding:25px;overflow:auto}.paper{width:210mm;min-height:297mm;background:#fff;color:#383a3f;margin:auto;padding:14mm 12mm;box-shadow:0 10px 40px #0008;font-family:Arial,sans-serif;font-size:12px}
+.paper-top{display:grid;grid-template-columns:1fr 190px;gap:20px;border-bottom:1px solid #c9c9c9;padding-bottom:13px}.business{display:grid;grid-template-columns:125px 1fr;gap:18px;align-items:start}.logo{width:125px;height:78px;background:#08090c center/contain no-repeat;border-radius:4px;overflow:hidden}.biz h2{font-size:18px;line-height:1.12;margin:0 0 9px;font-weight:800}.biz div{line-height:1.6}.invoice-meta{text-align:right;line-height:1.65}.invoice-meta b{font-size:9px}.invoice-meta .big{font-size:18px;font-weight:800;margin-bottom:12px}.balance{font-size:12px;font-weight:700;margin-top:8px}
+.bill{padding:13px 0 18px;border-bottom:1px solid #222}.bill-title{font-size:9px;font-weight:800;margin-bottom:10px}.bill-name{font-size:15px;font-weight:700}.bill-info{margin-top:4px;line-height:1.5}
+.invtable{width:100%;border-collapse:collapse;margin-top:4px}.invtable th{font-size:11px;text-align:left;border-top:1px solid #222;border-bottom:1px solid #222;padding:7px 0;text-transform:uppercase}.invtable td{padding:9px 0;border-bottom:1px dashed #ccc;font-size:14px;font-weight:600}.invtable th:not(:first-child),.invtable td:not(:first-child){text-align:right}.invtable td:first-child{font-weight:700}
+.lower{display:grid;grid-template-columns:1fr 310px;gap:20px;margin-top:15px}.pay h3{font-size:14px;margin:0 0 15px}.pay h4{font-size:8px;margin:0 0 5px}.pay p{margin:0 0 12px;line-height:1.5}.totals{border-top:0}.tl{display:flex;justify-content:space-between;padding:7px 0}.tl.total{border-top:1px solid #777;border-bottom:1px solid #777;margin-top:4px;padding:9px 0;font-weight:700}.tl.balance{border-bottom:1px solid #aaa;padding:12px 0;font-size:13px}
+.paper-footer{margin-top:110px;padding-top:15px;border-top:1px solid #ddd;line-height:1.6}
+.paper-footer b{font-size:9px}.paper-footer .two{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:20px}
+.watermark{margin-top:35px;font-size:8px;color:#999;text-align:center}
+.vat-note{margin-top:12px;padding:9px 11px;border:1px solid #b8b8b8;background:#f7f7f7;font-size:9px;font-weight:700}
+.paper.template-modern .paper-top{border-bottom:0;padding-bottom:18px}.paper.template-modern .invoice-meta .big{color:#a80e4d}.paper.template-modern .invtable th{background:#171b23;color:#fff;padding:8px}.paper.template-modern .totals{border-left:3px solid #a80e4d;padding-left:15px}
+.paper.template-minimal{font-family:Inter,Arial,sans-serif}.paper.template-minimal .paper-top{border-bottom:0}.paper.template-minimal .logo{background-color:#fafafa}.paper.template-minimal .invtable th{border-top:0;border-bottom:2px solid #222}.paper.template-minimal .invtable td{border-bottom:1px solid #e5e5e5}.paper.template-minimal .tl.total{border-top:2px solid #222;border-bottom:0}
+.paper.template-bold .paper-top{background:#16191f;color:#fff;padding:16px;margin:-14mm -12mm 0;padding-left:12mm;padding-right:12mm;border-bottom:4px solid #bd1b63}.paper.template-bold .biz h2,.paper.template-bold .biz div,.paper.template-bold .invoice-meta,.paper.template-bold .invoice-meta b{color:#fff}.paper.template-bold .invtable th{background:#bd1b63;color:#fff;padding:8px}.paper.template-bold .tl.total{background:#16191f;color:#fff;padding:11px}
+.paper.template-elegant{font-family:Georgia,serif}.paper.template-elegant .paper-top{border-bottom:1px solid #b79a5b}.paper.template-elegant .biz h2{font-family:Georgia,serif;font-size:21px}.paper.template-elegant .invoice-meta .big{color:#8a6b2e}.paper.template-elegant .invtable th{border-top:1px solid #b79a5b;border-bottom:1px solid #b79a5b}.paper.template-elegant .tl.total{border-top:1px solid #b79a5b;border-bottom:1px solid #b79a5b}
+.template-picker{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:10px}.template-card{border:1px solid #303642;background:#0b0d12;border-radius:8px;padding:10px;cursor:pointer}.template-card:hover,.template-card.selected{border-color:#bd1b63}.template-card b{display:block;color:#fff;font-size:11px;margin-bottom:4px}.template-card span{color:#858e9f;font-size:9px;line-height:1.4}@media(max-width:900px){.template-picker{grid-template-columns:repeat(2,1fr)}}
+.event-date-card{} #eventDateCard{border-color:#343a48} #eventDateCard h3{color:#e63d7e}@media(max-width:950px){.dashboard-stats{grid-template-columns:repeat(2,1fr)}.side{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);transition:.25s;z-index:40}.side.open{transform:none}.hamb{display:block!important}.view{padding:14px}.grid2{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.top{padding:12px 14px}}
+@media(max-width:600px){.stats,.dashboard-stats{grid-template-columns:1fr}.overview-grid{grid-template-columns:1fr}.dashboard-section-head{align-items:flex-start;flex-direction:column}.items-head{display:none}.item{grid-template-columns:1fr 1fr}.item>div:first-child{grid-column:1/-1}.item .rm{grid-column:2}.top .subtxt{display:none}}
+
+/* ===== OVERVIEW REPORTS ===== */
+.report-toolbar{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.report-modal{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:20px;z-index:120}
+.report-modal.show{display:flex}
+.report-dialog{width:min(1120px,96vw);max-height:92vh;overflow:auto;background:#11141b;border:1px solid #343a48;border-radius:14px;box-shadow:0 30px 90px #000b}
+.report-head{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;background:#11141bf5;border-bottom:1px solid #2b303c}
+.report-head h3{margin:0;color:#fff;font-size:14px}
+.report-head small{color:#7f8898;font-size:10px}
+.report-body{padding:18px}
+.report-filters{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:12px;background:#0d1016;border:1px solid #2b303c;border-radius:10px}
+.report-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap}
+.report-preview{margin-top:16px;background:#fff;color:#111;border-radius:10px;overflow:hidden}
+.report-preview-head{padding:18px 20px;border-bottom:1px solid #ddd}
+.report-preview-head h2{margin:0 0 5px;font-size:18px}
+.report-preview-head p{margin:0;color:#666;font-size:11px}
+.report-summary-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px 20px;background:#f6f6f6}
+.report-summary-card{border:1px solid #ddd;border-radius:8px;padding:10px;background:#fff}
+.report-summary-card span{display:block;font-size:9px;text-transform:uppercase;color:#777}
+.report-summary-card b{display:block;font-size:15px;margin-top:5px}
+.report-table-wrap{overflow:auto;padding:0 20px 20px}
+.report-table{width:100%;border-collapse:collapse;min-width:820px;font-size:10px}
+.report-table th{background:#171b23;color:#fff;text-align:left;padding:9px}
+.report-table td{padding:8px;border-bottom:1px solid #ddd}
+.report-table td.num,.report-table th.num{text-align:right}
+.report-empty{padding:30px;text-align:center;color:#777;font-size:11px}
+@media(max-width:900px){.report-filters{grid-template-columns:repeat(2,1fr)}.report-summary-cards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.report-filters{grid-template-columns:1fr}.report-summary-cards{grid-template-columns:1fr}.report-head{align-items:flex-start}}
+@media print{
+  body{background:#fff;display:block}.side,.top,#view-dashboard,#view-create,#view-saved,#view-settings,.no-print{display:none!important}.view{display:none!important}.print-view{display:block!important;padding:0}.preview-wrap{padding:0;background:#fff}.paper{box-shadow:none;margin:0;width:210mm;min-height:297mm;font-size:12px;line-height:1.45}
+  .paper .biz div{font-size:12px}
+  .paper .invoice-meta{font-size:12px}
+  .paper .invoice-meta b{font-size:10px}
+  .paper .bill-title{font-size:10px}
+  .paper .bill-name{font-size:17px}
+  .paper .bill-info{font-size:12px}
+  .paper .invtable th{font-size:11px}
+  .paper .invtable td{font-size:14px;font-weight:600}
+  .paper .invtable td:first-child{font-weight:700}
+  .paper .pay h4{font-size:10px}
+  .paper .pay p{font-size:12px}
+  .paper .tl{font-size:12px}
+  .paper .tl.balance{font-size:14px}
+  .paper .paper-footer{font-size:12px}
+  .paper .paper-footer b{font-size:10px}
+  .paper .watermark{font-size:9px}
+  .paper .vat-note{font-size:10px}
+}
+
+/* ===== 100 INVOICE TEMPLATES ===== */
+.paper[class*="template-"]{transition:none}
+
+.paper.template-1{background:hsl(37 25% 97%);border-color:hsl(86 35% 72%);border-radius:4px}
+.paper.template-1 .paper-top{border-bottom:3px solid hsl(37 55% 24%);padding-bottom:22px}
+.paper.template-1 .biz h2{color:hsl(37 55% 24%);font-weight:600;letter-spacing:0.4px;text-transform:uppercase}
+.paper.template-1 .invoice-meta>b,.paper.template-1 .bill-title,.paper.template-1 .pay h3,.paper.template-1 .pay h4{color:hsl(37 55% 24%)}
+.paper.template-1 .invoice-meta .big{color:hsl(37 55% 24%);font-weight:600}
+.paper.template-1 .balance{color:hsl(37 55% 24%)}
+.paper.template-1 .invtable th{background:hsl(37 55% 24%);color:#fff;border-color:hsl(37 55% 24%)}
+.paper.template-1 .invtable td{border-color:hsl(86 35% 72%)}
+.paper.template-1 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-1 .totals .total{border-top:2px solid hsl(37 55% 24%);color:hsl(37 55% 24%)}
+.paper.template-1 .paper-footer{border-top:2px solid hsl(37 55% 24%);margin-top:21px}
+.paper.template-1 .watermark{color:hsl(37 55% 24%);opacity:0.035}
+
+
+.paper.template-2{background:hsl(130 18% 96%);border-color:#d9d9d9;border-radius:8px}
+.paper.template-2 .paper-top{border-bottom:3px solid hsl(130 65% 38%);padding-bottom:26px}
+.paper.template-2 .biz h2{color:hsl(130 65% 38%);font-weight:700;letter-spacing:0.8px;text-transform:none}
+.paper.template-2 .invoice-meta>b,.paper.template-2 .bill-title,.paper.template-2 .pay h3,.paper.template-2 .pay h4{color:hsl(130 65% 38%)}
+.paper.template-2 .invoice-meta .big{color:hsl(130 65% 38%);font-weight:700}
+.paper.template-2 .balance{color:hsl(130 65% 38%)}
+.paper.template-2 .invtable th{background:hsl(130 65% 38%);color:#fff;border-color:hsl(130 65% 38%)}
+.paper.template-2 .invtable td{border-color:#d9d9d9}
+.paper.template-2 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-2 .totals .total{border-top:2px solid hsl(130 65% 38%);color:hsl(130 65% 38%)}
+.paper.template-2 .paper-footer{border-top:2px solid hsl(130 65% 38%);margin-top:24px}
+.paper.template-2 .watermark{color:hsl(130 65% 38%);opacity:0.045}
+
+
+.paper.template-3{background:#fbfbfb;border-color:hsl(111 50% 65%);border-radius:12px}
+.paper.template-3 .paper-top{border-bottom:3px solid hsl(111 65% 55%);padding-bottom:30px}
+.paper.template-3 .biz h2{color:hsl(111 65% 55%);font-weight:800;letter-spacing:1.2000000000000002px;text-transform:none}
+.paper.template-3 .invoice-meta>b,.paper.template-3 .bill-title,.paper.template-3 .pay h3,.paper.template-3 .pay h4{color:hsl(111 65% 55%)}
+.paper.template-3 .invoice-meta .big{color:hsl(111 65% 55%);font-weight:800}
+.paper.template-3 .balance{color:hsl(111 65% 55%)}
+.paper.template-3 .invtable th{background:hsl(111 65% 55%);color:#fff;border-color:hsl(111 65% 55%)}
+.paper.template-3 .invtable td{border-color:hsl(111 50% 65%)}
+.paper.template-3 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-3 .totals .total{border-top:2px solid hsl(111 65% 55%);color:hsl(111 65% 55%)}
+.paper.template-3 .paper-footer{border-top:2px solid hsl(111 65% 55%);margin-top:27px}
+.paper.template-3 .watermark{color:hsl(111 65% 55%);opacity:0.055}
+
+
+.paper.template-4{background:hsl(148 20% 94%);border-color:hsl(148 45% 80%);border-radius:18px}
+.paper.template-4 .paper-top{border-bottom:3px solid hsl(218 50% 28%);padding-bottom:18px}
+.paper.template-4 .biz h2{color:hsl(218 50% 28%);font-weight:500;letter-spacing:1.6px;text-transform:none}
+.paper.template-4 .invoice-meta>b,.paper.template-4 .bill-title,.paper.template-4 .pay h3,.paper.template-4 .pay h4{color:hsl(218 50% 28%)}
+.paper.template-4 .invoice-meta .big{color:hsl(218 50% 28%);font-weight:500}
+.paper.template-4 .balance{color:hsl(218 50% 28%)}
+.paper.template-4 .invtable th{background:hsl(218 50% 28%);color:#fff;border-color:hsl(218 50% 28%)}
+.paper.template-4 .invtable td{border-color:hsl(148 45% 80%)}
+.paper.template-4 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-4 .totals .total{border-top:2px solid hsl(218 50% 28%);color:hsl(218 50% 28%)}
+.paper.template-4 .paper-footer{border-top:2px solid hsl(218 50% 28%);margin-top:30px}
+.paper.template-4 .watermark{color:hsl(218 50% 28%);opacity:0.065}
+
+
+.paper.template-5{background:#ffffff;border-color:hsl(227 35% 72%);border-radius:24px}
+.paper.template-5 .paper-top{border-bottom:3px solid hsl(185 70% 42%);padding-bottom:22px}
+.paper.template-5 .biz h2{color:hsl(185 70% 42%);font-weight:600;letter-spacing:0.0px;text-transform:uppercase}
+.paper.template-5 .invoice-meta>b,.paper.template-5 .bill-title,.paper.template-5 .pay h3,.paper.template-5 .pay h4{color:hsl(185 70% 42%)}
+.paper.template-5 .invoice-meta .big{color:hsl(185 70% 42%);font-weight:600}
+.paper.template-5 .balance{color:hsl(185 70% 42%)}
+.paper.template-5 .invtable th{background:hsl(185 70% 42%);color:#fff;border-color:hsl(185 70% 42%)}
+.paper.template-5 .invtable td{border-color:hsl(227 35% 72%)}
+.paper.template-5 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-5 .totals .total{border-top:2px solid hsl(185 70% 42%);color:hsl(185 70% 42%)}
+.paper.template-5 .paper-footer{border-top:2px solid hsl(185 70% 42%);margin-top:18px}
+.paper.template-5 .watermark{color:hsl(185 70% 42%);opacity:0.025}
+
+
+.paper.template-6{background:hsl(222 25% 97%);border-color:#d9d9d9;border-radius:0px}
+.paper.template-6 .paper-top{border-bottom:3px solid hsl(222 55% 24%);padding-bottom:26px}
+.paper.template-6 .biz h2{color:hsl(222 55% 24%);font-weight:700;letter-spacing:0.4px;text-transform:none}
+.paper.template-6 .invoice-meta>b,.paper.template-6 .bill-title,.paper.template-6 .pay h3,.paper.template-6 .pay h4{color:hsl(222 55% 24%)}
+.paper.template-6 .invoice-meta .big{color:hsl(222 55% 24%);font-weight:700}
+.paper.template-6 .balance{color:hsl(222 55% 24%)}
+.paper.template-6 .invtable th{background:hsl(222 55% 24%);color:#fff;border-color:hsl(222 55% 24%)}
+.paper.template-6 .invtable td{border-color:#d9d9d9}
+.paper.template-6 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-6 .totals .total{border-top:2px solid hsl(222 55% 24%);color:hsl(222 55% 24%)}
+.paper.template-6 .paper-footer{border-top:2px solid hsl(222 55% 24%);margin-top:21px}
+.paper.template-6 .watermark{color:hsl(222 55% 24%);opacity:0.035}
+
+
+.paper.template-7{background:hsl(315 18% 96%);border-color:hsl(259 50% 65%);border-radius:4px}
+.paper.template-7 .paper-top{border-bottom:3px solid hsl(315 65% 38%);padding-bottom:30px}
+.paper.template-7 .biz h2{color:hsl(315 65% 38%);font-weight:800;letter-spacing:0.8px;text-transform:none}
+.paper.template-7 .invoice-meta>b,.paper.template-7 .bill-title,.paper.template-7 .pay h3,.paper.template-7 .pay h4{color:hsl(315 65% 38%)}
+.paper.template-7 .invoice-meta .big{color:hsl(315 65% 38%);font-weight:800}
+.paper.template-7 .balance{color:hsl(315 65% 38%)}
+.paper.template-7 .invtable th{background:hsl(315 65% 38%);color:#fff;border-color:hsl(315 65% 38%)}
+.paper.template-7 .invtable td{border-color:hsl(259 50% 65%)}
+.paper.template-7 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-7 .totals .total{border-top:2px solid hsl(315 65% 38%);color:hsl(315 65% 38%)}
+.paper.template-7 .paper-footer{border-top:2px solid hsl(315 65% 38%);margin-top:24px}
+.paper.template-7 .watermark{color:hsl(315 65% 38%);opacity:0.045}
+
+
+.paper.template-8{background:#fbfbfb;border-color:hsl(296 45% 80%);border-radius:8px}
+.paper.template-8 .paper-top{border-bottom:3px solid hsl(296 65% 55%);padding-bottom:18px}
+.paper.template-8 .biz h2{color:hsl(296 65% 55%);font-weight:500;letter-spacing:1.2000000000000002px;text-transform:none}
+.paper.template-8 .invoice-meta>b,.paper.template-8 .bill-title,.paper.template-8 .pay h3,.paper.template-8 .pay h4{color:hsl(296 65% 55%)}
+.paper.template-8 .invoice-meta .big{color:hsl(296 65% 55%);font-weight:500}
+.paper.template-8 .balance{color:hsl(296 65% 55%)}
+.paper.template-8 .invtable th{background:hsl(296 65% 55%);color:#fff;border-color:hsl(296 65% 55%)}
+.paper.template-8 .invtable td{border-color:hsl(296 45% 80%)}
+.paper.template-8 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-8 .totals .total{border-top:2px solid hsl(296 65% 55%);color:hsl(296 65% 55%)}
+.paper.template-8 .paper-footer{border-top:2px solid hsl(296 65% 55%);margin-top:27px}
+.paper.template-8 .watermark{color:hsl(296 65% 55%);opacity:0.055}
+
+
+.paper.template-9{background:hsl(333 20% 94%);border-color:hsl(43 35% 72%);border-radius:12px}
+.paper.template-9 .paper-top{border-bottom:3px solid hsl(43 50% 28%);padding-bottom:22px}
+.paper.template-9 .biz h2{color:hsl(43 50% 28%);font-weight:600;letter-spacing:1.6px;text-transform:uppercase}
+.paper.template-9 .invoice-meta>b,.paper.template-9 .bill-title,.paper.template-9 .pay h3,.paper.template-9 .pay h4{color:hsl(43 50% 28%)}
+.paper.template-9 .invoice-meta .big{color:hsl(43 50% 28%);font-weight:600}
+.paper.template-9 .balance{color:hsl(43 50% 28%)}
+.paper.template-9 .invtable th{background:hsl(43 50% 28%);color:#fff;border-color:hsl(43 50% 28%)}
+.paper.template-9 .invtable td{border-color:hsl(43 35% 72%)}
+.paper.template-9 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-9 .totals .total{border-top:2px solid hsl(43 50% 28%);color:hsl(43 50% 28%)}
+.paper.template-9 .paper-footer{border-top:2px solid hsl(43 50% 28%);margin-top:30px}
+.paper.template-9 .watermark{color:hsl(43 50% 28%);opacity:0.065}
+
+
+.paper.template-10{background:#ffffff;border-color:#d9d9d9;border-radius:18px}
+.paper.template-10 .paper-top{border-bottom:3px solid hsl(10 70% 42%);padding-bottom:26px}
+.paper.template-10 .biz h2{color:hsl(10 70% 42%);font-weight:700;letter-spacing:0.0px;text-transform:none}
+.paper.template-10 .invoice-meta>b,.paper.template-10 .bill-title,.paper.template-10 .pay h3,.paper.template-10 .pay h4{color:hsl(10 70% 42%)}
+.paper.template-10 .invoice-meta .big{color:hsl(10 70% 42%);font-weight:700}
+.paper.template-10 .balance{color:hsl(10 70% 42%)}
+.paper.template-10 .invtable th{background:hsl(10 70% 42%);color:#fff;border-color:hsl(10 70% 42%)}
+.paper.template-10 .invtable td{border-color:#d9d9d9}
+.paper.template-10 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-10 .totals .total{border-top:2px solid hsl(10 70% 42%);color:hsl(10 70% 42%)}
+.paper.template-10 .paper-footer{border-top:2px solid hsl(10 70% 42%);margin-top:18px}
+.paper.template-10 .watermark{color:hsl(10 70% 42%);opacity:0.025}
+
+
+.paper.template-11{background:hsl(47 25% 97%);border-color:hsl(47 50% 65%);border-radius:24px}
+.paper.template-11 .paper-top{border-bottom:3px solid hsl(47 55% 24%);padding-bottom:30px}
+.paper.template-11 .biz h2{color:hsl(47 55% 24%);font-weight:800;letter-spacing:0.4px;text-transform:none}
+.paper.template-11 .invoice-meta>b,.paper.template-11 .bill-title,.paper.template-11 .pay h3,.paper.template-11 .pay h4{color:hsl(47 55% 24%)}
+.paper.template-11 .invoice-meta .big{color:hsl(47 55% 24%);font-weight:800}
+.paper.template-11 .balance{color:hsl(47 55% 24%)}
+.paper.template-11 .invtable th{background:hsl(47 55% 24%);color:#fff;border-color:hsl(47 55% 24%)}
+.paper.template-11 .invtable td{border-color:hsl(47 50% 65%)}
+.paper.template-11 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-11 .totals .total{border-top:2px solid hsl(47 55% 24%);color:hsl(47 55% 24%)}
+.paper.template-11 .paper-footer{border-top:2px solid hsl(47 55% 24%);margin-top:21px}
+.paper.template-11 .watermark{color:hsl(47 55% 24%);opacity:0.035}
+
+
+.paper.template-12{background:hsl(140 18% 96%);border-color:hsl(84 45% 80%);border-radius:0px}
+.paper.template-12 .paper-top{border-bottom:3px solid hsl(140 65% 38%);padding-bottom:18px}
+.paper.template-12 .biz h2{color:hsl(140 65% 38%);font-weight:500;letter-spacing:0.8px;text-transform:none}
+.paper.template-12 .invoice-meta>b,.paper.template-12 .bill-title,.paper.template-12 .pay h3,.paper.template-12 .pay h4{color:hsl(140 65% 38%)}
+.paper.template-12 .invoice-meta .big{color:hsl(140 65% 38%);font-weight:500}
+.paper.template-12 .balance{color:hsl(140 65% 38%)}
+.paper.template-12 .invtable th{background:hsl(140 65% 38%);color:#fff;border-color:hsl(140 65% 38%)}
+.paper.template-12 .invtable td{border-color:hsl(84 45% 80%)}
+.paper.template-12 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-12 .totals .total{border-top:2px solid hsl(140 65% 38%);color:hsl(140 65% 38%)}
+.paper.template-12 .paper-footer{border-top:2px solid hsl(140 65% 38%);margin-top:24px}
+.paper.template-12 .watermark{color:hsl(140 65% 38%);opacity:0.045}
+
+
+.paper.template-13{background:#fbfbfb;border-color:hsl(184 35% 72%);border-radius:4px}
+.paper.template-13 .paper-top{border-bottom:3px solid hsl(121 65% 55%);padding-bottom:22px}
+.paper.template-13 .biz h2{color:hsl(121 65% 55%);font-weight:600;letter-spacing:1.2000000000000002px;text-transform:uppercase}
+.paper.template-13 .invoice-meta>b,.paper.template-13 .bill-title,.paper.template-13 .pay h3,.paper.template-13 .pay h4{color:hsl(121 65% 55%)}
+.paper.template-13 .invoice-meta .big{color:hsl(121 65% 55%);font-weight:600}
+.paper.template-13 .balance{color:hsl(121 65% 55%)}
+.paper.template-13 .invtable th{background:hsl(121 65% 55%);color:#fff;border-color:hsl(121 65% 55%)}
+.paper.template-13 .invtable td{border-color:hsl(184 35% 72%)}
+.paper.template-13 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-13 .totals .total{border-top:2px solid hsl(121 65% 55%);color:hsl(121 65% 55%)}
+.paper.template-13 .paper-footer{border-top:2px solid hsl(121 65% 55%);margin-top:27px}
+.paper.template-13 .watermark{color:hsl(121 65% 55%);opacity:0.055}
+
+
+.paper.template-14{background:hsl(158 20% 94%);border-color:#d9d9d9;border-radius:8px}
+.paper.template-14 .paper-top{border-bottom:3px solid hsl(228 50% 28%);padding-bottom:26px}
+.paper.template-14 .biz h2{color:hsl(228 50% 28%);font-weight:700;letter-spacing:1.6px;text-transform:none}
+.paper.template-14 .invoice-meta>b,.paper.template-14 .bill-title,.paper.template-14 .pay h3,.paper.template-14 .pay h4{color:hsl(228 50% 28%)}
+.paper.template-14 .invoice-meta .big{color:hsl(228 50% 28%);font-weight:700}
+.paper.template-14 .balance{color:hsl(228 50% 28%)}
+.paper.template-14 .invtable th{background:hsl(228 50% 28%);color:#fff;border-color:hsl(228 50% 28%)}
+.paper.template-14 .invtable td{border-color:#d9d9d9}
+.paper.template-14 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-14 .totals .total{border-top:2px solid hsl(228 50% 28%);color:hsl(228 50% 28%)}
+.paper.template-14 .paper-footer{border-top:2px solid hsl(228 50% 28%);margin-top:30px}
+.paper.template-14 .watermark{color:hsl(228 50% 28%);opacity:0.065}
+
+
+.paper.template-15{background:#ffffff;border-color:hsl(195 50% 65%);border-radius:12px}
+.paper.template-15 .paper-top{border-bottom:3px solid hsl(195 70% 42%);padding-bottom:30px}
+.paper.template-15 .biz h2{color:hsl(195 70% 42%);font-weight:800;letter-spacing:0.0px;text-transform:none}
+.paper.template-15 .invoice-meta>b,.paper.template-15 .bill-title,.paper.template-15 .pay h3,.paper.template-15 .pay h4{color:hsl(195 70% 42%)}
+.paper.template-15 .invoice-meta .big{color:hsl(195 70% 42%);font-weight:800}
+.paper.template-15 .balance{color:hsl(195 70% 42%)}
+.paper.template-15 .invtable th{background:hsl(195 70% 42%);color:#fff;border-color:hsl(195 70% 42%)}
+.paper.template-15 .invtable td{border-color:hsl(195 50% 65%)}
+.paper.template-15 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-15 .totals .total{border-top:2px solid hsl(195 70% 42%);color:hsl(195 70% 42%)}
+.paper.template-15 .paper-footer{border-top:2px solid hsl(195 70% 42%);margin-top:18px}
+.paper.template-15 .watermark{color:hsl(195 70% 42%);opacity:0.025}
+
+
+.paper.template-16{background:hsl(232 25% 97%);border-color:hsl(232 45% 80%);border-radius:18px}
+.paper.template-16 .paper-top{border-bottom:3px solid hsl(232 55% 24%);padding-bottom:18px}
+.paper.template-16 .biz h2{color:hsl(232 55% 24%);font-weight:500;letter-spacing:0.4px;text-transform:none}
+.paper.template-16 .invoice-meta>b,.paper.template-16 .bill-title,.paper.template-16 .pay h3,.paper.template-16 .pay h4{color:hsl(232 55% 24%)}
+.paper.template-16 .invoice-meta .big{color:hsl(232 55% 24%);font-weight:500}
+.paper.template-16 .balance{color:hsl(232 55% 24%)}
+.paper.template-16 .invtable th{background:hsl(232 55% 24%);color:#fff;border-color:hsl(232 55% 24%)}
+.paper.template-16 .invtable td{border-color:hsl(232 45% 80%)}
+.paper.template-16 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-16 .totals .total{border-top:2px solid hsl(232 55% 24%);color:hsl(232 55% 24%)}
+.paper.template-16 .paper-footer{border-top:2px solid hsl(232 55% 24%);margin-top:21px}
+.paper.template-16 .watermark{color:hsl(232 55% 24%);opacity:0.035}
+
+
+.paper.template-17{background:hsl(325 18% 96%);border-color:hsl(325 35% 72%);border-radius:24px}
+.paper.template-17 .paper-top{border-bottom:3px solid hsl(325 65% 38%);padding-bottom:22px}
+.paper.template-17 .biz h2{color:hsl(325 65% 38%);font-weight:600;letter-spacing:0.8px;text-transform:uppercase}
+.paper.template-17 .invoice-meta>b,.paper.template-17 .bill-title,.paper.template-17 .pay h3,.paper.template-17 .pay h4{color:hsl(325 65% 38%)}
+.paper.template-17 .invoice-meta .big{color:hsl(325 65% 38%);font-weight:600}
+.paper.template-17 .balance{color:hsl(325 65% 38%)}
+.paper.template-17 .invtable th{background:hsl(325 65% 38%);color:#fff;border-color:hsl(325 65% 38%)}
+.paper.template-17 .invtable td{border-color:hsl(325 35% 72%)}
+.paper.template-17 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-17 .totals .total{border-top:2px solid hsl(325 65% 38%);color:hsl(325 65% 38%)}
+.paper.template-17 .paper-footer{border-top:2px solid hsl(325 65% 38%);margin-top:24px}
+.paper.template-17 .watermark{color:hsl(325 65% 38%);opacity:0.045}
+
+
+.paper.template-18{background:#fbfbfb;border-color:#d9d9d9;border-radius:0px}
+.paper.template-18 .paper-top{border-bottom:3px solid hsl(306 65% 55%);padding-bottom:26px}
+.paper.template-18 .biz h2{color:hsl(306 65% 55%);font-weight:700;letter-spacing:1.2000000000000002px;text-transform:none}
+.paper.template-18 .invoice-meta>b,.paper.template-18 .bill-title,.paper.template-18 .pay h3,.paper.template-18 .pay h4{color:hsl(306 65% 55%)}
+.paper.template-18 .invoice-meta .big{color:hsl(306 65% 55%);font-weight:700}
+.paper.template-18 .balance{color:hsl(306 65% 55%)}
+.paper.template-18 .invtable th{background:hsl(306 65% 55%);color:#fff;border-color:hsl(306 65% 55%)}
+.paper.template-18 .invtable td{border-color:#d9d9d9}
+.paper.template-18 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-18 .totals .total{border-top:2px solid hsl(306 65% 55%);color:hsl(306 65% 55%)}
+.paper.template-18 .paper-footer{border-top:2px solid hsl(306 65% 55%);margin-top:27px}
+.paper.template-18 .watermark{color:hsl(306 65% 55%);opacity:0.055}
+
+
+.paper.template-19{background:hsl(343 20% 94%);border-color:hsl(343 50% 65%);border-radius:4px}
+.paper.template-19 .paper-top{border-bottom:3px solid hsl(53 50% 28%);padding-bottom:30px}
+.paper.template-19 .biz h2{color:hsl(53 50% 28%);font-weight:800;letter-spacing:1.6px;text-transform:none}
+.paper.template-19 .invoice-meta>b,.paper.template-19 .bill-title,.paper.template-19 .pay h3,.paper.template-19 .pay h4{color:hsl(53 50% 28%)}
+.paper.template-19 .invoice-meta .big{color:hsl(53 50% 28%);font-weight:800}
+.paper.template-19 .balance{color:hsl(53 50% 28%)}
+.paper.template-19 .invtable th{background:hsl(53 50% 28%);color:#fff;border-color:hsl(53 50% 28%)}
+.paper.template-19 .invtable td{border-color:hsl(343 50% 65%)}
+.paper.template-19 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-19 .totals .total{border-top:2px solid hsl(53 50% 28%);color:hsl(53 50% 28%)}
+.paper.template-19 .paper-footer{border-top:2px solid hsl(53 50% 28%);margin-top:30px}
+.paper.template-19 .watermark{color:hsl(53 50% 28%);opacity:0.065}
+
+
+.paper.template-20{background:#ffffff;border-color:hsl(20 45% 80%);border-radius:8px}
+.paper.template-20 .paper-top{border-bottom:3px solid hsl(20 70% 42%);padding-bottom:18px}
+.paper.template-20 .biz h2{color:hsl(20 70% 42%);font-weight:500;letter-spacing:0.0px;text-transform:none}
+.paper.template-20 .invoice-meta>b,.paper.template-20 .bill-title,.paper.template-20 .pay h3,.paper.template-20 .pay h4{color:hsl(20 70% 42%)}
+.paper.template-20 .invoice-meta .big{color:hsl(20 70% 42%);font-weight:500}
+.paper.template-20 .balance{color:hsl(20 70% 42%)}
+.paper.template-20 .invtable th{background:hsl(20 70% 42%);color:#fff;border-color:hsl(20 70% 42%)}
+.paper.template-20 .invtable td{border-color:hsl(20 45% 80%)}
+.paper.template-20 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-20 .totals .total{border-top:2px solid hsl(20 70% 42%);color:hsl(20 70% 42%)}
+.paper.template-20 .paper-footer{border-top:2px solid hsl(20 70% 42%);margin-top:18px}
+.paper.template-20 .watermark{color:hsl(20 70% 42%);opacity:0.025}
+
+
+.paper.template-21{background:hsl(57 25% 97%);border-color:hsl(106 35% 72%);border-radius:12px}
+.paper.template-21 .paper-top{border-bottom:3px solid hsl(57 55% 24%);padding-bottom:22px}
+.paper.template-21 .biz h2{color:hsl(57 55% 24%);font-weight:600;letter-spacing:0.4px;text-transform:uppercase}
+.paper.template-21 .invoice-meta>b,.paper.template-21 .bill-title,.paper.template-21 .pay h3,.paper.template-21 .pay h4{color:hsl(57 55% 24%)}
+.paper.template-21 .invoice-meta .big{color:hsl(57 55% 24%);font-weight:600}
+.paper.template-21 .balance{color:hsl(57 55% 24%)}
+.paper.template-21 .invtable th{background:hsl(57 55% 24%);color:#fff;border-color:hsl(57 55% 24%)}
+.paper.template-21 .invtable td{border-color:hsl(106 35% 72%)}
+.paper.template-21 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-21 .totals .total{border-top:2px solid hsl(57 55% 24%);color:hsl(57 55% 24%)}
+.paper.template-21 .paper-footer{border-top:2px solid hsl(57 55% 24%);margin-top:21px}
+.paper.template-21 .watermark{color:hsl(57 55% 24%);opacity:0.035}
+
+
+.paper.template-22{background:hsl(150 18% 96%);border-color:#d9d9d9;border-radius:18px}
+.paper.template-22 .paper-top{border-bottom:3px solid hsl(150 65% 38%);padding-bottom:26px}
+.paper.template-22 .biz h2{color:hsl(150 65% 38%);font-weight:700;letter-spacing:0.8px;text-transform:none}
+.paper.template-22 .invoice-meta>b,.paper.template-22 .bill-title,.paper.template-22 .pay h3,.paper.template-22 .pay h4{color:hsl(150 65% 38%)}
+.paper.template-22 .invoice-meta .big{color:hsl(150 65% 38%);font-weight:700}
+.paper.template-22 .balance{color:hsl(150 65% 38%)}
+.paper.template-22 .invtable th{background:hsl(150 65% 38%);color:#fff;border-color:hsl(150 65% 38%)}
+.paper.template-22 .invtable td{border-color:#d9d9d9}
+.paper.template-22 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-22 .totals .total{border-top:2px solid hsl(150 65% 38%);color:hsl(150 65% 38%)}
+.paper.template-22 .paper-footer{border-top:2px solid hsl(150 65% 38%);margin-top:24px}
+.paper.template-22 .watermark{color:hsl(150 65% 38%);opacity:0.045}
+
+
+.paper.template-23{background:#fbfbfb;border-color:hsl(131 50% 65%);border-radius:24px}
+.paper.template-23 .paper-top{border-bottom:3px solid hsl(131 65% 55%);padding-bottom:30px}
+.paper.template-23 .biz h2{color:hsl(131 65% 55%);font-weight:800;letter-spacing:1.2000000000000002px;text-transform:none}
+.paper.template-23 .invoice-meta>b,.paper.template-23 .bill-title,.paper.template-23 .pay h3,.paper.template-23 .pay h4{color:hsl(131 65% 55%)}
+.paper.template-23 .invoice-meta .big{color:hsl(131 65% 55%);font-weight:800}
+.paper.template-23 .balance{color:hsl(131 65% 55%)}
+.paper.template-23 .invtable th{background:hsl(131 65% 55%);color:#fff;border-color:hsl(131 65% 55%)}
+.paper.template-23 .invtable td{border-color:hsl(131 50% 65%)}
+.paper.template-23 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-23 .totals .total{border-top:2px solid hsl(131 65% 55%);color:hsl(131 65% 55%)}
+.paper.template-23 .paper-footer{border-top:2px solid hsl(131 65% 55%);margin-top:27px}
+.paper.template-23 .watermark{color:hsl(131 65% 55%);opacity:0.055}
+
+
+.paper.template-24{background:hsl(168 20% 94%);border-color:hsl(168 45% 80%);border-radius:0px}
+.paper.template-24 .paper-top{border-bottom:3px solid hsl(238 50% 28%);padding-bottom:18px}
+.paper.template-24 .biz h2{color:hsl(238 50% 28%);font-weight:500;letter-spacing:1.6px;text-transform:none}
+.paper.template-24 .invoice-meta>b,.paper.template-24 .bill-title,.paper.template-24 .pay h3,.paper.template-24 .pay h4{color:hsl(238 50% 28%)}
+.paper.template-24 .invoice-meta .big{color:hsl(238 50% 28%);font-weight:500}
+.paper.template-24 .balance{color:hsl(238 50% 28%)}
+.paper.template-24 .invtable th{background:hsl(238 50% 28%);color:#fff;border-color:hsl(238 50% 28%)}
+.paper.template-24 .invtable td{border-color:hsl(168 45% 80%)}
+.paper.template-24 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-24 .totals .total{border-top:2px solid hsl(238 50% 28%);color:hsl(238 50% 28%)}
+.paper.template-24 .paper-footer{border-top:2px solid hsl(238 50% 28%);margin-top:30px}
+.paper.template-24 .watermark{color:hsl(238 50% 28%);opacity:0.065}
+
+
+.paper.template-25{background:#ffffff;border-color:hsl(247 35% 72%);border-radius:4px}
+.paper.template-25 .paper-top{border-bottom:3px solid hsl(205 70% 42%);padding-bottom:22px}
+.paper.template-25 .biz h2{color:hsl(205 70% 42%);font-weight:600;letter-spacing:0.0px;text-transform:uppercase}
+.paper.template-25 .invoice-meta>b,.paper.template-25 .bill-title,.paper.template-25 .pay h3,.paper.template-25 .pay h4{color:hsl(205 70% 42%)}
+.paper.template-25 .invoice-meta .big{color:hsl(205 70% 42%);font-weight:600}
+.paper.template-25 .balance{color:hsl(205 70% 42%)}
+.paper.template-25 .invtable th{background:hsl(205 70% 42%);color:#fff;border-color:hsl(205 70% 42%)}
+.paper.template-25 .invtable td{border-color:hsl(247 35% 72%)}
+.paper.template-25 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-25 .totals .total{border-top:2px solid hsl(205 70% 42%);color:hsl(205 70% 42%)}
+.paper.template-25 .paper-footer{border-top:2px solid hsl(205 70% 42%);margin-top:18px}
+.paper.template-25 .watermark{color:hsl(205 70% 42%);opacity:0.025}
+
+
+.paper.template-26{background:hsl(242 25% 97%);border-color:#d9d9d9;border-radius:8px}
+.paper.template-26 .paper-top{border-bottom:3px solid hsl(242 55% 24%);padding-bottom:26px}
+.paper.template-26 .biz h2{color:hsl(242 55% 24%);font-weight:700;letter-spacing:0.4px;text-transform:none}
+.paper.template-26 .invoice-meta>b,.paper.template-26 .bill-title,.paper.template-26 .pay h3,.paper.template-26 .pay h4{color:hsl(242 55% 24%)}
+.paper.template-26 .invoice-meta .big{color:hsl(242 55% 24%);font-weight:700}
+.paper.template-26 .balance{color:hsl(242 55% 24%)}
+.paper.template-26 .invtable th{background:hsl(242 55% 24%);color:#fff;border-color:hsl(242 55% 24%)}
+.paper.template-26 .invtable td{border-color:#d9d9d9}
+.paper.template-26 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-26 .totals .total{border-top:2px solid hsl(242 55% 24%);color:hsl(242 55% 24%)}
+.paper.template-26 .paper-footer{border-top:2px solid hsl(242 55% 24%);margin-top:21px}
+.paper.template-26 .watermark{color:hsl(242 55% 24%);opacity:0.035}
+
+
+.paper.template-27{background:hsl(335 18% 96%);border-color:hsl(279 50% 65%);border-radius:12px}
+.paper.template-27 .paper-top{border-bottom:3px solid hsl(335 65% 38%);padding-bottom:30px}
+.paper.template-27 .biz h2{color:hsl(335 65% 38%);font-weight:800;letter-spacing:0.8px;text-transform:none}
+.paper.template-27 .invoice-meta>b,.paper.template-27 .bill-title,.paper.template-27 .pay h3,.paper.template-27 .pay h4{color:hsl(335 65% 38%)}
+.paper.template-27 .invoice-meta .big{color:hsl(335 65% 38%);font-weight:800}
+.paper.template-27 .balance{color:hsl(335 65% 38%)}
+.paper.template-27 .invtable th{background:hsl(335 65% 38%);color:#fff;border-color:hsl(335 65% 38%)}
+.paper.template-27 .invtable td{border-color:hsl(279 50% 65%)}
+.paper.template-27 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-27 .totals .total{border-top:2px solid hsl(335 65% 38%);color:hsl(335 65% 38%)}
+.paper.template-27 .paper-footer{border-top:2px solid hsl(335 65% 38%);margin-top:24px}
+.paper.template-27 .watermark{color:hsl(335 65% 38%);opacity:0.045}
+
+
+.paper.template-28{background:#fbfbfb;border-color:hsl(316 45% 80%);border-radius:18px}
+.paper.template-28 .paper-top{border-bottom:3px solid hsl(316 65% 55%);padding-bottom:18px}
+.paper.template-28 .biz h2{color:hsl(316 65% 55%);font-weight:500;letter-spacing:1.2000000000000002px;text-transform:none}
+.paper.template-28 .invoice-meta>b,.paper.template-28 .bill-title,.paper.template-28 .pay h3,.paper.template-28 .pay h4{color:hsl(316 65% 55%)}
+.paper.template-28 .invoice-meta .big{color:hsl(316 65% 55%);font-weight:500}
+.paper.template-28 .balance{color:hsl(316 65% 55%)}
+.paper.template-28 .invtable th{background:hsl(316 65% 55%);color:#fff;border-color:hsl(316 65% 55%)}
+.paper.template-28 .invtable td{border-color:hsl(316 45% 80%)}
+.paper.template-28 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-28 .totals .total{border-top:2px solid hsl(316 65% 55%);color:hsl(316 65% 55%)}
+.paper.template-28 .paper-footer{border-top:2px solid hsl(316 65% 55%);margin-top:27px}
+.paper.template-28 .watermark{color:hsl(316 65% 55%);opacity:0.055}
+
+
+.paper.template-29{background:hsl(353 20% 94%);border-color:hsl(63 35% 72%);border-radius:24px}
+.paper.template-29 .paper-top{border-bottom:3px solid hsl(63 50% 28%);padding-bottom:22px}
+.paper.template-29 .biz h2{color:hsl(63 50% 28%);font-weight:600;letter-spacing:1.6px;text-transform:uppercase}
+.paper.template-29 .invoice-meta>b,.paper.template-29 .bill-title,.paper.template-29 .pay h3,.paper.template-29 .pay h4{color:hsl(63 50% 28%)}
+.paper.template-29 .invoice-meta .big{color:hsl(63 50% 28%);font-weight:600}
+.paper.template-29 .balance{color:hsl(63 50% 28%)}
+.paper.template-29 .invtable th{background:hsl(63 50% 28%);color:#fff;border-color:hsl(63 50% 28%)}
+.paper.template-29 .invtable td{border-color:hsl(63 35% 72%)}
+.paper.template-29 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-29 .totals .total{border-top:2px solid hsl(63 50% 28%);color:hsl(63 50% 28%)}
+.paper.template-29 .paper-footer{border-top:2px solid hsl(63 50% 28%);margin-top:30px}
+.paper.template-29 .watermark{color:hsl(63 50% 28%);opacity:0.065}
+
