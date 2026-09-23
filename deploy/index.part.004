@@ -72,7 +72,7 @@ body.auth-locked{overflow:hidden!important}
 #authView[hidden]{display:none!important}
 .fbi-auth-shell{width:min(1260px,96vw);height:min(760px,88vh);min-height:620px;display:grid;grid-template-columns:1.12fr .88fr;overflow:hidden;position:relative;border:1px solid rgba(255,255,255,.16);border-radius:26px;background:#0d1016;box-shadow:0 35px 100px rgba(0,0,0,.65),0 0 80px rgba(189,27,99,.08)}
 .fbi-auth-visual{position:relative;overflow:hidden;min-width:0;background:#07080c}
-.fbi-auth-visual-bg{position:absolute;inset:0;background-image:url("assets/login-bg.png");background-size:200% 100%;background-position:left center;background-repeat:no-repeat;filter:saturate(.9) contrast(1.05);transform:scale(1.015)}
+.fbi-auth-visual-bg{position:absolute;inset:0;background-image:linear-gradient(135deg,#07080b 0%,#160b13 52%,#0a1017 100%);background-size:200% 100%;background-position:left center;background-repeat:no-repeat;filter:saturate(.9) contrast(1.05);transform:scale(1.015)}
 .fbi-auth-visual-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.12),rgba(0,0,0,.06) 58%,rgba(7,9,14,.34)),linear-gradient(180deg,rgba(7,9,14,.05),rgba(7,9,14,.18))}
 .fbi-auth-visual-content{position:relative;z-index:2;height:100%;padding:48px;display:flex;flex-direction:column;justify-content:space-between}
 .fbi-auth-kicker{font-size:10px;letter-spacing:3px;line-height:1.9;color:#e8e9ed;max-width:330px;text-transform:uppercase}
@@ -148,7 +148,7 @@ body.auth-locked{overflow:hidden!important}
       <div class="fbi-auth-visual-content">
         <div class="fbi-auth-kicker">PRODUCTION · LIVE STREAMING · PHOTOGRAPHY · ADVERTISING · DRONE WORKS</div>
         <div class="fbi-auth-logo-wrap">
-          <img src="assets/fbi-logo-default.jpg" alt="FBI — Film Beyond Imagination">
+          <img src="data:image/svg+xml,%3Csvg xmlns='http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' viewBox='0 0 240 90'%3E%3Crect width='240' height='90' rx='14' fill='%2308090c'/%3E%3Ctext x='120' y='57' text-anchor='middle' font-family='Arial' font-size='48' font-weight='900' fill='white'%3EFBI%3C%2Ftext%3E%3C%2Fsvg%3E" alt="FBI — Film Beyond Imagination">
         </div>
         <div class="fbi-auth-tagline">Turning Ideas Into Reality</div>
         <div class="fbi-auth-benefits">
@@ -418,7 +418,7 @@ body.auth-locked{overflow:hidden!important}
   <div class="card" id="dataBackupCard"><h3>Local Data Protection</h3><div style="font-size:10px;color:#858e9f;line-height:1.6">Invoice Studio stores your invoices, clients and settings in the local SQLite database. Draft work is also autosaved so a refresh does not erase what you were entering.</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn" type="button" onclick="exportStudioBackup()">Export Data Backup</button><label class="btn" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">Import Data Backup<input type="file" accept=".json,application/json" onchange="importStudioBackup(event)" style="display:none"></label></div><small id="storageStatus" style="display:block;color:#6f7888;margin-top:8px"></small></div>
   <div class="grid2">
     <div class="card"><h3>Business Details</h3><label>Business Name</label><input id="biz" value="FILM BEYOND IMAGINATION (FBI)"><label>Owner / Contact Name</label><input id="owner" value="Jerbel Mark Addeh"><label>Address</label><input id="baddr" value="Dome, Accra"><label>Phone</label><input id="bphone" value="0257407350"><label>Email</label><input id="bemail" value="filmbfbi@gmail.com"><label>Business Number</label><input id="bnum" value="0257407350"></div>
-    <div class="card"><h3>Logo & Default Payment</h3><label>Invoice Logo</label><div style="display:flex;align-items:center;gap:10px;margin:6px 0 10px"><div style="width:92px;height:52px;border-radius:6px;background:#08090c center/contain no-repeat url('assets/fbi-logo-default.jpg');border:1px solid #303642"></div><small style="color:#858e9f">FBI gold logo is set as the default. Upload another image only if you want to replace it.</small></div><input id="logoFile" type="file" accept="image/*"><label>Default Payment Information</label><textarea id="defaultPay" rows="10">Bank Name: Cal Bank
+    <div class="card"><h3>Logo & Default Payment</h3><label>Invoice Logo</label><div style="display:flex;align-items:center;gap:10px;margin:6px 0 10px"><div style="width:92px;height:52px;border-radius:6px;background:#08090c center/contain no-repeat url('data:image/svg+xml,%3Csvg xmlns='http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' viewBox='0 0 240 90'%3E%3Crect width='240' height='90' rx='14' fill='%2308090c'/%3E%3Ctext x='120' y='57' text-anchor='middle' font-family='Arial' font-size='48' font-weight='900' fill='white'%3EFBI%3C%2Ftext%3E%3C%2Fsvg%3E');border:1px solid #303642"></div><small style="color:#858e9f">FBI gold logo is set as the default. Upload another image only if you want to replace it.</small></div><input id="logoFile" type="file" accept="image/*"><label>Default Payment Information</label><textarea id="defaultPay" rows="10">Bank Name: Cal Bank
 Account Name: FILM BEYOND IMAGINATION (FBI)
 Account Number: 1400010238562
 Branch: Dansoman
