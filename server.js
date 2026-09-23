@@ -20,11 +20,21 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
+const dbConfig = process.env.DATABASE_URL
+  ? { connectionString: process.env.DATABASE_URL }
+  : {
+      host: process.env.PGHOST || 'postgres',
+      port: Number(process.env.PGPORT || 5432),
+      database: process.env.PGDATABASE,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD
+    };
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  ...dbConfig,
   max: Number(process.env.DB_POOL_MAX || 10),
   idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 10_000,
+  connectionTimeoutMillis: 15_000,
   ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : undefined
 });
 
