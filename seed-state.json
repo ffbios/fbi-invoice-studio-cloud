@@ -1,0 +1,25 @@
+{
+  "version": 3,
+  "savedAt": 1790198770673,
+  "data": {
+    "data": [],
+    "clients": [],
+    "settings": {
+      "biz": "FILM BEYOND IMAGINATION (FBI)",
+      "owner": "Jerbel Mark Addeh",
+      "baddr": "Dome, Accra",
+      "bphone": "0257407350",
+      "bemail": "filmbfbi@gmail.com",
+      "bnum": "0257407350",
+      "template": 100,
+      "defaultPay": "Bank Name: Cal Bank\nAccount Name: FILM BEYOND IMAGINATION (FBI)\nAccount Number: 1400010238562\nBranch: Dansoman\n\nMomo service Name: MTN\nMomo Number: 0257407350\nAccount Name: Jerbel Mark Addeh",
+      "waEnabled": "yes",
+      "waRecipient": "233257407350",
+      "waApiUrl": "/api/whatsapp/invoice-created",
+      "waTemplate": "hello_world",
+      "waLanguage": "en_US",
+      "waEvent": "created",
+      "invoiceSequence": 1
+    }
+  }
+}
