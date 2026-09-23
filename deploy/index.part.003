@@ -1,0 +1,500 @@
+.paper.template-65 .paper-footer{border-top:2px solid hsl(245 70% 42%);margin-top:18px}
+.paper.template-65 .watermark{color:hsl(245 70% 42%);opacity:0.025}
+
+
+.paper.template-66{background:hsl(282 25% 97%);border-color:#d9d9d9;border-radius:0px}
+.paper.template-66 .paper-top{border-bottom:3px solid hsl(282 55% 24%);padding-bottom:26px}
+.paper.template-66 .biz h2{color:hsl(282 55% 24%);font-weight:700;letter-spacing:0.4px;text-transform:none}
+.paper.template-66 .invoice-meta>b,.paper.template-66 .bill-title,.paper.template-66 .pay h3,.paper.template-66 .pay h4{color:hsl(282 55% 24%)}
+.paper.template-66 .invoice-meta .big{color:hsl(282 55% 24%);font-weight:700}
+.paper.template-66 .balance{color:hsl(282 55% 24%)}
+.paper.template-66 .invtable th{background:hsl(282 55% 24%);color:#fff;border-color:hsl(282 55% 24%)}
+.paper.template-66 .invtable td{border-color:#d9d9d9}
+.paper.template-66 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-66 .totals .total{border-top:2px solid hsl(282 55% 24%);color:hsl(282 55% 24%)}
+.paper.template-66 .paper-footer{border-top:2px solid hsl(282 55% 24%);margin-top:21px}
+.paper.template-66 .watermark{color:hsl(282 55% 24%);opacity:0.035}
+
+
+.paper.template-67{background:hsl(15 18% 96%);border-color:hsl(319 50% 65%);border-radius:4px}
+.paper.template-67 .paper-top{border-bottom:3px solid hsl(15 65% 38%);padding-bottom:30px}
+.paper.template-67 .biz h2{color:hsl(15 65% 38%);font-weight:800;letter-spacing:0.8px;text-transform:none}
+.paper.template-67 .invoice-meta>b,.paper.template-67 .bill-title,.paper.template-67 .pay h3,.paper.template-67 .pay h4{color:hsl(15 65% 38%)}
+.paper.template-67 .invoice-meta .big{color:hsl(15 65% 38%);font-weight:800}
+.paper.template-67 .balance{color:hsl(15 65% 38%)}
+.paper.template-67 .invtable th{background:hsl(15 65% 38%);color:#fff;border-color:hsl(15 65% 38%)}
+.paper.template-67 .invtable td{border-color:hsl(319 50% 65%)}
+.paper.template-67 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-67 .totals .total{border-top:2px solid hsl(15 65% 38%);color:hsl(15 65% 38%)}
+.paper.template-67 .paper-footer{border-top:2px solid hsl(15 65% 38%);margin-top:24px}
+.paper.template-67 .watermark{color:hsl(15 65% 38%);opacity:0.045}
+
+
+.paper.template-68{background:#fbfbfb;border-color:hsl(356 45% 80%);border-radius:8px}
+.paper.template-68 .paper-top{border-bottom:3px solid hsl(356 65% 55%);padding-bottom:18px}
+.paper.template-68 .biz h2{color:hsl(356 65% 55%);font-weight:500;letter-spacing:1.2000000000000002px;text-transform:none}
+.paper.template-68 .invoice-meta>b,.paper.template-68 .bill-title,.paper.template-68 .pay h3,.paper.template-68 .pay h4{color:hsl(356 65% 55%)}
+.paper.template-68 .invoice-meta .big{color:hsl(356 65% 55%);font-weight:500}
+.paper.template-68 .balance{color:hsl(356 65% 55%)}
+.paper.template-68 .invtable th{background:hsl(356 65% 55%);color:#fff;border-color:hsl(356 65% 55%)}
+.paper.template-68 .invtable td{border-color:hsl(356 45% 80%)}
+.paper.template-68 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-68 .totals .total{border-top:2px solid hsl(356 65% 55%);color:hsl(356 65% 55%)}
+.paper.template-68 .paper-footer{border-top:2px solid hsl(356 65% 55%);margin-top:27px}
+.paper.template-68 .watermark{color:hsl(356 65% 55%);opacity:0.055}
+
+
+.paper.template-69{background:hsl(33 20% 94%);border-color:hsl(103 35% 72%);border-radius:12px}
+.paper.template-69 .paper-top{border-bottom:3px solid hsl(103 50% 28%);padding-bottom:22px}
+.paper.template-69 .biz h2{color:hsl(103 50% 28%);font-weight:600;letter-spacing:1.6px;text-transform:uppercase}
+.paper.template-69 .invoice-meta>b,.paper.template-69 .bill-title,.paper.template-69 .pay h3,.paper.template-69 .pay h4{color:hsl(103 50% 28%)}
+.paper.template-69 .invoice-meta .big{color:hsl(103 50% 28%);font-weight:600}
+.paper.template-69 .balance{color:hsl(103 50% 28%)}
+.paper.template-69 .invtable th{background:hsl(103 50% 28%);color:#fff;border-color:hsl(103 50% 28%)}
+.paper.template-69 .invtable td{border-color:hsl(103 35% 72%)}
+.paper.template-69 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-69 .totals .total{border-top:2px solid hsl(103 50% 28%);color:hsl(103 50% 28%)}
+.paper.template-69 .paper-footer{border-top:2px solid hsl(103 50% 28%);margin-top:30px}
+.paper.template-69 .watermark{color:hsl(103 50% 28%);opacity:0.065}
+
+
+.paper.template-70{background:#ffffff;border-color:#d9d9d9;border-radius:18px}
+.paper.template-70 .paper-top{border-bottom:3px solid hsl(70 70% 42%);padding-bottom:26px}
+.paper.template-70 .biz h2{color:hsl(70 70% 42%);font-weight:700;letter-spacing:0.0px;text-transform:none}
+.paper.template-70 .invoice-meta>b,.paper.template-70 .bill-title,.paper.template-70 .pay h3,.paper.template-70 .pay h4{color:hsl(70 70% 42%)}
+.paper.template-70 .invoice-meta .big{color:hsl(70 70% 42%);font-weight:700}
+.paper.template-70 .balance{color:hsl(70 70% 42%)}
+.paper.template-70 .invtable th{background:hsl(70 70% 42%);color:#fff;border-color:hsl(70 70% 42%)}
+.paper.template-70 .invtable td{border-color:#d9d9d9}
+.paper.template-70 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-70 .totals .total{border-top:2px solid hsl(70 70% 42%);color:hsl(70 70% 42%)}
+.paper.template-70 .paper-footer{border-top:2px solid hsl(70 70% 42%);margin-top:18px}
+.paper.template-70 .watermark{color:hsl(70 70% 42%);opacity:0.025}
+
+
+.paper.template-71{background:hsl(107 25% 97%);border-color:hsl(107 50% 65%);border-radius:24px}
+.paper.template-71 .paper-top{border-bottom:3px solid hsl(107 55% 24%);padding-bottom:30px}
+.paper.template-71 .biz h2{color:hsl(107 55% 24%);font-weight:800;letter-spacing:0.4px;text-transform:none}
+.paper.template-71 .invoice-meta>b,.paper.template-71 .bill-title,.paper.template-71 .pay h3,.paper.template-71 .pay h4{color:hsl(107 55% 24%)}
+.paper.template-71 .invoice-meta .big{color:hsl(107 55% 24%);font-weight:800}
+.paper.template-71 .balance{color:hsl(107 55% 24%)}
+.paper.template-71 .invtable th{background:hsl(107 55% 24%);color:#fff;border-color:hsl(107 55% 24%)}
+.paper.template-71 .invtable td{border-color:hsl(107 50% 65%)}
+.paper.template-71 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-71 .totals .total{border-top:2px solid hsl(107 55% 24%);color:hsl(107 55% 24%)}
+.paper.template-71 .paper-footer{border-top:2px solid hsl(107 55% 24%);margin-top:21px}
+.paper.template-71 .watermark{color:hsl(107 55% 24%);opacity:0.035}
+
+
+.paper.template-72{background:hsl(200 18% 96%);border-color:hsl(144 45% 80%);border-radius:0px}
+.paper.template-72 .paper-top{border-bottom:3px solid hsl(200 65% 38%);padding-bottom:18px}
+.paper.template-72 .biz h2{color:hsl(200 65% 38%);font-weight:500;letter-spacing:0.8px;text-transform:none}
+.paper.template-72 .invoice-meta>b,.paper.template-72 .bill-title,.paper.template-72 .pay h3,.paper.template-72 .pay h4{color:hsl(200 65% 38%)}
+.paper.template-72 .invoice-meta .big{color:hsl(200 65% 38%);font-weight:500}
+.paper.template-72 .balance{color:hsl(200 65% 38%)}
+.paper.template-72 .invtable th{background:hsl(200 65% 38%);color:#fff;border-color:hsl(200 65% 38%)}
+.paper.template-72 .invtable td{border-color:hsl(144 45% 80%)}
+.paper.template-72 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-72 .totals .total{border-top:2px solid hsl(200 65% 38%);color:hsl(200 65% 38%)}
+.paper.template-72 .paper-footer{border-top:2px solid hsl(200 65% 38%);margin-top:24px}
+.paper.template-72 .watermark{color:hsl(200 65% 38%);opacity:0.045}
+
+
+.paper.template-73{background:#fbfbfb;border-color:hsl(244 35% 72%);border-radius:4px}
+.paper.template-73 .paper-top{border-bottom:3px solid hsl(181 65% 55%);padding-bottom:22px}
+.paper.template-73 .biz h2{color:hsl(181 65% 55%);font-weight:600;letter-spacing:1.2000000000000002px;text-transform:uppercase}
+.paper.template-73 .invoice-meta>b,.paper.template-73 .bill-title,.paper.template-73 .pay h3,.paper.template-73 .pay h4{color:hsl(181 65% 55%)}
+.paper.template-73 .invoice-meta .big{color:hsl(181 65% 55%);font-weight:600}
+.paper.template-73 .balance{color:hsl(181 65% 55%)}
+.paper.template-73 .invtable th{background:hsl(181 65% 55%);color:#fff;border-color:hsl(181 65% 55%)}
+.paper.template-73 .invtable td{border-color:hsl(244 35% 72%)}
+.paper.template-73 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-73 .totals .total{border-top:2px solid hsl(181 65% 55%);color:hsl(181 65% 55%)}
+.paper.template-73 .paper-footer{border-top:2px solid hsl(181 65% 55%);margin-top:27px}
+.paper.template-73 .watermark{color:hsl(181 65% 55%);opacity:0.055}
+
+
+.paper.template-74{background:hsl(218 20% 94%);border-color:#d9d9d9;border-radius:8px}
+.paper.template-74 .paper-top{border-bottom:3px solid hsl(288 50% 28%);padding-bottom:26px}
+.paper.template-74 .biz h2{color:hsl(288 50% 28%);font-weight:700;letter-spacing:1.6px;text-transform:none}
+.paper.template-74 .invoice-meta>b,.paper.template-74 .bill-title,.paper.template-74 .pay h3,.paper.template-74 .pay h4{color:hsl(288 50% 28%)}
+.paper.template-74 .invoice-meta .big{color:hsl(288 50% 28%);font-weight:700}
+.paper.template-74 .balance{color:hsl(288 50% 28%)}
+.paper.template-74 .invtable th{background:hsl(288 50% 28%);color:#fff;border-color:hsl(288 50% 28%)}
+.paper.template-74 .invtable td{border-color:#d9d9d9}
+.paper.template-74 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-74 .totals .total{border-top:2px solid hsl(288 50% 28%);color:hsl(288 50% 28%)}
+.paper.template-74 .paper-footer{border-top:2px solid hsl(288 50% 28%);margin-top:30px}
+.paper.template-74 .watermark{color:hsl(288 50% 28%);opacity:0.065}
+
+
+.paper.template-75{background:#ffffff;border-color:hsl(255 50% 65%);border-radius:12px}
+.paper.template-75 .paper-top{border-bottom:3px solid hsl(255 70% 42%);padding-bottom:30px}
+.paper.template-75 .biz h2{color:hsl(255 70% 42%);font-weight:800;letter-spacing:0.0px;text-transform:none}
+.paper.template-75 .invoice-meta>b,.paper.template-75 .bill-title,.paper.template-75 .pay h3,.paper.template-75 .pay h4{color:hsl(255 70% 42%)}
+.paper.template-75 .invoice-meta .big{color:hsl(255 70% 42%);font-weight:800}
+.paper.template-75 .balance{color:hsl(255 70% 42%)}
+.paper.template-75 .invtable th{background:hsl(255 70% 42%);color:#fff;border-color:hsl(255 70% 42%)}
+.paper.template-75 .invtable td{border-color:hsl(255 50% 65%)}
+.paper.template-75 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-75 .totals .total{border-top:2px solid hsl(255 70% 42%);color:hsl(255 70% 42%)}
+.paper.template-75 .paper-footer{border-top:2px solid hsl(255 70% 42%);margin-top:18px}
+.paper.template-75 .watermark{color:hsl(255 70% 42%);opacity:0.025}
+
+
+.paper.template-76{background:hsl(292 25% 97%);border-color:hsl(292 45% 80%);border-radius:18px}
+.paper.template-76 .paper-top{border-bottom:3px solid hsl(292 55% 24%);padding-bottom:18px}
+.paper.template-76 .biz h2{color:hsl(292 55% 24%);font-weight:500;letter-spacing:0.4px;text-transform:none}
+.paper.template-76 .invoice-meta>b,.paper.template-76 .bill-title,.paper.template-76 .pay h3,.paper.template-76 .pay h4{color:hsl(292 55% 24%)}
+.paper.template-76 .invoice-meta .big{color:hsl(292 55% 24%);font-weight:500}
+.paper.template-76 .balance{color:hsl(292 55% 24%)}
+.paper.template-76 .invtable th{background:hsl(292 55% 24%);color:#fff;border-color:hsl(292 55% 24%)}
+.paper.template-76 .invtable td{border-color:hsl(292 45% 80%)}
+.paper.template-76 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-76 .totals .total{border-top:2px solid hsl(292 55% 24%);color:hsl(292 55% 24%)}
+.paper.template-76 .paper-footer{border-top:2px solid hsl(292 55% 24%);margin-top:21px}
+.paper.template-76 .watermark{color:hsl(292 55% 24%);opacity:0.035}
+
+
+.paper.template-77{background:hsl(25 18% 96%);border-color:hsl(25 35% 72%);border-radius:24px}
+.paper.template-77 .paper-top{border-bottom:3px solid hsl(25 65% 38%);padding-bottom:22px}
+.paper.template-77 .biz h2{color:hsl(25 65% 38%);font-weight:600;letter-spacing:0.8px;text-transform:uppercase}
+.paper.template-77 .invoice-meta>b,.paper.template-77 .bill-title,.paper.template-77 .pay h3,.paper.template-77 .pay h4{color:hsl(25 65% 38%)}
+.paper.template-77 .invoice-meta .big{color:hsl(25 65% 38%);font-weight:600}
+.paper.template-77 .balance{color:hsl(25 65% 38%)}
+.paper.template-77 .invtable th{background:hsl(25 65% 38%);color:#fff;border-color:hsl(25 65% 38%)}
+.paper.template-77 .invtable td{border-color:hsl(25 35% 72%)}
+.paper.template-77 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-77 .totals .total{border-top:2px solid hsl(25 65% 38%);color:hsl(25 65% 38%)}
+.paper.template-77 .paper-footer{border-top:2px solid hsl(25 65% 38%);margin-top:24px}
+.paper.template-77 .watermark{color:hsl(25 65% 38%);opacity:0.045}
+
+
+.paper.template-78{background:#fbfbfb;border-color:#d9d9d9;border-radius:0px}
+.paper.template-78 .paper-top{border-bottom:3px solid hsl(6 65% 55%);padding-bottom:26px}
+.paper.template-78 .biz h2{color:hsl(6 65% 55%);font-weight:700;letter-spacing:1.2000000000000002px;text-transform:none}
+.paper.template-78 .invoice-meta>b,.paper.template-78 .bill-title,.paper.template-78 .pay h3,.paper.template-78 .pay h4{color:hsl(6 65% 55%)}
+.paper.template-78 .invoice-meta .big{color:hsl(6 65% 55%);font-weight:700}
+.paper.template-78 .balance{color:hsl(6 65% 55%)}
+.paper.template-78 .invtable th{background:hsl(6 65% 55%);color:#fff;border-color:hsl(6 65% 55%)}
+.paper.template-78 .invtable td{border-color:#d9d9d9}
+.paper.template-78 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-78 .totals .total{border-top:2px solid hsl(6 65% 55%);color:hsl(6 65% 55%)}
+.paper.template-78 .paper-footer{border-top:2px solid hsl(6 65% 55%);margin-top:27px}
+.paper.template-78 .watermark{color:hsl(6 65% 55%);opacity:0.055}
+
+
+.paper.template-79{background:hsl(43 20% 94%);border-color:hsl(43 50% 65%);border-radius:4px}
+.paper.template-79 .paper-top{border-bottom:3px solid hsl(113 50% 28%);padding-bottom:30px}
+.paper.template-79 .biz h2{color:hsl(113 50% 28%);font-weight:800;letter-spacing:1.6px;text-transform:none}
+.paper.template-79 .invoice-meta>b,.paper.template-79 .bill-title,.paper.template-79 .pay h3,.paper.template-79 .pay h4{color:hsl(113 50% 28%)}
+.paper.template-79 .invoice-meta .big{color:hsl(113 50% 28%);font-weight:800}
+.paper.template-79 .balance{color:hsl(113 50% 28%)}
+.paper.template-79 .invtable th{background:hsl(113 50% 28%);color:#fff;border-color:hsl(113 50% 28%)}
+.paper.template-79 .invtable td{border-color:hsl(43 50% 65%)}
+.paper.template-79 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-79 .totals .total{border-top:2px solid hsl(113 50% 28%);color:hsl(113 50% 28%)}
+.paper.template-79 .paper-footer{border-top:2px solid hsl(113 50% 28%);margin-top:30px}
+.paper.template-79 .watermark{color:hsl(113 50% 28%);opacity:0.065}
+
+
+.paper.template-80{background:#ffffff;border-color:hsl(80 45% 80%);border-radius:8px}
+.paper.template-80 .paper-top{border-bottom:3px solid hsl(80 70% 42%);padding-bottom:18px}
+.paper.template-80 .biz h2{color:hsl(80 70% 42%);font-weight:500;letter-spacing:0.0px;text-transform:none}
+.paper.template-80 .invoice-meta>b,.paper.template-80 .bill-title,.paper.template-80 .pay h3,.paper.template-80 .pay h4{color:hsl(80 70% 42%)}
+.paper.template-80 .invoice-meta .big{color:hsl(80 70% 42%);font-weight:500}
+.paper.template-80 .balance{color:hsl(80 70% 42%)}
+.paper.template-80 .invtable th{background:hsl(80 70% 42%);color:#fff;border-color:hsl(80 70% 42%)}
+.paper.template-80 .invtable td{border-color:hsl(80 45% 80%)}
+.paper.template-80 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-80 .totals .total{border-top:2px solid hsl(80 70% 42%);color:hsl(80 70% 42%)}
+.paper.template-80 .paper-footer{border-top:2px solid hsl(80 70% 42%);margin-top:18px}
+.paper.template-80 .watermark{color:hsl(80 70% 42%);opacity:0.025}
+
+
+.paper.template-81{background:hsl(117 25% 97%);border-color:hsl(166 35% 72%);border-radius:12px}
+.paper.template-81 .paper-top{border-bottom:3px solid hsl(117 55% 24%);padding-bottom:22px}
+.paper.template-81 .biz h2{color:hsl(117 55% 24%);font-weight:600;letter-spacing:0.4px;text-transform:uppercase}
+.paper.template-81 .invoice-meta>b,.paper.template-81 .bill-title,.paper.template-81 .pay h3,.paper.template-81 .pay h4{color:hsl(117 55% 24%)}
+.paper.template-81 .invoice-meta .big{color:hsl(117 55% 24%);font-weight:600}
+.paper.template-81 .balance{color:hsl(117 55% 24%)}
+.paper.template-81 .invtable th{background:hsl(117 55% 24%);color:#fff;border-color:hsl(117 55% 24%)}
+.paper.template-81 .invtable td{border-color:hsl(166 35% 72%)}
+.paper.template-81 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-81 .totals .total{border-top:2px solid hsl(117 55% 24%);color:hsl(117 55% 24%)}
+.paper.template-81 .paper-footer{border-top:2px solid hsl(117 55% 24%);margin-top:21px}
+.paper.template-81 .watermark{color:hsl(117 55% 24%);opacity:0.035}
+
+
+.paper.template-82{background:hsl(210 18% 96%);border-color:#d9d9d9;border-radius:18px}
+.paper.template-82 .paper-top{border-bottom:3px solid hsl(210 65% 38%);padding-bottom:26px}
+.paper.template-82 .biz h2{color:hsl(210 65% 38%);font-weight:700;letter-spacing:0.8px;text-transform:none}
+.paper.template-82 .invoice-meta>b,.paper.template-82 .bill-title,.paper.template-82 .pay h3,.paper.template-82 .pay h4{color:hsl(210 65% 38%)}
+.paper.template-82 .invoice-meta .big{color:hsl(210 65% 38%);font-weight:700}
+.paper.template-82 .balance{color:hsl(210 65% 38%)}
+.paper.template-82 .invtable th{background:hsl(210 65% 38%);color:#fff;border-color:hsl(210 65% 38%)}
+.paper.template-82 .invtable td{border-color:#d9d9d9}
+.paper.template-82 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-82 .totals .total{border-top:2px solid hsl(210 65% 38%);color:hsl(210 65% 38%)}
+.paper.template-82 .paper-footer{border-top:2px solid hsl(210 65% 38%);margin-top:24px}
+.paper.template-82 .watermark{color:hsl(210 65% 38%);opacity:0.045}
+
+
+.paper.template-83{background:#fbfbfb;border-color:hsl(191 50% 65%);border-radius:24px}
+.paper.template-83 .paper-top{border-bottom:3px solid hsl(191 65% 55%);padding-bottom:30px}
+.paper.template-83 .biz h2{color:hsl(191 65% 55%);font-weight:800;letter-spacing:1.2000000000000002px;text-transform:none}
+.paper.template-83 .invoice-meta>b,.paper.template-83 .bill-title,.paper.template-83 .pay h3,.paper.template-83 .pay h4{color:hsl(191 65% 55%)}
+.paper.template-83 .invoice-meta .big{color:hsl(191 65% 55%);font-weight:800}
+.paper.template-83 .balance{color:hsl(191 65% 55%)}
+.paper.template-83 .invtable th{background:hsl(191 65% 55%);color:#fff;border-color:hsl(191 65% 55%)}
+.paper.template-83 .invtable td{border-color:hsl(191 50% 65%)}
+.paper.template-83 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-83 .totals .total{border-top:2px solid hsl(191 65% 55%);color:hsl(191 65% 55%)}
+.paper.template-83 .paper-footer{border-top:2px solid hsl(191 65% 55%);margin-top:27px}
+.paper.template-83 .watermark{color:hsl(191 65% 55%);opacity:0.055}
+
+
+.paper.template-84{background:hsl(228 20% 94%);border-color:hsl(228 45% 80%);border-radius:0px}
+.paper.template-84 .paper-top{border-bottom:3px solid hsl(298 50% 28%);padding-bottom:18px}
+.paper.template-84 .biz h2{color:hsl(298 50% 28%);font-weight:500;letter-spacing:1.6px;text-transform:none}
+.paper.template-84 .invoice-meta>b,.paper.template-84 .bill-title,.paper.template-84 .pay h3,.paper.template-84 .pay h4{color:hsl(298 50% 28%)}
+.paper.template-84 .invoice-meta .big{color:hsl(298 50% 28%);font-weight:500}
+.paper.template-84 .balance{color:hsl(298 50% 28%)}
+.paper.template-84 .invtable th{background:hsl(298 50% 28%);color:#fff;border-color:hsl(298 50% 28%)}
+.paper.template-84 .invtable td{border-color:hsl(228 45% 80%)}
+.paper.template-84 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-84 .totals .total{border-top:2px solid hsl(298 50% 28%);color:hsl(298 50% 28%)}
+.paper.template-84 .paper-footer{border-top:2px solid hsl(298 50% 28%);margin-top:30px}
+.paper.template-84 .watermark{color:hsl(298 50% 28%);opacity:0.065}
+
+
+.paper.template-85{background:#ffffff;border-color:hsl(307 35% 72%);border-radius:4px}
+.paper.template-85 .paper-top{border-bottom:3px solid hsl(265 70% 42%);padding-bottom:22px}
+.paper.template-85 .biz h2{color:hsl(265 70% 42%);font-weight:600;letter-spacing:0.0px;text-transform:uppercase}
+.paper.template-85 .invoice-meta>b,.paper.template-85 .bill-title,.paper.template-85 .pay h3,.paper.template-85 .pay h4{color:hsl(265 70% 42%)}
+.paper.template-85 .invoice-meta .big{color:hsl(265 70% 42%);font-weight:600}
+.paper.template-85 .balance{color:hsl(265 70% 42%)}
+.paper.template-85 .invtable th{background:hsl(265 70% 42%);color:#fff;border-color:hsl(265 70% 42%)}
+.paper.template-85 .invtable td{border-color:hsl(307 35% 72%)}
+.paper.template-85 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-85 .totals .total{border-top:2px solid hsl(265 70% 42%);color:hsl(265 70% 42%)}
+.paper.template-85 .paper-footer{border-top:2px solid hsl(265 70% 42%);margin-top:18px}
+.paper.template-85 .watermark{color:hsl(265 70% 42%);opacity:0.025}
+
+
+.paper.template-86{background:hsl(302 25% 97%);border-color:#d9d9d9;border-radius:8px}
+.paper.template-86 .paper-top{border-bottom:3px solid hsl(302 55% 24%);padding-bottom:26px}
+.paper.template-86 .biz h2{color:hsl(302 55% 24%);font-weight:700;letter-spacing:0.4px;text-transform:none}
+.paper.template-86 .invoice-meta>b,.paper.template-86 .bill-title,.paper.template-86 .pay h3,.paper.template-86 .pay h4{color:hsl(302 55% 24%)}
+.paper.template-86 .invoice-meta .big{color:hsl(302 55% 24%);font-weight:700}
+.paper.template-86 .balance{color:hsl(302 55% 24%)}
+.paper.template-86 .invtable th{background:hsl(302 55% 24%);color:#fff;border-color:hsl(302 55% 24%)}
+.paper.template-86 .invtable td{border-color:#d9d9d9}
+.paper.template-86 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-86 .totals .total{border-top:2px solid hsl(302 55% 24%);color:hsl(302 55% 24%)}
+.paper.template-86 .paper-footer{border-top:2px solid hsl(302 55% 24%);margin-top:21px}
+.paper.template-86 .watermark{color:hsl(302 55% 24%);opacity:0.035}
+
+
+.paper.template-87{background:hsl(35 18% 96%);border-color:hsl(339 50% 65%);border-radius:12px}
+.paper.template-87 .paper-top{border-bottom:3px solid hsl(35 65% 38%);padding-bottom:30px}
+.paper.template-87 .biz h2{color:hsl(35 65% 38%);font-weight:800;letter-spacing:0.8px;text-transform:none}
+.paper.template-87 .invoice-meta>b,.paper.template-87 .bill-title,.paper.template-87 .pay h3,.paper.template-87 .pay h4{color:hsl(35 65% 38%)}
+.paper.template-87 .invoice-meta .big{color:hsl(35 65% 38%);font-weight:800}
+.paper.template-87 .balance{color:hsl(35 65% 38%)}
+.paper.template-87 .invtable th{background:hsl(35 65% 38%);color:#fff;border-color:hsl(35 65% 38%)}
+.paper.template-87 .invtable td{border-color:hsl(339 50% 65%)}
+.paper.template-87 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-87 .totals .total{border-top:2px solid hsl(35 65% 38%);color:hsl(35 65% 38%)}
+.paper.template-87 .paper-footer{border-top:2px solid hsl(35 65% 38%);margin-top:24px}
+.paper.template-87 .watermark{color:hsl(35 65% 38%);opacity:0.045}
+
+
+.paper.template-88{background:#fbfbfb;border-color:hsl(16 45% 80%);border-radius:18px}
+.paper.template-88 .paper-top{border-bottom:3px solid hsl(16 65% 55%);padding-bottom:18px}
+.paper.template-88 .biz h2{color:hsl(16 65% 55%);font-weight:500;letter-spacing:1.2000000000000002px;text-transform:none}
+.paper.template-88 .invoice-meta>b,.paper.template-88 .bill-title,.paper.template-88 .pay h3,.paper.template-88 .pay h4{color:hsl(16 65% 55%)}
+.paper.template-88 .invoice-meta .big{color:hsl(16 65% 55%);font-weight:500}
+.paper.template-88 .balance{color:hsl(16 65% 55%)}
+.paper.template-88 .invtable th{background:hsl(16 65% 55%);color:#fff;border-color:hsl(16 65% 55%)}
+.paper.template-88 .invtable td{border-color:hsl(16 45% 80%)}
+.paper.template-88 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-88 .totals .total{border-top:2px solid hsl(16 65% 55%);color:hsl(16 65% 55%)}
+.paper.template-88 .paper-footer{border-top:2px solid hsl(16 65% 55%);margin-top:27px}
+.paper.template-88 .watermark{color:hsl(16 65% 55%);opacity:0.055}
+
+
+.paper.template-89{background:hsl(53 20% 94%);border-color:hsl(123 35% 72%);border-radius:24px}
+.paper.template-89 .paper-top{border-bottom:3px solid hsl(123 50% 28%);padding-bottom:22px}
+.paper.template-89 .biz h2{color:hsl(123 50% 28%);font-weight:600;letter-spacing:1.6px;text-transform:uppercase}
+.paper.template-89 .invoice-meta>b,.paper.template-89 .bill-title,.paper.template-89 .pay h3,.paper.template-89 .pay h4{color:hsl(123 50% 28%)}
+.paper.template-89 .invoice-meta .big{color:hsl(123 50% 28%);font-weight:600}
+.paper.template-89 .balance{color:hsl(123 50% 28%)}
+.paper.template-89 .invtable th{background:hsl(123 50% 28%);color:#fff;border-color:hsl(123 50% 28%)}
+.paper.template-89 .invtable td{border-color:hsl(123 35% 72%)}
+.paper.template-89 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-89 .totals .total{border-top:2px solid hsl(123 50% 28%);color:hsl(123 50% 28%)}
+.paper.template-89 .paper-footer{border-top:2px solid hsl(123 50% 28%);margin-top:30px}
+.paper.template-89 .watermark{color:hsl(123 50% 28%);opacity:0.065}
+
+
+.paper.template-90{background:#ffffff;border-color:#d9d9d9;border-radius:0px}
+.paper.template-90 .paper-top{border-bottom:3px solid hsl(90 70% 42%);padding-bottom:26px}
+.paper.template-90 .biz h2{color:hsl(90 70% 42%);font-weight:700;letter-spacing:0.0px;text-transform:none}
+.paper.template-90 .invoice-meta>b,.paper.template-90 .bill-title,.paper.template-90 .pay h3,.paper.template-90 .pay h4{color:hsl(90 70% 42%)}
+.paper.template-90 .invoice-meta .big{color:hsl(90 70% 42%);font-weight:700}
+.paper.template-90 .balance{color:hsl(90 70% 42%)}
+.paper.template-90 .invtable th{background:hsl(90 70% 42%);color:#fff;border-color:hsl(90 70% 42%)}
+.paper.template-90 .invtable td{border-color:#d9d9d9}
+.paper.template-90 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-90 .totals .total{border-top:2px solid hsl(90 70% 42%);color:hsl(90 70% 42%)}
+.paper.template-90 .paper-footer{border-top:2px solid hsl(90 70% 42%);margin-top:18px}
+.paper.template-90 .watermark{color:hsl(90 70% 42%);opacity:0.025}
+
+
+.paper.template-91{background:hsl(127 25% 97%);border-color:hsl(127 50% 65%);border-radius:4px}
+.paper.template-91 .paper-top{border-bottom:3px solid hsl(127 55% 24%);padding-bottom:30px}
+.paper.template-91 .biz h2{color:hsl(127 55% 24%);font-weight:800;letter-spacing:0.4px;text-transform:none}
+.paper.template-91 .invoice-meta>b,.paper.template-91 .bill-title,.paper.template-91 .pay h3,.paper.template-91 .pay h4{color:hsl(127 55% 24%)}
+.paper.template-91 .invoice-meta .big{color:hsl(127 55% 24%);font-weight:800}
+.paper.template-91 .balance{color:hsl(127 55% 24%)}
+.paper.template-91 .invtable th{background:hsl(127 55% 24%);color:#fff;border-color:hsl(127 55% 24%)}
+.paper.template-91 .invtable td{border-color:hsl(127 50% 65%)}
+.paper.template-91 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-91 .totals .total{border-top:2px solid hsl(127 55% 24%);color:hsl(127 55% 24%)}
+.paper.template-91 .paper-footer{border-top:2px solid hsl(127 55% 24%);margin-top:21px}
+.paper.template-91 .watermark{color:hsl(127 55% 24%);opacity:0.035}
+
+
+.paper.template-92{background:hsl(220 18% 96%);border-color:hsl(164 45% 80%);border-radius:8px}
+.paper.template-92 .paper-top{border-bottom:3px solid hsl(220 65% 38%);padding-bottom:18px}
+.paper.template-92 .biz h2{color:hsl(220 65% 38%);font-weight:500;letter-spacing:0.8px;text-transform:none}
+.paper.template-92 .invoice-meta>b,.paper.template-92 .bill-title,.paper.template-92 .pay h3,.paper.template-92 .pay h4{color:hsl(220 65% 38%)}
+.paper.template-92 .invoice-meta .big{color:hsl(220 65% 38%);font-weight:500}
+.paper.template-92 .balance{color:hsl(220 65% 38%)}
+.paper.template-92 .invtable th{background:hsl(220 65% 38%);color:#fff;border-color:hsl(220 65% 38%)}
+.paper.template-92 .invtable td{border-color:hsl(164 45% 80%)}
+.paper.template-92 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-92 .totals .total{border-top:2px solid hsl(220 65% 38%);color:hsl(220 65% 38%)}
+.paper.template-92 .paper-footer{border-top:2px solid hsl(220 65% 38%);margin-top:24px}
+.paper.template-92 .watermark{color:hsl(220 65% 38%);opacity:0.045}
+
+
+.paper.template-93{background:#fbfbfb;border-color:hsl(264 35% 72%);border-radius:12px}
+.paper.template-93 .paper-top{border-bottom:3px solid hsl(201 65% 55%);padding-bottom:22px}
+.paper.template-93 .biz h2{color:hsl(201 65% 55%);font-weight:600;letter-spacing:1.2000000000000002px;text-transform:uppercase}
+.paper.template-93 .invoice-meta>b,.paper.template-93 .bill-title,.paper.template-93 .pay h3,.paper.template-93 .pay h4{color:hsl(201 65% 55%)}
+.paper.template-93 .invoice-meta .big{color:hsl(201 65% 55%);font-weight:600}
+.paper.template-93 .balance{color:hsl(201 65% 55%)}
+.paper.template-93 .invtable th{background:hsl(201 65% 55%);color:#fff;border-color:hsl(201 65% 55%)}
+.paper.template-93 .invtable td{border-color:hsl(264 35% 72%)}
+.paper.template-93 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-93 .totals .total{border-top:2px solid hsl(201 65% 55%);color:hsl(201 65% 55%)}
+.paper.template-93 .paper-footer{border-top:2px solid hsl(201 65% 55%);margin-top:27px}
+.paper.template-93 .watermark{color:hsl(201 65% 55%);opacity:0.055}
+
+
+.paper.template-94{background:hsl(238 20% 94%);border-color:#d9d9d9;border-radius:18px}
+.paper.template-94 .paper-top{border-bottom:3px solid hsl(308 50% 28%);padding-bottom:26px}
+.paper.template-94 .biz h2{color:hsl(308 50% 28%);font-weight:700;letter-spacing:1.6px;text-transform:none}
+.paper.template-94 .invoice-meta>b,.paper.template-94 .bill-title,.paper.template-94 .pay h3,.paper.template-94 .pay h4{color:hsl(308 50% 28%)}
+.paper.template-94 .invoice-meta .big{color:hsl(308 50% 28%);font-weight:700}
+.paper.template-94 .balance{color:hsl(308 50% 28%)}
+.paper.template-94 .invtable th{background:hsl(308 50% 28%);color:#fff;border-color:hsl(308 50% 28%)}
+.paper.template-94 .invtable td{border-color:#d9d9d9}
+.paper.template-94 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-94 .totals .total{border-top:2px solid hsl(308 50% 28%);color:hsl(308 50% 28%)}
+.paper.template-94 .paper-footer{border-top:2px solid hsl(308 50% 28%);margin-top:30px}
+.paper.template-94 .watermark{color:hsl(308 50% 28%);opacity:0.065}
+
+
+.paper.template-95{background:#ffffff;border-color:hsl(275 50% 65%);border-radius:24px}
+.paper.template-95 .paper-top{border-bottom:3px solid hsl(275 70% 42%);padding-bottom:30px}
+.paper.template-95 .biz h2{color:hsl(275 70% 42%);font-weight:800;letter-spacing:0.0px;text-transform:none}
+.paper.template-95 .invoice-meta>b,.paper.template-95 .bill-title,.paper.template-95 .pay h3,.paper.template-95 .pay h4{color:hsl(275 70% 42%)}
+.paper.template-95 .invoice-meta .big{color:hsl(275 70% 42%);font-weight:800}
+.paper.template-95 .balance{color:hsl(275 70% 42%)}
+.paper.template-95 .invtable th{background:hsl(275 70% 42%);color:#fff;border-color:hsl(275 70% 42%)}
+.paper.template-95 .invtable td{border-color:hsl(275 50% 65%)}
+.paper.template-95 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-95 .totals .total{border-top:2px solid hsl(275 70% 42%);color:hsl(275 70% 42%)}
+.paper.template-95 .paper-footer{border-top:2px solid hsl(275 70% 42%);margin-top:18px}
+.paper.template-95 .watermark{color:hsl(275 70% 42%);opacity:0.025}
+
+
+.paper.template-96{background:hsl(312 25% 97%);border-color:hsl(312 45% 80%);border-radius:0px}
+.paper.template-96 .paper-top{border-bottom:3px solid hsl(312 55% 24%);padding-bottom:18px}
+.paper.template-96 .biz h2{color:hsl(312 55% 24%);font-weight:500;letter-spacing:0.4px;text-transform:none}
+.paper.template-96 .invoice-meta>b,.paper.template-96 .bill-title,.paper.template-96 .pay h3,.paper.template-96 .pay h4{color:hsl(312 55% 24%)}
+.paper.template-96 .invoice-meta .big{color:hsl(312 55% 24%);font-weight:500}
+.paper.template-96 .balance{color:hsl(312 55% 24%)}
+.paper.template-96 .invtable th{background:hsl(312 55% 24%);color:#fff;border-color:hsl(312 55% 24%)}
+.paper.template-96 .invtable td{border-color:hsl(312 45% 80%)}
+.paper.template-96 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-96 .totals .total{border-top:2px solid hsl(312 55% 24%);color:hsl(312 55% 24%)}
+.paper.template-96 .paper-footer{border-top:2px solid hsl(312 55% 24%);margin-top:21px}
+.paper.template-96 .watermark{color:hsl(312 55% 24%);opacity:0.035}
+
+
+.paper.template-97{background:hsl(45 18% 96%);border-color:hsl(45 35% 72%);border-radius:4px}
+.paper.template-97 .paper-top{border-bottom:3px solid hsl(45 65% 38%);padding-bottom:22px}
+.paper.template-97 .biz h2{color:hsl(45 65% 38%);font-weight:600;letter-spacing:0.8px;text-transform:uppercase}
+.paper.template-97 .invoice-meta>b,.paper.template-97 .bill-title,.paper.template-97 .pay h3,.paper.template-97 .pay h4{color:hsl(45 65% 38%)}
+.paper.template-97 .invoice-meta .big{color:hsl(45 65% 38%);font-weight:600}
+.paper.template-97 .balance{color:hsl(45 65% 38%)}
+.paper.template-97 .invtable th{background:hsl(45 65% 38%);color:#fff;border-color:hsl(45 65% 38%)}
+.paper.template-97 .invtable td{border-color:hsl(45 35% 72%)}
+.paper.template-97 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-97 .totals .total{border-top:2px solid hsl(45 65% 38%);color:hsl(45 65% 38%)}
+.paper.template-97 .paper-footer{border-top:2px solid hsl(45 65% 38%);margin-top:24px}
+.paper.template-97 .watermark{color:hsl(45 65% 38%);opacity:0.045}
+
+
+.paper.template-98{background:#fbfbfb;border-color:#d9d9d9;border-radius:8px}
+.paper.template-98 .paper-top{border-bottom:3px solid hsl(26 65% 55%);padding-bottom:26px}
+.paper.template-98 .biz h2{color:hsl(26 65% 55%);font-weight:700;letter-spacing:1.2000000000000002px;text-transform:none}
+.paper.template-98 .invoice-meta>b,.paper.template-98 .bill-title,.paper.template-98 .pay h3,.paper.template-98 .pay h4{color:hsl(26 65% 55%)}
+.paper.template-98 .invoice-meta .big{color:hsl(26 65% 55%);font-weight:700}
+.paper.template-98 .balance{color:hsl(26 65% 55%)}
+.paper.template-98 .invtable th{background:hsl(26 65% 55%);color:#fff;border-color:hsl(26 65% 55%)}
+.paper.template-98 .invtable td{border-color:#d9d9d9}
+.paper.template-98 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-98 .totals .total{border-top:2px solid hsl(26 65% 55%);color:hsl(26 65% 55%)}
+.paper.template-98 .paper-footer{border-top:2px solid hsl(26 65% 55%);margin-top:27px}
+.paper.template-98 .watermark{color:hsl(26 65% 55%);opacity:0.055}
+
+
+.paper.template-99{background:hsl(63 20% 94%);border-color:hsl(63 50% 65%);border-radius:12px}
+.paper.template-99 .paper-top{border-bottom:3px solid hsl(133 50% 28%);padding-bottom:30px}
+.paper.template-99 .biz h2{color:hsl(133 50% 28%);font-weight:800;letter-spacing:1.6px;text-transform:none}
+.paper.template-99 .invoice-meta>b,.paper.template-99 .bill-title,.paper.template-99 .pay h3,.paper.template-99 .pay h4{color:hsl(133 50% 28%)}
+.paper.template-99 .invoice-meta .big{color:hsl(133 50% 28%);font-weight:800}
+.paper.template-99 .balance{color:hsl(133 50% 28%)}
+.paper.template-99 .invtable th{background:hsl(133 50% 28%);color:#fff;border-color:hsl(133 50% 28%)}
+.paper.template-99 .invtable td{border-color:hsl(63 50% 65%)}
+.paper.template-99 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-99 .totals .total{border-top:2px solid hsl(133 50% 28%);color:hsl(133 50% 28%)}
+.paper.template-99 .paper-footer{border-top:2px solid hsl(133 50% 28%);margin-top:30px}
+.paper.template-99 .watermark{color:hsl(133 50% 28%);opacity:0.065}
+
+
+.paper.template-100{background:#ffffff;border-color:hsl(100 45% 80%);border-radius:18px}
+.paper.template-100 .paper-top{border-bottom:3px solid hsl(100 70% 42%);padding-bottom:18px}
+.paper.template-100 .biz h2{color:hsl(100 70% 42%);font-weight:500;letter-spacing:0.0px;text-transform:none}
+.paper.template-100 .invoice-meta>b,.paper.template-100 .bill-title,.paper.template-100 .pay h3,.paper.template-100 .pay h4{color:hsl(100 70% 42%)}
+.paper.template-100 .invoice-meta .big{color:hsl(100 70% 42%);font-weight:500}
+.paper.template-100 .balance{color:hsl(100 70% 42%)}
+.paper.template-100 .invtable th{background:hsl(100 70% 42%);color:#fff;border-color:hsl(100 70% 42%)}
+.paper.template-100 .invtable td{border-color:hsl(100 45% 80%)}
+.paper.template-100 .invtable tbody tr:nth-child(even){background:rgba(0,0,0,.025)}
+.paper.template-100 .totals .total{border-top:2px solid hsl(100 70% 42%);color:hsl(100 70% 42%)}
+.paper.template-100 .paper-footer{border-top:2px solid hsl(100 70% 42%);margin-top:18px}
+.paper.template-100 .watermark{color:hsl(100 70% 42%);opacity:0.025}
+
+
+.rental-meta{margin:10px 0 14px;padding:10px 12px;border:1px solid #ddd;background:#fafafa;font-size:8.5px;line-height:1.55}.rental-meta b{font-weight:700}
+
+/* FBI SIGNATURE MODERN INVOICE — default premium design */
+.paper.template-100{background:#fff;color:#16181d;border:0;border-radius:0;box-shadow:none;font-family:Inter,Arial,sans-serif;padding:12mm 13mm;position:relative;overflow:hidden}
+.paper.template-100:before{content:"";position:absolute;top:0;left:0;right:0;height:7px;background:linear-gradient(90deg,#11131a 0%,#11131a 72%,#c9a227 72%,#c9a227 100%)}
+.paper.template-100 .paper-top{display:grid;grid-template-columns:1fr 220px;gap:28px;border:0;padding:12px 0 24px;margin-top:4px;align-items:start}
