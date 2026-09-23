@@ -1,0 +1,500 @@
+const TEMPLATE_NAMES=['Classic Executive', 'Modern Corporate', 'Minimal White', 'Midnight Luxe', 'Royal Gold', 'Slate Professional', 'Emerald Business', 'Ocean Finance', 'Crimson Legal', 'Violet Creative', 'Cobalt Studio', 'Graphite Pro', 'Ivory Classic', 'Copper Executive', 'Teal Modern', 'Navy Ledger', 'Burgundy Premium', 'Forest Professional', 'Aqua Minimal', 'Charcoal Elite', 'Sandstone Business', 'Platinum Clean', 'Ruby Agency', 'Sapphire Corporate', 'Olive Consulting', 'Indigo Finance', 'Bronze Studio', 'Pearl Minimal', 'Steel Executive', 'Onyx Premium', 'Azure Modern', 'Wine Professional', 'Moss Business', 'Skyline Corporate', 'Amber Creative', 'Deep Blue Ledger', 'Terracotta Agency', 'Arctic Clean', 'Royal Indigo', 'Cedar Executive', 'Carbon Studio', 'Champagne Luxe', 'Mint Professional', 'Oceanic Minimal', 'Mahogany Business', 'Electric Cobalt', 'Desert Corporate', 'Pine Consulting', 'Rose Agency', 'Titanium Pro', 'Monochrome Classic', 'Goldline Executive', 'Blueprint Modern', 'Clean Ledger', 'Black Label', 'White Label', 'Copperline Studio', 'Emerald Luxe', 'Sapphire Elite', 'Ruby Corporate', 'Indigo Minimal', 'Teal Executive', 'Crimson Studio', 'Forest Luxe', 'Platinum Corporate', 'Obsidian Modern', 'Ivory Agency', 'Cobalt Executive', 'Burgundy Ledger', 'Aqua Professional', 'Graphite Minimal', 'Royal Business', 'Amber Executive', 'Slate Agency', 'Pearl Corporate', 'Bronze Luxe', 'Navy Professional', 'Olive Minimal', 'Violet Executive', 'Steel Corporate', 'Ocean Studio', 'Sand Modern', 'Wine Luxe', 'Moss Executive', 'Azure Agency', 'Charcoal Ledger', 'Arctic Professional', 'Cedar Minimal', 'Ruby Executive', 'Sapphire Studio', 'Gold Corporate', 'Indigo Luxe', 'Teal Agency', 'Emerald Ledger', 'Crimson Professional', 'Platinum Minimal', 'Onyx Executive', 'Cobalt Corporate', 'Ivory Luxe', 'FBI Signature'];
+function initTemplates(){
+  const sel=$("template"); if(!sel) return;
+  sel.innerHTML=TEMPLATE_NAMES.map((n,i)=>`<option value="${i+1}">${String(i+1).padStart(2,"0")} — ${n}</option>`).join("");
+  sel.onchange=()=>{ if(current) current.template=+sel.value; };
+}
+function selectedTemplate(){return Math.max(1,Math.min(100,Number($("template")?.value||1)))}
+
+function money(n){return ($("cur")?.value||"GHS")+"₵"+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function reportStatusFor(x){return invoiceStatusInfo(x).status}
+function reportCategories(){
+  const set=new Set(data.map(x=>String(x.category||"").trim()).filter(Boolean));
+  return Array.from(set).sort((a,b)=>a.localeCompare(b));
+}
+function reportFilteredData(){
+  const from=$("reportFrom")?.value||"",to=$("reportTo")?.value||"",status=$("reportStatus")?.value||"",client=$("reportClient")?.value||"",category=$("reportCategory")?.value||"";
+  return data.filter(x=>{
+    const d=String(x.date||"");
+    if(from&&d<from)return false; if(to&&d>to)return false;
+    if(status&&reportStatusFor(x)!==status)return false;
+    if(client&&String(x.client||"")!==client)return false;
+    if(category&&String(x.category||"")!==category)return false;
+    return true;
+  }).sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))||String(b.no||"").localeCompare(String(a.no||"")));
+}
+function populateReportFilters(){
+  const clientEl=$("reportClient"),catEl=$("reportCategory");
+  if(clientEl){const old=clientEl.value;clientEl.innerHTML='<option value="">All Clients</option>'+Array.from(new Set(data.map(x=>String(x.client||"").trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b)).map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");if(Array.from(clientEl.options).some(o=>o.value===old))clientEl.value=old}
+  if(catEl){const old=catEl.value;catEl.innerHTML='<option value="">All Categories</option>'+reportCategories().map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");if(Array.from(catEl.options).some(o=>o.value===old))catEl.value=old}
+}
+function resetReportFilters(){
+  ["reportFrom","reportTo"].forEach(id=>{if($(id))$(id).value=""});if($("reportStatus"))$("reportStatus").value="";if($("reportClient"))$("reportClient").value="";if($("reportCategory"))$("reportCategory").value="";updateReportPreview();
+}
+function openReportModal(){
+  populateReportFilters();
+  $("reportModal").classList.add("show");
+  $("reportModal").setAttribute("aria-hidden","false");
+  updateReportPreview();
+}
+function closeReportModal(){
+  $("reportModal").classList.remove("show");
+  $("reportModal").setAttribute("aria-hidden","true");
+}
+function reportDateRangeLabel(){const f=$("reportFrom")?.value||"",t=$("reportTo")?.value||"";if(f&&t)return f+" to "+t;if(f)return "From "+f;if(t)return "Up to "+t;return "All saved invoice records"}
+function updateReportPreview(){
+  const rows=reportFilteredData();const total=rows.reduce((s,x)=>s+Number(x.total||0),0);const paid=rows.reduce((s,x)=>s+Math.min(Number(x.amountPaid||0),Number(x.total||0)),0);const balance=rows.reduce((s,x)=>s+invoiceBalance(x),0);const overdue=rows.filter(x=>reportStatusFor(x)==="Overdue").length;
+  const body=rows.map(x=>{const st=reportStatusFor(x),p=Math.min(Number(x.amountPaid||0),Number(x.total||0));return `<tr><td><b>${esc(x.no||"—")}</b></td><td>${esc(x.client||"No client")}</td><td>${esc(x.date||"—")}</td><td>${esc(x.due||"On Receipt")}</td><td>${esc(st)}</td><td>${esc(x.category||"—")}</td><td class="num">${esc(fmtMoney(x.total,x.cur))}</td><td class="num">${esc(fmtMoney(p,x.cur))}</td><td class="num">${esc(fmtMoney(invoiceBalance(x),x.cur))}</td></tr>`}).join("");
+  $("reportPreview").innerHTML=`<div class="report-preview-head"><h2>${esc(settings.biz||"FBI Invoice Studio")} — Invoice Report</h2><p>${esc(reportDateRangeLabel())} · Generated ${esc(new Date().toLocaleString())}</p></div><div class="report-summary-cards"><div class="report-summary-card"><span>Invoices</span><b>${rows.length}</b></div><div class="report-summary-card"><span>Total Invoiced</span><b>${esc(fmtMoney(total,"GHS"))}</b></div><div class="report-summary-card"><span>Collected</span><b>${esc(fmtMoney(paid,"GHS"))}</b></div><div class="report-summary-card"><span>Outstanding</span><b>${esc(fmtMoney(balance,"GHS"))}</b></div></div>${rows.length?`<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Invoice</th><th>Client</th><th>Date</th><th>Due</th><th>Status</th><th>Category</th><th class="num">Amount</th><th class="num">Paid</th><th class="num">Balance</th></tr></thead><tbody>${body}</tbody></table></div>`:`<div class="report-empty">No invoices match the selected report filters.</div>`}`;
+}
+function csvCell(v){const x=String(v??"");return '"'+x.replace(/"/g,'""')+'"'}
+function exportReportCsv(){
+  const rows=reportFilteredData();if(!rows.length){toast("No records match the report filters.");return}
+  const lines=[["Invoice","Client","Date","Due","Status","Category","Currency","Amount","Paid","Balance"],...rows.map(x=>[x.no,x.client||"No client",x.date||"",x.due||"On Receipt",reportStatusFor(x),x.category||"",x.cur||"GHS",Number(x.total||0).toFixed(2),Number(Math.min(Number(x.amountPaid||0),Number(x.total||0))).toFixed(2),Number(invoiceBalance(x)).toFixed(2)])].map(r=>r.map(csvCell).join(",")).join("\r\n");
+  const blob=new Blob([lines],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="FBI-Invoice-Studio-Report-"+new Date().toISOString().slice(0,10)+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast("Report CSV exported");
+}
+function printOverviewReport(){
+  const content=$("reportPreview");if(!content||!content.innerHTML.trim()){toast("Generate the report first.");return}
+  openDocumentPrint(content,"Invoice Studio Report","size:A4 landscape;margin:10mm");
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("reportModal")?.classList.contains("show"))closeReportModal()});
+
+function show(v){document.body.classList.remove("receipt-print-mode");document.querySelectorAll(".view").forEach(x=>x.classList.remove("active","print-view"));$("view-"+v).classList.add("active");document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.v===v));let t={dashboard:["Overview","Your invoicing control center"],create:["Create Invoice","Build and print invoices"],clients:["Client Database","Manage your clients and billing contacts"],saved:["Saved Invoices","View and manage saved invoices"],receipts:["Official Receipts","Print professional payment receipts"],settings:["Business Settings","Business identity and payment details"],whatsapp:["WhatsApp Alerts","Automatic invoice notifications"],preview:["Invoice Preview","Preview and print your invoice"],"receipt-preview":["Official Receipt","Preview and print your receipt"]}[v]||["Invoice Studio",""];$("title").textContent=t[0];$("subtitle").textContent=t[1];if(v==="saved")renderSaved();if(v==="receipts")renderReceipts();if(v==="clients")renderClients();if(v==="dashboard")dashboard();if(v==="create"){populateClientSelect();initServiceCatalog();}$("side").classList.remove("open")}
+document.querySelectorAll(".nav button").forEach(b=>{b.addEventListener("click",function(e){e.preventDefault();if(window.__FBI_NAV__)window.__FBI_NAV__(b.dataset.v);else show(b.dataset.v);});});$("template").onchange=()=>setTemplate($("template").value);["amountPaid","paymentDate","paymentMethod","transactionRef","receivedBy"].forEach(id=>$(id)?.addEventListener("input",()=>{if(id==="amountPaid")updatePaymentBalancePreview()}));
+function toast(x){let t=$("toast");t.textContent=x;t.classList.add("show");clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove("show"),2000)}
+const DRAFT_KEY=KEY+":draft-v3";
+let lastPersistAt=0;
+
+function safeStorageGet(store,key){
+  try{return store&&store.getItem?store.getItem(key):null}catch(e){return null}
+}
+function safeStorageSet(store,key,value){
+  try{if(!store||!store.setItem)return false;store.setItem(key,value);return true}catch(e){return false}
+}
+function safeStorageRemove(store,key){
+  try{if(store&&store.removeItem)store.removeItem(key)}catch(e){}
+}
+function parseStoredEnvelope(raw){
+  if(!raw)return null;
+  try{
+    const obj=JSON.parse(raw);
+    if(obj&&obj.data&&Array.isArray(obj.data.data)){
+      return {data:obj.data.data,clients:Array.isArray(obj.data.clients)?obj.data.clients:[],settings:obj.data.settings||{},savedAt:Number(obj.savedAt)||0};
+    }
+    if(obj&&Array.isArray(obj.data)){
+      return {data:obj.data,clients:Array.isArray(obj.clients)?obj.clients:[],settings:obj.settings||{},savedAt:0};
+    }
+  }catch(e){}
+  return null;
+}
+function readWindowNameState(){
+  try{
+    if(!window.name)return null;
+    if(window.name.indexOf("FBI-INVOICE-STUDIO-STATE:")===0)return JSON.parse(window.name.slice("FBI-INVOICE-STUDIO-STATE:".length));
+    if(window.name.indexOf("FBI-INVOICE-STUDIO:")===0)return {app:JSON.parse(window.name.slice("FBI-INVOICE-STUDIO:".length)),draft:null};
+    if(window.name.indexOf("FBI-INVOICE-DRAFT:")===0)return {app:null,draft:JSON.parse(window.name.slice("FBI-INVOICE-DRAFT:".length))};
+  }catch(e){}
+  return null;
+}
+function getWindowNameEnvelope(){
+  try{
+    const state=readWindowNameState();
+    return state&&state.app?parseStoredEnvelope(JSON.stringify(state.app)):null;
+  }catch(e){return null}
+}
+function setWindowNameState(appJson,draftValue){
+  try{
+    const existing=readWindowNameState()||{};
+    const state={app:appJson?JSON.parse(appJson):(existing.app||null),draft:draftValue!==undefined?draftValue:(existing.draft||null)};
+    const json=JSON.stringify(state);
+    // window.name survives page refresh in the same tab and is a final fallback
+    // for browsers that restrict Web Storage on local HTML files.
+    if(json.length<=1900000)window.name="FBI-INVOICE-STUDIO-STATE:"+json;
+  }catch(e){}
+}
+function setWindowNameEnvelope(json){setWindowNameState(json,undefined)}
+function readPersistentPayloadSync(){
+  const candidates=[
+    parseStoredEnvelope(safeStorageGet(window.localStorage,KEY)),
+    parseStoredEnvelope(safeStorageGet(window.sessionStorage,KEY)),
+    getWindowNameEnvelope()
+  ].filter(Boolean);
+  if(!candidates.length)return null;
+  candidates.sort((a,b)=>(b.savedAt||0)-(a.savedAt||0));
+  return candidates[0];
+}
+let serverPersistQueue=Promise.resolve();
+let serverDbOnline=false;
+let lastServerPersistAt=0;
+
+function persist(){
+  const payload={data,clients,settings};
+  const envelope={version:4,savedAt:Date.now(),data:payload};
+  const json=JSON.stringify(envelope);
+  // Keep the existing browser fallback, but make the local SQLite server the primary store.
+  safeStorageSet(window.localStorage,KEY,json);
+  safeStorageSet(window.sessionStorage,KEY,json);
+  setWindowNameEnvelope(json);
+  lastPersistAt=envelope.savedAt;
+
+  serverPersistQueue=serverPersistQueue.then(async()=>{
+    try{
+      const res=await fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:json,cache:'no-store'});
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      const body=await res.json().catch(()=>({}));
+      if(body.ok===false)throw new Error(body.error||'Database save failed');
+      serverDbOnline=true;
+      lastServerPersistAt=envelope.savedAt;
+      const st=$('storageStatus');
+      if(st)st.textContent='Local SQLite database is connected. Your invoices, clients and settings are stored on this computer/server.';
+      return true;
+    }catch(e){
+      serverDbOnline=false;
+      console.warn('SQLite database save failed:',e);
+      const st=$('storageStatus');
+      if(st)st.textContent='Database connection unavailable. Browser fallback is being used until the local server reconnects.';
+      return false;
+    }
+  });
+  return serverPersistQueue;
+}
+function readPersistentPayload(){
+  return fetch('/api/state',{cache:'no-store'})
+    .then(async res=>{
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      const body=await res.json();
+      if(body&&body.ok===false)throw new Error(body.error||'Database read failed');
+      serverDbOnline=true;
+      const st=$('storageStatus');
+      if(st)st.textContent='Local SQLite database is connected. Your invoices, clients and settings are restored from the database.';
+      return body&&body.state?parseStoredEnvelope(JSON.stringify(body.state)):null;
+    })
+    .catch(e=>{
+      serverDbOnline=false;
+      console.warn('SQLite database read failed; using browser fallback:',e);
+      return readPersistentPayloadSync();
+    });
+}
+function clearPersistentDraft(){
+  safeStorageRemove(window.localStorage,DRAFT_KEY);safeStorageRemove(window.sessionStorage,DRAFT_KEY);
+  try{
+    const state=readWindowNameState();
+    if(state){state.draft=null;window.name="FBI-INVOICE-STUDIO-STATE:"+JSON.stringify(state)}
+  }catch(e){}
+}
+function readDraft(){
+  const raws=[safeStorageGet(window.localStorage,DRAFT_KEY),safeStorageGet(window.sessionStorage,DRAFT_KEY)];
+  for(const raw of raws){if(raw){try{return JSON.parse(raw)}catch(e){}}}
+  try{const state=readWindowNameState();if(state?.draft)return state.draft}catch(e){}
+  return null;
+}
+function writeDraft(draft){
+  try{
+    const json=JSON.stringify(draft);
+    safeStorageSet(window.localStorage,DRAFT_KEY,json);
+    safeStorageSet(window.sessionStorage,DRAFT_KEY,json);
+    try{const state=readWindowNameState()||{};setWindowNameState(state.app?JSON.stringify(state.app):null,JSON.parse(json))}catch(e){}
+  }catch(e){}
+}
+let draftSaveTimer=null;
+function collectDraft(){
+  if(!$('no')||!$('date')||!$('items'))return null;
+  return {
+    id:current?.id||null,no:$('no').value,date:$('date').value,due:$('due').value,status:$('status').value,cur:$('cur').value,client:$('client').value,clientAddress:$('clientAddress').value,clientPhone:$('clientPhone').value,clientEmail:$('clientEmail').value,tax:$('tax').value,discount:$('discount').value,payment:$('payment').value,notes:$('notes').value,template:$('template').value,vatInclusive:$('vatInclusive').checked,amountPaid:$('amountPaid').value,paymentDate:$('paymentDate').value,paymentMethod:$('paymentMethod').value,transactionRef:$('transactionRef').value,receivedBy:$('receivedBy').value,receiptNo:$('receiptNo').value,eventDate:$('eventDate')?.value||'',rentalStart:$('rentalStart')?.value||'',rentalEnd:$('rentalEnd')?.value||'',jobLocation:$('jobLocation')?.value||'',rentalRef:$('rentalRef')?.value||'',rentalUnit:$('rentalUnit')?.value||'Per Day',deposit:$('deposit')?.value||0,category:$('serviceCategory')?.value||'',serviceBrand:$('brandModelFilter')?.value||'',serviceItem:$('catalogItemSelect')?.value||$('itemSearch')?.value||'',items:[...document.querySelectorAll('.item')].map(r=>({desc:r.querySelector('.desc')?.value||'',qty:r.querySelector('.qty')?.value||0,rate:r.querySelector('.rate')?.value||0}))
+  };
+}
+function scheduleDraftSave(){
+  clearTimeout(draftSaveTimer);
+  draftSaveTimer=setTimeout(()=>{try{const d=collectDraft();if(d)writeDraft({savedAt:Date.now(),draft:d})}catch(e){}},180);
+}
+function restoreDraft(){
+  const entry=readDraft();if(!entry?.draft)return false;
+  const x=entry.draft;
+  try{
+    current=x.id?(data.find(a=>a.id===x.id)||null):null;
+    invoiceNumberReserved=x.no||'';
+    ['no','date','due','status','cur','client','clientAddress','clientPhone','clientEmail','tax','discount','payment','notes','template','amountPaid','paymentDate','paymentMethod','transactionRef','receivedBy','receiptNo'].forEach(id=>{if($(id)&&x[id]!==undefined)$(id).value=x[id]});
+    if($('vatInclusive'))$('vatInclusive').checked=x.vatInclusive!==false;
+    if($('eventDate'))$('eventDate').value=x.eventDate||'';
+    if($('rentalStart'))$('rentalStart').value=x.rentalStart||'';
+    if($('rentalEnd'))$('rentalEnd').value=x.rentalEnd||'';
+    if($('jobLocation'))$('jobLocation').value=x.jobLocation||'';
+    if($('rentalRef'))$('rentalRef').value=x.rentalRef||'';
+    if($('rentalUnit'))$('rentalUnit').value=x.rentalUnit||'Per Day';
+    if($('deposit'))$('deposit').value=x.deposit||0;
+    if($('items')){ $('items').innerHTML=''; (x.items||[]).forEach(a=>addItem(a.desc,a.qty,a.rate)); if(!x.items?.length)addItem('',1,0); }
+    initTemplates();if($('template'))$('template').value=String(x.template||settings.template||100);
+    if($('serviceCategory')&&x.category){$('serviceCategory').value=x.category;$('serviceCategory').dispatchEvent(new Event('change'))}
+    if($('brandModelFilter')&&x.serviceBrand){$('brandModelFilter').value=x.serviceBrand;$('brandModelFilter').dispatchEvent(new Event('change'))}
+    if($('catalogItemSelect')&&x.serviceItem)$('catalogItemSelect').value=x.serviceItem;
+    toggleEventDate();toggleRentalDetails();calc();updatePaymentBalancePreview();show('create');
+    toast('Your unsaved work was restored.');
+    return true;
+  }catch(e){console.warn('Draft restore failed',e);return false}
+}
+function loadStudioFromDrive(){ return false; }
+function gsRun_(method,payload){ return Promise.resolve(null); }
+function normalizePaymentSettings(){
+  const requestedPay=`Bank Name: Cal Bank
+Account Name: FILM BEYOND IMAGINATION (FBI)
+Account Number: 1400010238562
+Branch: Dansoman
+
+MOMO Service
+*203*0771134#
+Name: (FBI) FILM BEYOND IMAGINATION`;
+  const oldPay=String(settings.defaultPay||"");
+  if(!oldPay || oldPay.includes("Momo service Name: MTN") || oldPay.includes("Momo Number: 0257407350") || oldPay.includes("*203*0771134#")){
+    settings.defaultPay=requestedPay;
+  }
+}
+const DEFAULT_FBI_LOGO="assets/fbi-logo-default.jpg";
+
+function init(skipNewInvoice=false,preloaded=null){
+  const d=preloaded||readPersistentPayloadSync()||{};
+  data=Array.isArray(d.data)?d.data:[];
+  clients=Array.isArray(d.clients)?d.clients:[];
+  settings={
+    biz:"FILM BEYOND IMAGINATION (FBI)",owner:"Jerbel Mark Addeh",baddr:"Dome, Accra",bphone:"0257407350",bemail:"filmbfbi@gmail.com",bnum:"0257407350",
+    logo:DEFAULT_FBI_LOGO,template:100,
+    defaultPay:`Bank Name: Cal Bank
+Account Name: FILM BEYOND IMAGINATION (FBI)
+Account Number: 1400010238562
+Branch: Dansoman
+
+Momo service Name: MTN
+Momo Number: 0257407350
+Account Name: Jerbel Mark Addeh`,
+    waEnabled:"yes",waRecipient:"233257407350",waApiUrl:"/api/whatsapp/invoice-created",waTemplate:"hello_world",waLanguage:"en_US",waEvent:"created",
+    ...(d.settings||{})
+  };
+  if(!settings.logo)settings.logo=DEFAULT_FBI_LOGO;
+  normalizePaymentSettings();
+  ["biz","owner","baddr","bphone","bemail","bnum","defaultPay"].forEach(k=>{if($(k))$(k).value=settings[k]||""});
+  if($("waEnabled"))$("waEnabled").value=settings.waEnabled||"yes";
+  if($("waRecipient"))$("waRecipient").value=settings.waRecipient||"233257407350";
+  if($("waApiUrl"))$("waApiUrl").value=settings.waApiUrl||"/api/whatsapp/invoice-created";
+  if($("waTemplate"))$("waTemplate").value=settings.waTemplate||"hello_world";
+  if($("waLanguage"))$("waLanguage").value=settings.waLanguage||"en_US";
+  if($("waEvent"))$("waEvent").value=settings.waEvent||"created";
+  document.querySelectorAll("[data-template-card]").forEach(c=>c.onclick=()=>{const map={classic:1,modern:2,minimal:3,bold:4,elegant:5};const v=map[c.dataset.templateCard]||1;setTemplate(v);$("template").value=String(v)});
+  if(!skipNewInvoice) newInvoice();
+  populateClientSelect();renderClients();dashboard();
+}
+function nextInvoiceSequence(){
+  let maxSaved=0;
+  data.forEach(x=>{
+    const m=String(x.no||"").match(/(\d+)$/);
+    if(m)maxSaved=Math.max(maxSaved,parseInt(m[1],10)||0);
+  });
+  const storedNext=Math.max(1,Number(settings.invoiceSequence)||1);
+  const next=Math.max(storedNext,maxSaved+1);
+  settings.invoiceSequence=next;
+  return next;
+}
+function nextInvoiceNumber(){return "INV"+String(nextInvoiceSequence()).padStart(4,"0")}
+function setTemplate(v){settings.template=v;document.querySelectorAll("[data-template-card]").forEach(c=>c.classList.toggle("selected",c.dataset.templateCard===v));persist()}
+function toggleEventDate(){
+  const category=$("serviceCategory")?.value||"";
+  const show=["Live Streaming","Media Works","Live Production","Drone Works"].includes(category);
+  const card=$("eventDateCard");
+  if(card)card.style.display=show?"block":"none";
+  const hint=$("eventDateHint");
+  if(hint)hint.textContent=show?"Event date for "+category+".":"Select an event date for this service category.";
+}
+function clearEventDate(){if($("eventDate"))$("eventDate").value="";}
+function toggleRentalDetails(){const isRental=$("serviceCategory")?.value==="Equipment Rentals";const el=$("rentalDetailsCard");if(el)el.style.display=isRental?"block":"none";}
+function clearRentalDetails(){["rentalStart","rentalEnd","jobLocation","rentalRef"].forEach(id=>{if($(id))$(id).value=""});if($("rentalUnit"))$("rentalUnit").value="Per Day";if($("deposit"))$("deposit").value=0;}
+function nextReceiptNumber(){let max=0;data.forEach(x=>{let m=String(x.receiptNo||"").match(/(\d+)$/);if(m)max=Math.max(max,parseInt(m[1],10)||0)});return "REC"+String(max+1).padStart(4,"0")}
+function paymentTotals(x){const total=Number(x.total||0),paid=Math.max(0,Number(x.amountPaid||0));return{total,paid,balance:Math.max(0,total-paid)}}
+function updatePaymentBalancePreview(totalOverride){const el=$("paymentBalancePreview");if(!el)return;let total=Number(totalOverride);if(!Number.isFinite(total)){let sub=0;document.querySelectorAll(".item").forEach(r=>{let q=+r.querySelector(".qty").value||0,p=+r.querySelector(".rate").value||0;sub+=q*p});let dis=+$("discount").value||0,tax=Math.max(0,sub-dis)*(+$("tax").value||0)/100;total=Math.max(0,sub-dis)+tax}const paid=Math.max(0,Number($("amountPaid")?.value||0));el.textContent=fmtMoney(Math.max(0,total-paid),$("cur")?.value||"GHS")}
+function renderReceipts(){const el=$("receiptList");if(!el)return;const list=data.filter(x=>Number(x.amountPaid||0)>0).sort((a,b)=>String(b.paymentDate||b.date||"").localeCompare(String(a.paymentDate||a.date||"")));if(!list.length){el.innerHTML='<div class="receipt-empty">No payment receipts have been recorded yet. Record a payment on an invoice to generate the first receipt.</div>';return}el.innerHTML=list.map(x=>{const p=paymentTotals(x),full=p.balance<=0.005;return `<div class="receipt-row"><div class="grow"><div class="main">${esc(x.receiptNo||"—")} · ${esc(x.no||"")}</div><div class="meta">${esc(x.client||"No client")} · ${esc(x.paymentDate||x.date||"—")} · ${esc(x.paymentMethod||"Payment")}</div></div><div class="amount">${fmtMoney(p.paid,x.cur)}</div><span class="status-pill ${full?"status-paid":"status-partial"}">${full?"Paid in Full":"Partial Payment"}</span><button class="btn" onclick="showReceipt('${x.id}')">View</button><button class="btn primary" onclick="showReceipt('${x.id}');setTimeout(printReceipt,30)">Print</button></div>`}).join("")}
+async function recordPayment(){
+  const total=Number(calc().total||0),paid=Math.max(0,Number($("amountPaid")?.value||0));
+  if(paid<=0){alert("Enter the amount received before generating a receipt.");return}
+  if(paid>total+0.005){alert("Amount paid cannot be greater than the invoice total.");return}
+  if(!$("paymentDate").value)$("paymentDate").value=new Date().toISOString().slice(0,10);
+  if(!$("receiptNo").value){
+    try{$("receiptNo").value=await gsRun_("getNextReceiptNumber")}catch(e){$("receiptNo").value=nextReceiptNumber()}
+  }
+  $("status").value=paid>=total-0.005?"Paid":"Partially Paid";
+  await save();
+  await showReceipt(current?.id);
+}
+function showReceipt(id){const x=data.find(a=>a.id===id)||current;if(!x||Number(x.amountPaid||0)<=0){toast("Record a payment before generating a receipt");return}current=x;if(!x.receiptNo){x.receiptNo=nextReceiptNumber();persist()}renderReceipt(x);document.querySelectorAll(".view").forEach(v=>v.classList.remove("active","print-view"));$("view-receipt-preview").classList.add("active");$("side").classList.remove("open")}
+function renderReceipt(x){const s=settings,p=paymentTotals(x),full=p.balance<=0.005,logo=s.logo?`<div class="receipt-logo" style="background-image:url('${s.logo}')"></div>`:`<div class="receipt-logo"></div>`;const rows=(x.items||[]).map(i=>`<tr><td>${esc(i.desc)}</td><td>${i.qty}</td><td>${esc(money(i.qty*i.rate))}</td></tr>`).join("");const statusLabel=full?"PAID IN FULL":"PARTIAL PAYMENT";$("receiptPaper").innerHTML=`<div class="receipt-header"><div class="receipt-brand">${logo}<div class="receipt-biz"><h2>${esc(s.biz||"FILM BEYOND IMAGINATION (FBI)")}</h2><div>${s.owner?esc(s.owner)+"<br>":""}${esc(s.baddr||"")}<br>${esc(s.bphone||"")} · ${esc(s.bemail||"")}</div></div></div><div class="receipt-meta"><div class="label">Receipt Number</div><div class="receipt-no">${esc(x.receiptNo||nextReceiptNumber())}</div><div class="label">Payment Date</div><div class="date">${esc(x.paymentDate||new Date().toISOString().slice(0,10))}</div></div></div><div class="receipt-title">OFFICIAL PAYMENT RECEIPT</div><span class="receipt-paid-badge ${full?"":"partial"}">${statusLabel}</span><div class="receipt-grid"><div class="receipt-info"><div class="k">Received From</div><div class="v">${esc(x.client||"Client")}<br>${esc(x.clientAddress||"")}<br>${esc(x.clientPhone||"")}${x.clientEmail?" · "+esc(x.clientEmail):""}</div></div><div class="receipt-info"><div class="k">Reference</div><div class="v">Invoice: ${esc(x.no||"—")}<br>Payment Method: ${esc(x.paymentMethod||"—")}<br>Transaction Ref: ${esc(x.transactionRef||"—")}</div></div></div><table class="receipt-items"><thead><tr><th>Description</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${rows||`<tr><td>Invoice payment</td><td>1</td><td>${esc(fmtMoney(p.paid,x.cur))}</td></tr>`}</tbody></table><div class="receipt-total"><div class="receipt-total-box"><div class="receipt-total-line"><span>Invoice Total</span><b>${esc(fmtMoney(p.total,x.cur))}</b></div><div class="receipt-total-line"><span>Amount Received</span><b>${esc(fmtMoney(p.paid,x.cur))}</b></div><div class="receipt-total-line total"><span>RECEIVED</span><b>${esc(fmtMoney(p.paid,x.cur))}</b></div><div class="receipt-total-line balance"><span>Balance Remaining</span><b>${esc(fmtMoney(p.balance,x.cur))}</b></div></div></div><div class="receipt-note">Received with thanks. This receipt acknowledges payment made against the referenced invoice. ${x.notes?esc(x.notes):"Thank you for your business."}</div><div class="receipt-sign"><div class="line">Customer / Payer</div><div class="line">Received By${x.receivedBy?": "+esc(x.receivedBy):""}</div></div><div class="receipt-footer"><b>Receipt Record</b><br>Receipt ${esc(x.receiptNo||"")} · Invoice ${esc(x.no||"")} · ${esc(statusLabel)}<br>This document is a payment receipt. It is not a GRA E-VAT receipt unless issued through a GRA-certified invoicing system.</div>`}
+function openDocumentPrint(element, title, pageCss){
+  if(!element){throw new Error("Document preview is empty")};
+  const popup=window.open("about:blank","_blank","width=1100,height=900");
+  if(!popup){toast("Please allow pop-ups for this app so the invoice can be printed.");return false;}
+  const styles=Array.from(document.querySelectorAll("style")).map(s=>s.textContent).join("\n");
+  const links=Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map(l=>l.outerHTML).join("\n");
+  popup.document.open();
+  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${String(title||"Document").replace(/[<>]/g,"")}</title>${links}<style>${styles}\n@page{${pageCss||"size:A4 portrait;margin:0"}}html,body{margin:0!important;padding:0!important;background:#fff!important;display:block!important;min-height:0!important}body{color:#111!important}.print-root{width:100%;margin:0!important;padding:0!important;background:#fff!important}.paper,.receipt-paper{box-shadow:none!important;margin:0 auto!important}.no-print{display:none!important}</style></head><body><div class="print-root">${element.outerHTML}</div></body></html>`);
+  popup.document.close();
+  popup.focus();
+  setTimeout(()=>{try{popup.print()}catch(e){}},350);
+  popup.onafterprint=()=>setTimeout(()=>{try{popup.close()}catch(e){}},250);
+  return true;
+}
+
+async function printReceipt(){
+  if(!current){toast("No receipt selected");return}
+  try{
+    renderReceipt(current);
+    persist();
+    openDocumentPrint($("receiptPaper"),"Official Receipt "+(current.receiptNo||""),"size:A5 portrait;margin:0");
+  }catch(e){console.error(e);toast("Receipt print failed: "+e.message)}
+}
+let invoiceNumberReserved="";
+function reserveInvoiceNumberClient(){
+  invoiceNumberReserved=nextInvoiceNumber();
+  if(!current&&$("no"))$("no").value=invoiceNumberReserved;
+  return invoiceNumberReserved;
+}
+function newInvoice(){
+  clearPersistentDraft();
+  current=null;invoiceNumberReserved="";initTemplates();$("template").value="100";initServiceCatalog();
+  const nextNo=nextInvoiceNumber();
+  $("no").value=nextNo;
+  $("date").value=new Date().toISOString().slice(0,10);$("due").value="On Receipt";$("status").value="Draft";$("cur").value="GHS";
+  $("template").value=String(settings.template||100);$("client").value="";$("clientAddress").value="";$("clientPhone").value="";$("clientEmail").value="";
+  if($("clientSelect"))$("clientSelect").value="";$("tax").value=20;$("discount").value=0;$("payment").value=settings.defaultPay;$("notes").value="";
+  $("vatInclusive").checked=true;$("amountPaid").value=0;$("paymentDate").value="";$("paymentMethod").value="Mobile Money";$("transactionRef").value="";$("receivedBy").value="";$("receiptNo").value="";
+  $("items").innerHTML="";addItem("",1,0);setTemplate($("template").value);clearRentalDetails();clearEventDate();toggleRentalDetails();toggleEventDate();show("create");updatePaymentBalancePreview();
+}
+function addItem(desc="",qty=1,rate=0){let d=document.createElement("div");d.className="item";d.innerHTML=`<div><input class="desc" list="itemOptions" placeholder="Description" value="${esc(desc)}"></div><div><input class="rate" type="number" min="0" step=".01" value="${rate}"></div><div><input class="qty" type="number" min="0" step=".01" value="${qty}"></div><div><input class="amt" readonly value="${money(qty*rate)}"></div><button class="rm" onclick="this.parentElement.remove();calc()">✕</button>`;$("items").appendChild(d);d.querySelectorAll("input").forEach(i=>i.oninput=calc);calc()}
+function calc(){let sub=0;document.querySelectorAll(".item").forEach(r=>{let q=+r.querySelector(".qty").value||0,p=+r.querySelector(".rate").value||0,a=q*p;sub+=a;r.querySelector(".amt").value=money(a)});let dis=+$("discount").value||0,tax=Math.max(0,sub-dis)*(+$("tax").value||0)/100,total=Math.max(0,sub-dis)+tax;$("total").textContent=money(total);updatePaymentBalancePreview(total);return{sub,dis,tax,total}}
+function get(){let c=calc();let paid=Math.max(0,Number($("amountPaid")?.value||0));if($("status")?.value==="Paid")paid=c.total;if(paid>0.005&&paid<c.total-0.005)$("status").value="Partially Paid";if(paid>=c.total-0.005&&c.total>0)$("status").value="Paid";let receiptNo=$("receiptNo")?.value||current?.receiptNo||"";if(paid>0.005&&!receiptNo)receiptNo=nextReceiptNumber();return{id:current?.id||("av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10)),no:$("no").value,date:$("date").value,due:$("due").value,status:$("status").value,cur:$("cur").value,template:$("template").value||settings.template||"classic",client:$("client").value,clientAddress:$("clientAddress").value,clientPhone:$("clientPhone").value,clientEmail:$("clientEmail").value,items:[...document.querySelectorAll(".item")].map(r=>({desc:r.querySelector(".desc").value,qty:+r.querySelector(".qty").value||0,rate:+r.querySelector(".rate").value||0})).filter(x=>x.desc),taxRate:+$("tax").value||0,discount:+$("discount").value||0,vatInclusive:$("vatInclusive").checked,...c,payment:$("payment").value,notes:$("notes").value,template:selectedTemplate(),category:$("serviceCategory")?.value||"Media Works",serviceBrand:$("brandModelFilter")?.value||"",serviceItem:$("catalogItemSelect")?.value||$("itemSearch")?.value||"",eventDate:$("eventDate")?.value||"",rentalStart:$("rentalStart")?.value||"",rentalEnd:$("rentalEnd")?.value||"",jobLocation:$("jobLocation")?.value||"",rentalRef:$("rentalRef")?.value||"",rentalUnit:$("rentalUnit")?.value||"Per Day",deposit:+($("deposit")?.value||0),amountPaid:paid,paymentDate:$("paymentDate")?.value||"",paymentMethod:$("paymentMethod")?.value||"",transactionRef:$("transactionRef")?.value||"",receivedBy:$("receivedBy")?.value||"",receiptNo}}
+async function save(){
+  try{
+    let x=get();
+    let i=data.findIndex(a=>a.id===x.id),isNew=i<0;
+    if(isNew){
+      let seq=nextInvoiceSequence();
+      let candidate="INV"+String(seq).padStart(4,"0");
+      while(data.some(a=>String(a.no)===candidate)){
+        seq++;
+        settings.invoiceSequence=seq;
+        candidate="INV"+String(seq).padStart(4,"0");
+      }
+      x.no=candidate;
+      settings.invoiceSequence=seq+1;
+    }
+    $("no").value=x.no;invoiceNumberReserved=x.no;
+    if(i>=0)data[i]=x;else data.unshift(x);
+    current=x;
+    const localOk=await persist();
+    if(localOk)clearPersistentDraft();
+    dashboard();renderSaved();renderReceipts();
+    toast(localOk?"Invoice saved":"Invoice could not be saved");
+    if(isNew && settings.waEnabled==="yes"){try{await sendWhatsAppNotification(x)}catch(e){console.warn("WhatsApp notification failed",e)}}
+    return x;
+  }catch(err){console.error(err);toast("Invoice could not be saved: "+err.message);throw err}
+}
+function restoreServiceSelection(x){
+  try{
+    initServiceCatalog();
+    const cat=$("serviceCategory"),brand=$("brandModelFilter"),search=$("itemSearch"),item=$("catalogItemSelect");
+    if(cat&&x.category){cat.value=x.category;cat.dispatchEvent(new Event("change"));}
+    if(brand&&x.serviceBrand){brand.value=x.serviceBrand;brand.dispatchEvent(new Event("change"));}
+    if(search&&x.serviceItem){search.value=x.serviceItem;search.dispatchEvent(new Event("input"));}
+    if(item&&x.serviceItem){const opts=[...item.options];const match=opts.find(o=>o.value.toLowerCase()===String(x.serviceItem).toLowerCase());if(match)item.value=match.value;}
+    toggleEventDate();toggleRentalDetails();
+  }catch(e){console.warn("Service selection restore failed",e)}
+}
+function loadInvoice(id){
+  clearPersistentDraft();
+  let x=data.find(a=>a.id===id);if(!x)return;current=x;invoiceNumberReserved=x.no||"";
+  ["no","date","due","status","cur","client","clientAddress","clientPhone","clientEmail","tax","discount","payment","notes"].forEach(k=>$(k).value=x[{no:"no",date:"date",due:"due",status:"status",cur:"cur",client:"client",clientAddress:"clientAddress",clientPhone:"clientPhone",clientEmail:"clientEmail",tax:"taxRate",discount:"discount",payment:"payment",notes:"notes"}[k]]??"");
+  $("template").value=String(Number(x.template)||100);$("vatInclusive").checked=x.vatInclusive!==false;$("amountPaid").value=Number(x.amountPaid||0);$("paymentDate").value=x.paymentDate||"";$("paymentMethod").value=x.paymentMethod||"Mobile Money";$("transactionRef").value=x.transactionRef||"";$("receivedBy").value=x.receivedBy||"";$("receiptNo").value=x.receiptNo||"";
+  $("eventDate").value=x.eventDate||"";$("rentalStart").value=x.rentalStart||"";$("rentalEnd").value=x.rentalEnd||"";$("jobLocation").value=x.jobLocation||"";$("rentalRef").value=x.rentalRef||"";$("rentalUnit").value=x.rentalUnit||"Per Day";$("deposit").value=x.deposit||0;
+  if($("payment") && !String(x.payment||"").trim())$("payment").value=settings.defaultPay||"";
+  setTemplate($("template").value);$("items").innerHTML="";(x.items||[]).forEach(a=>addItem(a.desc,a.qty,a.rate));initTemplates();$("template").value=String(Number(x.template)||100);
+  restoreServiceSelection(x);show("create");populateClientSelect();if($("clientSelect"))$("clientSelect").value=(clients.find(c=>c.name===x.client)||{}).id||"";updatePaymentBalancePreview();
+}
+function populateClientSelect(){const sel=$("clientSelect");if(!sel)return;const current=sel.value;sel.innerHTML='<option value="">— New / Manual Client —</option>'+clients.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.phone?" · "+esc(c.phone):""}</option>`).join("");if(current)sel.value=current}
+function applySelectedClient(){const id=$("clientSelect")?.value;if(!id)return;const c=clients.find(x=>x.id===id);if(!c)return;$("client").value=c.name||"";$("clientAddress").value=c.address||"";$("clientPhone").value=c.phone||"";$("clientEmail").value=c.email||""}
+function saveCurrentClient(){const name=$("client").value.trim();if(!name){toast("Enter a client name first");return}let c=clients.find(x=>x.name.toLowerCase()===name.toLowerCase());if(c){c.phone=$("clientPhone").value.trim();c.email=$("clientEmail").value.trim();c.address=$("clientAddress").value.trim()}else{c={id:("av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10)),name,phone:$("clientPhone").value.trim(),email:$("clientEmail").value.trim(),address:$("clientAddress").value.trim(),notes:"",createdAt:new Date().toISOString()};clients.unshift(c)}persist();populateClientSelect();$("clientSelect").value=c.id;toast("Client saved to database")}
+function clearClientForm(){$("clientId").value="";$("dbClientName").value="";$("dbClientPhone").value="";$("dbClientEmail").value="";$("dbClientAddress").value="";$("dbClientNotes").value="";$("clientFormTitle").textContent="Add Client"}
+function saveClient(){const name=$("dbClientName").value.trim();if(!name){toast("Client name is required");return}const id=$("clientId").value;let c=id?clients.find(x=>x.id===id):null;if(!c){c={id:("av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10)),createdAt:new Date().toISOString()};clients.unshift(c)}c.name=name;c.phone=$("dbClientPhone").value.trim();c.email=$("dbClientEmail").value.trim();c.address=$("dbClientAddress").value.trim();c.notes=$("dbClientNotes").value.trim();persist();clearClientForm();populateClientSelect();renderClients();toast("Client saved")}
+function editClient(id){const c=clients.find(x=>x.id===id);if(!c)return;$("clientId").value=c.id;$("dbClientName").value=c.name||"";$("dbClientPhone").value=c.phone||"";$("dbClientEmail").value=c.email||"";$("dbClientAddress").value=c.address||"";$("dbClientNotes").value=c.notes||"";$("clientFormTitle").textContent="Edit Client";show("clients")}
+function deleteClient(id){if(!confirm("Delete this client from the database? Existing invoices will remain unchanged."))return;clients=clients.filter(x=>x.id!==id);persist();populateClientSelect();renderClients();toast("Client deleted")}
+function useClient(id){const c=clients.find(x=>x.id===id);if(!c)return;newInvoice();$("client").value=c.name||"";$("clientAddress").value=c.address||"";$("clientPhone").value=c.phone||"";$("clientEmail").value=c.email||"";$("clientSelect").value=c.id;show("create")}
+function parseCsvLine(line){
+  const out=[];let cur="",quoted=false;
+  for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(quoted&&line[i+1]==='"'){cur+='"';i++;}else quoted=!quoted;}else if(ch===','&&!quoted){out.push(cur.trim());cur="";}else cur+=ch;}
+  out.push(cur.trim());return out;
+}
+function importClientsFile(evt){
+  const f=evt.target.files&&evt.target.files[0];if(!f)return;
+  const status=$("clientImportStatus");if(status)status.textContent="Reading "+f.name+"…";
+  const reader=new FileReader();reader.onload=async e=>{
+    try{
+      const text=String(e.target.result||"");let rows=[];
+      if(f.name.toLowerCase().endsWith(".json")){
+        const raw=JSON.parse(text);rows=Array.isArray(raw)?raw:(Array.isArray(raw.clients)?raw.clients:[]);
+      }else{
+        const lines=text.replace(/^\uFEFF/,"").split(/\r?\n/).filter(x=>x.trim());if(!lines.length)throw new Error("The file is empty.");
+        const headers=parseCsvLine(lines.shift()).map(h=>h.toLowerCase().replace(/[^a-z0-9]/g,""));
+        const idx=k=>{const aliases={name:["name","clientname","company","companyname"],phone:["phone","phonenumber","mobile","contact"],email:["email","emailaddress"],address:["address","clientaddress"],notes:["notes","note"]}[k]||[k];return headers.findIndex(h=>aliases.includes(h))};
+        const ix={name:idx("name"),phone:idx("phone"),email:idx("email"),address:idx("address"),notes:idx("notes")};
+        rows=lines.map(line=>{const a=parseCsvLine(line);return{name:ix.name>=0?a[ix.name]:"",phone:ix.phone>=0?a[ix.phone]:"",email:ix.email>=0?a[ix.email]:"",address:ix.address>=0?a[ix.address]:"",notes:ix.notes>=0?a[ix.notes]:""}});
+      }
+      let added=0,updated=0;
+      rows.forEach(r=>{const name=String(r.name||r.client||r.company||"").trim();if(!name)return;let c=clients.find(x=>String(x.name||"").toLowerCase()===name.toLowerCase());if(!c){c={id:"av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10),createdAt:new Date().toISOString()};clients.unshift(c);added++;}else updated++;c.name=name;c.phone=String(r.phone||"").trim();c.email=String(r.email||"").trim();c.address=String(r.address||"").trim();c.notes=String(r.notes||"").trim();});
+      await persist();populateClientSelect();renderClients();if(status)status.textContent=`Imported ${added} new clients and updated ${updated} existing clients.`;toast("Client data imported");
+    }catch(err){console.error(err);if(status)status.textContent="Import failed: "+err.message;toast("Client import failed: "+err.message)}finally{evt.target.value=""}
+  };reader.readAsText(f);
+}
+
+function renderClients(){
+  const el=$("clientList");if(!el)return;
+  const q=$("clientSearch")?.value||"";
+  const qq=String(q).trim().toLowerCase();
+  const list=clients.filter(c=>[c.name,c.phone,c.email,c.address].join(" ").toLowerCase().includes(qq)).sort((a,b)=>a.name.localeCompare(b.name));
+  el.innerHTML=list.length?list.map(c=>`<div class="saved" style="align-items:flex-start"><div class="grow"><div style="font-weight:900">${esc(c.name)}</div><div class="meta">${esc(c.phone||"")}${c.email?" · "+esc(c.email):""}</div><div class="meta">${esc(c.address||"")}</div></div><button type="button" class="btn" data-client-action="use" data-client-id="${esc(c.id)}">Use</button><button type="button" class="btn" data-client-action="edit" data-client-id="${esc(c.id)}">Edit</button><button type="button" class="btn danger" data-client-action="delete" data-client-id="${esc(c.id)}">Delete</button></div>`).join(""):'<div style="color:#777;text-align:center;padding:20px">No clients found.</div>';
+  el.onclick=function(e){
+    const btn=e.target.closest("button[data-client-action][data-client-id]");
+    if(!btn)return;
+    e.preventDefault();e.stopPropagation();
+    const id=btn.getAttribute("data-client-id");
+    const action=btn.getAttribute("data-client-action");
+    if(action==="use")useClient(id);
+    else if(action==="edit")editClient(id);
+    else if(action==="delete")deleteClient(id);
+  };
+}
+
+function del(id){if(confirm("Delete this invoice?")){data=data.filter(x=>x.id!==id);persist();renderSaved();dashboard();toast("Invoice deleted")}}
+function renderSaved(){
+  const el=$("saved");if(!el)return;
+  el.innerHTML=data.length?data.map(x=>`<div class="saved" data-invoice-row="${esc(x.id)}"><span class="grow">${esc(x.no)} <span class="meta">${esc(x.client||"No client")} · ${esc(x.status)}</span></span><b>${x.cur}₵${Number(x.total||0).toLocaleString(undefined,{minimumFractionDigits:2})}</b><button type="button" class="btn" data-invoice-action="edit" data-invoice-id="${esc(x.id)}">Edit</button><button type="button" class="btn" data-invoice-action="view" data-invoice-id="${esc(x.id)}">View</button>${Number(x.amountPaid||0)>0?`<button type="button" class="btn primary" data-invoice-action="receipt" data-invoice-id="${esc(x.id)}">Receipt</button>`:""}<button type="button" class="btn danger" data-invoice-action="delete" data-invoice-id="${esc(x.id)}">Delete</button></div>`).join(""):'<div style="color:#777;text-align:center;padding:20px">No saved invoices.</div>';
+  el.onclick=function(e){
+    const btn=e.target.closest("button[data-invoice-action][data-invoice-id]");
+    if(!btn)return;
+    e.preventDefault();e.stopPropagation();
+    const id=btn.getAttribute("data-invoice-id");
+    const action=btn.getAttribute("data-invoice-action");
+    if(action==="edit")loadInvoice(id);
+    else if(action==="view")previewSaved(id);
+    else if(action==="receipt")showReceipt(id);
+    else if(action==="delete")del(id);
+  };
+}
+
+function previewSaved(id){loadInvoice(id);setTimeout(preview,30)}
+function invoiceStatusInfo(x){const st=String(x.status||"Draft");const due=String(x.due||"");let dueDate=/^\d{4}-\d{2}-\d{2}$/.test(due)?new Date(due+"T23:59:59"):null;const today=new Date();today.setHours(23,59,59,999);let effective=st;if(st!=="Paid"&&dueDate&&dueDate<today)effective="Overdue";let cls=effective==="Paid"?"status-paid":effective==="Overdue"?"status-overdue":effective==="Partially Paid"?"status-partial":effective==="Sent"?"status-sent":"status-draft";return{status:effective,cls,dueDate}}
+function invoiceBalance(x){return x.status==="Paid"?0:Number(x.balanceDue!=null?x.balanceDue:x.total||0)}
+function fmtMoney(v,c="GHS"){return String(c||"GHS")+"₵"+Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
+function daysFromToday(d){if(!d)return null;const a=new Date();a.setHours(0,0,0,0);const b=new Date(d);b.setHours(0,0,0,0);return Math.round((b-a)/86400000)}
+function dashboard(){
+  const infos=data.map(x=>({x,...invoiceStatusInfo(x)}));
+  const total=data.reduce((s,x)=>s+Number(x.total||0),0);
+  const paid=data.filter(x=>x.status==="Paid").reduce((s,x)=>s+Number(x.total||0),0);
+  const outstanding=infos.filter(o=>o.status!=="Paid"&&o.status!=="Draft").reduce((s,o)=>s+invoiceBalance(o.x),0);
+  const overdue=infos.filter(o=>o.status==="Overdue").reduce((s,o)=>s+invoiceBalance(o.x),0);
+  const drafts=infos.filter(o=>o.status==="Draft").length;
+  const sent=infos.filter(o=>o.status==="Sent").length;
+  const partial=infos.filter(o=>o.status==="Partially Paid").length;
