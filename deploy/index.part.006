@@ -410,8 +410,9 @@ async function hydrateCloudState(){
   initTemplates();
   initServiceCatalog();
   paintLoadedState_();
-  const restored=restoreDraft();
-  if(!restored && !data.length && !current) newInvoice();
+  const restoredLocal=restoreDraft();
+  const restoredCloud=restoredLocal?false:await restoreCloudDraft();
+  if(!restoredLocal && !restoredCloud && !data.length && !current) newInvoice();
   cloudStateHydrated=true;
   return stored;
 }
