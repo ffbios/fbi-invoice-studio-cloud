@@ -147,13 +147,13 @@ function persist(){
       serverDbOnline=true;
       lastServerPersistAt=envelope.savedAt;
       const st=$('storageStatus');
-      if(st)st.textContent='Local SQLite database is connected. Your invoices, clients and settings are stored on this computer/server.';
+      if(st)st.textContent='Cloud PostgreSQL database is connected. Your invoices, clients and settings are stored securely in the cloud.';
       return true;
     }catch(e){
       serverDbOnline=false;
       console.warn('SQLite database save failed:',e);
       const st=$('storageStatus');
-      if(st)st.textContent='Database connection unavailable. Browser fallback is being used until the local server reconnects.';
+      if(st)st.textContent='Cloud database connection unavailable. Your browser copy is being kept as a temporary fallback.';
       return false;
     }
   });
@@ -167,7 +167,7 @@ function readPersistentPayload(){
       if(body&&body.ok===false)throw new Error(body.error||'Database read failed');
       serverDbOnline=true;
       const st=$('storageStatus');
-      if(st)st.textContent='Local SQLite database is connected. Your invoices, clients and settings are restored from the database.';
+      if(st)st.textContent='Cloud PostgreSQL database is connected. Your invoices, clients and settings are restored from the cloud database.';
       return body&&body.state?parseStoredEnvelope(JSON.stringify(body.state)):null;
     })
     .catch(e=>{
@@ -177,8 +177,10 @@ function readPersistentPayload(){
     });
 }
 let serverDraftQueue=Promise.resolve();
+let cloudDraftDirty=false;
 
 function clearPersistentDraft(){
+  cloudDraftDirty=false;
   safeStorageRemove(window.localStorage,DRAFT_KEY);safeStorageRemove(window.sessionStorage,DRAFT_KEY);
   try{
     const state=readWindowNameState();
@@ -200,6 +202,7 @@ function readDraft(){
 }
 function writeDraft(draft){
   try{
+    cloudDraftDirty=true;
     const entry={savedAt:Date.now(),draft};
     const json=JSON.stringify(entry);
     safeStorageSet(window.localStorage,DRAFT_KEY,json);
@@ -275,6 +278,15 @@ async function restoreCloudDraft(){
     return false;
   }
 }
+window.addEventListener('pagehide',function(){
+  if(!cloudDraftDirty || location.protocol==='file:')return;
+  try{
+    const d=collectDraft();
+    if(!d)return;
+    const payload=JSON.stringify({savedAt:Date.now(),draft:d});
+    if(navigator.sendBeacon)navigator.sendBeacon('/api/draft',new Blob([payload],{type:'application/json'}));
+  }catch(e){}
+});
 function loadStudioFromDrive(){ return false; }
 function gsRun_(method,payload){ return Promise.resolve(null); }
 function normalizePaymentSettings(){
