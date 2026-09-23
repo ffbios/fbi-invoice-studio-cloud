@@ -334,8 +334,9 @@ function enterApp(){
   try{$("authView").hidden=true}catch(e){}
   try{sessionStorage.setItem(AUTH_SESSION,"1")}catch(e){}
   try{if(typeof refreshAppUI_==="function")refreshAppUI_()}catch(e){}
-  try{location.hash=location.hash||"#view-dashboard"}catch(e){}
-  try{show("dashboard")}catch(e){}
+  const target=cloudDraftRestoredOnStartup?"create":"dashboard";
+  try{location.hash=target==="create"?"#view-create":"#view-dashboard"}catch(e){}
+  try{show(target)}catch(e){}
 }
 async function logoutApp(){
   try{await authRequest("/api/auth/logout","POST",{})}catch(e){console.warn("Logout request failed",e)}
@@ -404,6 +405,7 @@ function paintLoadedState_(){
   if(st && !serverDbOnline)st.textContent='Cloud database is not connected. Check your internet connection and server status.';
 }
 let cloudStateHydrated=false;
+let cloudDraftRestoredOnStartup=false;
 async function hydrateCloudState(){
   const stored=await readPersistentPayload();
   init(true,stored);
@@ -412,7 +414,8 @@ async function hydrateCloudState(){
   paintLoadedState_();
   const restoredLocal=restoreDraft();
   const restoredCloud=restoredLocal?false:await restoreCloudDraft();
-  if(!restoredLocal && !restoredCloud && !data.length && !current) newInvoice();
+  cloudDraftRestoredOnStartup=!!(restoredLocal||restoredCloud);
+  if(!cloudDraftRestoredOnStartup && !data.length && !current) newInvoice();
   cloudStateHydrated=true;
   return stored;
 }
