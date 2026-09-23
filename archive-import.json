@@ -1,0 +1,191 @@
+{
+  "version": 1,
+  "importedAt": "2026-09-23",
+  "sourceDocuments": [
+    "Adobea.pdf",
+    "GII PHOTOS INVOICE.pdf",
+    "SHOOT N KISS INVOICE.pdf",
+    "SHOOTNKISS RECEIPT.pdf"
+  ],
+  "clients": [
+    {
+      "id": "archive-client-adobea-add",
+      "name": "ADOBEA ADD",
+      "phone": "233557799040",
+      "email": "",
+      "address": "ASOFA",
+      "notes": "",
+      "createdAt": "2026-09-23T00:00:00.000Z"
+    },
+    {
+      "id": "archive-client-gii-photos",
+      "name": "GII PHOTOS & FILMS",
+      "phone": "233245365801",
+      "email": "",
+      "address": "KASOA",
+      "notes": "",
+      "createdAt": "2026-09-23T00:00:00.000Z"
+    },
+    {
+      "id": "archive-client-shoot-n-kiss",
+      "name": "SHOOT N KISS",
+      "phone": "233245024722",
+      "email": "",
+      "address": "NORTH LEGON",
+      "notes": "",
+      "createdAt": "2026-09-23T00:00:00.000Z"
+    }
+  ],
+  "invoices": [
+    {
+      "id": "archive-invoice-inv0004",
+      "no": "INV0004",
+      "date": "2026-09-23",
+      "due": "On Receipt",
+      "status": "Sent",
+      "cur": "GHS",
+      "template": 100,
+      "client": "ADOBEA ADD",
+      "clientAddress": "ASOFA",
+      "clientPhone": "233557799040",
+      "clientEmail": "",
+      "items": [
+        {
+          "desc": "4-Camera Production",
+          "qty": 3,
+          "rate": 6250
+        },
+        {
+          "desc": "Photography Coverage",
+          "qty": 3,
+          "rate": 1500
+        },
+        {
+          "desc": "Workmanship",
+          "qty": 3,
+          "rate": 3000
+        }
+      ],
+      "taxRate": 0,
+      "discount": 1500,
+      "vatInclusive": true,
+      "sub": 32250,
+      "dis": 1500,
+      "tax": 0,
+      "total": 30750,
+      "payment": "Bank Name: Cal Bank\nAccount Name: FILM BEYOND IMAGINATION (FBI)\nAccount Number: 1400010238562\nBranch: Dansoman\n\nMOMO Service\n*203*0771134#\nName: (FBI) FILM BEYOND IMAGINATION",
+      "notes": "Thank you for your business.",
+      "category": "Media Works",
+      "serviceBrand": "",
+      "serviceItem": "",
+      "eventDate": "2026-09-24",
+      "rentalStart": "",
+      "rentalEnd": "",
+      "jobLocation": "",
+      "rentalRef": "",
+      "rentalUnit": "Per Day",
+      "deposit": 0,
+      "amountPaid": 0,
+      "paymentDate": "",
+      "paymentMethod": "",
+      "transactionRef": "",
+      "receivedBy": "",
+      "receiptNo": ""
+    },
+    {
+      "id": "archive-invoice-inv0005",
+      "no": "INV0005",
+      "date": "2026-09-23",
+      "due": "On Receipt",
+      "status": "Paid",
+      "cur": "GHS",
+      "template": 100,
+      "client": "SHOOT N KISS",
+      "clientAddress": "NORTH LEGON",
+      "clientPhone": "233245024722",
+      "clientEmail": "",
+      "items": [
+        {
+          "desc": "Dual Camera Streaming",
+          "qty": 1,
+          "rate": 3000
+        },
+        {
+          "desc": "Google Meet",
+          "qty": 1,
+          "rate": 0
+        }
+      ],
+      "taxRate": 0,
+      "discount": 0,
+      "vatInclusive": true,
+      "sub": 3000,
+      "dis": 0,
+      "tax": 0,
+      "total": 3000,
+      "payment": "Bank Name: Cal Bank\nAccount Name: FILM BEYOND IMAGINATION (FBI)\nAccount Number: 1400010238562\nBranch: Dansoman\n\nMOMO Service\n*203*0771134#\nName: (FBI) FILM BEYOND IMAGINATION",
+      "notes": "Thank you for your business.",
+      "category": "Live Streaming",
+      "serviceBrand": "",
+      "serviceItem": "Dual Camera Streaming",
+      "eventDate": "",
+      "rentalStart": "",
+      "rentalEnd": "",
+      "jobLocation": "",
+      "rentalRef": "",
+      "rentalUnit": "Per Day",
+      "deposit": 0,
+      "amountPaid": 3000,
+      "paymentDate": "2026-09-22",
+      "paymentMethod": "Mobile Money",
+      "transactionRef": "MOMO",
+      "receivedBy": "JERBEL MARK ADDEH",
+      "receiptNo": "REC0001"
+    },
+    {
+      "id": "archive-invoice-inv0006",
+      "no": "INV0006",
+      "date": "2026-09-23",
+      "due": "On Receipt",
+      "status": "Draft",
+      "cur": "GHS",
+      "template": 100,
+      "client": "GII PHOTOS & FILMS",
+      "clientAddress": "KASOA",
+      "clientPhone": "233245365801",
+      "clientEmail": "",
+      "items": [
+        {
+          "desc": "DRONE WORKS",
+          "qty": 3,
+          "rate": 1500
+        }
+      ],
+      "taxRate": 0,
+      "discount": 1500,
+      "vatInclusive": true,
+      "sub": 4500,
+      "dis": 1500,
+      "tax": 0,
+      "total": 3000,
+      "payment": "Bank Name: Cal Bank\nAccount Name: FILM BEYOND IMAGINATION (FBI)\nAccount Number: 1400010238562\nBranch: Dansoman\n\nMOMO Service\n*203*0771134#\nName: (FBI) FILM BEYOND IMAGINATION",
+      "notes": "Thank you for your business.",
+      "category": "Drone Works",
+      "serviceBrand": "",
+      "serviceItem": "DRONE WORKS",
+      "eventDate": "",
+      "rentalStart": "",
+      "rentalEnd": "",
+      "jobLocation": "",
+      "rentalRef": "",
+      "rentalUnit": "Per Day",
+      "deposit": 0,
+      "amountPaid": 0,
+      "paymentDate": "",
+      "paymentMethod": "",
+      "transactionRef": "",
+      "receivedBy": "",
+      "receiptNo": ""
+    }
+  ]
+}
