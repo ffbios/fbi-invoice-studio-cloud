@@ -1,0 +1,14 @@
+{
+  "name": "fbi-invoice-studio-cloud",
+  "version": "2.0.0",
+  "private": true,
+  "description": "FBI Invoice Studio cloud application with PostgreSQL persistence and server-side authentication",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node build-index.js && node server.js",
+    "migrate": "node migrate-sqlite-to-postgres.js"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
+  }
+}
