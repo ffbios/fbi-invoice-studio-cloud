@@ -1,0 +1,500 @@
+.paper.template-100 .business{display:grid;grid-template-columns:112px 1fr;gap:18px;align-items:start}
+.paper.template-100 .logo{width:112px;height:72px;background:#08090c center/contain no-repeat;border:0;border-radius:6px}
+.paper.template-100 .biz h2{font-size:19px;letter-spacing:.3px;color:#11131a;margin:2px 0 7px;font-weight:800}
+.paper.template-100 .biz div{font-size:9px;line-height:1.65;color:#5d6470}
+.paper.template-100 .invoice-meta{text-align:right;line-height:1.5}
+.paper.template-100 .invoice-meta>b{font-size:8px;letter-spacing:1.6px;color:#8a919c}
+.paper.template-100 .invoice-meta .big{font-size:24px;line-height:1.1;color:#11131a;font-weight:850;margin:3px 0 13px}
+.paper.template-100 .balance{font-size:15px;color:#11131a;font-weight:850;margin-top:3px}
+.paper.template-100 .status-pill{display:inline-block;margin-top:8px;padding:5px 10px;border-radius:999px;background:#f3f4f6;color:#303640;font-size:8px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
+.paper.template-100 .status-paid{background:#e8f7ef;color:#147a48}.paper.template-100 .status-overdue{background:#fff0f1;color:#b42332}.paper.template-100 .status-draft{background:#f0f1f3;color:#5d6470}.paper.template-100 .status-partial{background:#fff6df;color:#986b00}.paper.template-100 .status-sent{background:#edf4ff;color:#235fa9}
+.paper.template-100 .bill{padding:16px 0;border:0}
+.paper.template-100 .bill-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.paper.template-100 .info-card{background:#f7f8fa;border:1px solid #e6e8ec;border-radius:10px;padding:12px 14px;min-height:78px}
+.paper.template-100 .info-label{font-size:7px;letter-spacing:1.3px;text-transform:uppercase;font-weight:800;color:#9299a5;margin-bottom:6px}
+.paper.template-100 .bill-title{font-size:7px;letter-spacing:1.3px;color:#9299a5;margin:0 0 6px}
+.paper.template-100 .bill-name{font-size:12px;color:#15181e;font-weight:800}.paper.template-100 .bill-info{font-size:8.5px;color:#68707c;line-height:1.5;margin-top:4px}
+.paper.template-100 .invtable{margin-top:18px;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid #e4e6ea;border-radius:10px}
+.paper.template-100 .invtable th{background:#11131a;color:#fff;border:0;padding:9px 10px;font-size:7.5px;letter-spacing:.7px}
+.paper.template-100 .invtable th:first-child{border-radius:9px 0 0 0}.paper.template-100 .invtable th:last-child{border-radius:0 9px 0 0}
+.paper.template-100 .invtable td{padding:10px;border-bottom:1px solid #eceef1;font-size:9px;color:#3e4550}.paper.template-100 .invtable tr:last-child td{border-bottom:0}.paper.template-100 .invtable td:first-child{font-weight:650;color:#171a20}.paper.template-100 .invtable tbody tr:nth-child(even){background:#fafbfc}
+.paper.template-100 .lower{display:grid;grid-template-columns:1fr 270px;gap:26px;margin-top:20px;align-items:start}
+.paper.template-100 .pay{border:1px solid #e5e7eb;border-radius:10px;padding:14px;background:#fff}.paper.template-100 .pay h3{font-size:11px;color:#11131a;margin:0 0 11px}.paper.template-100 .pay h4{font-size:7px;letter-spacing:1.1px;color:#9299a5;margin:0 0 5px}.paper.template-100 .pay p{font-size:8.5px;color:#5d6470;line-height:1.55;margin:0 0 10px}
+.paper.template-100 .totals{border:1px solid #e4e6ea;border-radius:10px;padding:8px 14px;background:#fafbfc}.paper.template-100 .tl{padding:7px 0;font-size:8.5px;color:#707783}.paper.template-100 .tl b{color:#252a32}.paper.template-100 .tl.total{margin:5px -14px 0;padding:12px 14px;border:0;border-top:1px solid #e2e4e8;background:#11131a;color:#fff;font-size:11px}.paper.template-100 .tl.total b{color:#fff;font-size:13px}.paper.template-100 .tl.balance{margin:0 -14px;padding:11px 14px;border:0;border-top:1px dashed #d5d8dd;font-size:9px;color:#11131a}.paper.template-100 .tl.balance b{font-size:12px}
+.paper.template-100 .vat-note{margin-top:9px;padding:7px 10px;background:#fff8df;border-left:3px solid #c9a227;border-radius:5px;color:#745900;font-size:8px;font-weight:700}
+.paper.template-100 .rental-box{margin-top:15px;border:1px solid #e5e7eb;border-radius:10px;padding:12px;background:#fbfbfc}.paper.template-100 .rental-box .rental-title{font-size:8px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8a919c;margin-bottom:8px}.paper.template-100 .rental-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.paper.template-100 .rental-grid div{font-size:8px;color:#5d6470}.paper.template-100 .rental-grid b{display:block;color:#222730;font-size:8.5px;margin-top:3px}
+.paper.template-100 .paper-footer{margin-top:25px;padding-top:13px;border-top:1px solid #e5e7eb;line-height:1.5}.paper.template-100 .paper-footer b{font-size:7px;letter-spacing:1px;color:#8a919c}.paper.template-100 .paper-footer .two{font-size:8px;color:#68707c;margin-top:8px}.paper.template-100 .watermark{margin-top:20px;font-size:7px;color:#a4a9b1;letter-spacing:.5px}
+@media(max-width:700px){.paper.template-100 .paper-top,.paper.template-100 .bill-grid,.paper.template-100 .lower{grid-template-columns:1fr}.paper.template-100 .invoice-meta{text-align:left}.paper.template-100 .rental-grid{grid-template-columns:1fr 1fr}}
+
+/* ===== PAYMENT RECEIPTS ===== */
+.receipt-paper{width:148mm;min-height:210mm;background:#fff;color:#1a1d22;margin:auto;padding:13mm 12mm;box-shadow:0 10px 40px #0008;font-family:Arial,sans-serif;font-size:10px;position:relative}.receipt-header{display:grid;grid-template-columns:1fr 170px;gap:20px;align-items:start;border-bottom:2px solid #11131a;padding-bottom:14px}.receipt-brand{display:flex;gap:14px;align-items:flex-start}.receipt-logo{width:86px;height:56px;background:#08090c center/contain no-repeat;border-radius:4px;overflow:hidden}.receipt-biz h2{font-size:16px;line-height:1.15;margin:0 0 7px;font-weight:850}.receipt-biz div{font-size:8.5px;line-height:1.55;color:#5f6671}.receipt-meta{text-align:right}.receipt-meta .label{font-size:7px;letter-spacing:1.2px;text-transform:uppercase;color:#8a919c;font-weight:800;margin:0}.receipt-meta .receipt-no{font-size:19px;font-weight:900;color:#b18a2c;margin:4px 0 9px}.receipt-meta .date{font-size:9px;color:#3f4650}.receipt-title{margin:18px 0 10px;font-size:22px;font-weight:900;letter-spacing:1px;color:#11131a}.receipt-paid-badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:#e9f8f0;color:#167546;font-size:8px;font-weight:900;letter-spacing:.8px;text-transform:uppercase}.receipt-paid-badge.partial{background:#fff4d9;color:#8a6400}.receipt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}.receipt-info{border:1px solid #e4e6ea;border-radius:9px;padding:12px;background:#fafbfc;min-height:72px}.receipt-info .k{font-size:7px;color:#9299a5;letter-spacing:1.2px;text-transform:uppercase;font-weight:800;margin-bottom:6px}.receipt-info .v{font-size:10px;font-weight:750;line-height:1.45;color:#232830}.receipt-items{width:100%;border-collapse:collapse;margin-top:16px}.receipt-items th{font-size:7px;letter-spacing:.8px;text-transform:uppercase;text-align:left;color:#747c87;padding:8px 0;border-bottom:1px solid #cfd3d9}.receipt-items td{padding:8px 0;border-bottom:1px solid #eceef1;font-size:8.8px}.receipt-items th:not(:first-child),.receipt-items td:not(:first-child){text-align:right}.receipt-total{margin-top:18px;display:flex;justify-content:flex-end}.receipt-total-box{width:260px;border:1px solid #dfe2e6;border-radius:10px;overflow:hidden}.receipt-total-line{display:flex;justify-content:space-between;padding:8px 12px;font-size:9px}.receipt-total-line span{color:#707782}.receipt-total-line.total{background:#11131a;color:#fff;font-size:12px;font-weight:900;padding:12px}.receipt-total-line.total span{color:#fff}.receipt-total-line.balance{border-top:1px dashed #d3d6da;font-size:10px;font-weight:850}.receipt-total-line.balance b{color:#b18a2c}.receipt-note{margin-top:18px;padding:10px 12px;border-left:3px solid #b18a2c;background:#fff9e7;border-radius:5px;color:#5f4b13;font-size:8.5px;line-height:1.5}.receipt-sign{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:32px}.receipt-sign .line{border-top:1px solid #aab0b8;padding-top:6px;font-size:7.5px;color:#737b87}.receipt-footer{margin-top:28px;border-top:1px solid #e3e5e8;padding-top:10px;font-size:7.5px;color:#858d98;line-height:1.5}.receipt-footer b{color:#4c535e}.receipt-list{display:grid;gap:8px}.receipt-row{display:flex;align-items:center;gap:10px;border:1px solid #2b303b;background:#10131a;border-radius:8px;padding:10px}.receipt-row .grow{flex:1;min-width:0}.receipt-row .main{font-size:11px;font-weight:850}.receipt-row .meta{color:#727b89;font-size:9px;margin-top:3px}.receipt-row .amount{font-weight:900;font-size:11px}.receipt-empty{text-align:center;color:#737c8b;padding:24px;border:1px dashed #3a404c;border-radius:10px}@media(max-width:700px){.receipt-paper{width:100%;min-height:0;padding:8mm}.receipt-header,.receipt-grid{grid-template-columns:1fr}.receipt-meta{text-align:left}.receipt-sign{grid-template-columns:1fr}}@media print{@page{size:A5 portrait;margin:10mm}body.receipt-print-mode{background:#fff;display:block}body.receipt-print-mode .side,body.receipt-print-mode .top,body.receipt-print-mode .no-print{display:none!important}body.receipt-print-mode .view{display:none!important}body.receipt-print-mode #view-receipt-preview{display:block!important;padding:0}body.receipt-print-mode .preview-wrap{padding:0;background:#fff}body.receipt-print-mode .receipt-paper{box-shadow:none;margin:0;width:100%;min-height:0}}
+
+/* Modern authentication screen */
+body.auth-locked .side,body.auth-locked .main{display:none!important}
+#authView{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 15% 10%,rgba(216,0,91,.18),transparent 32%),radial-gradient(circle at 85% 85%,rgba(255,255,255,.06),transparent 30%),#07080d;color:#fff;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+#authView[hidden]{display:none!important}#authView:not([hidden]){display:flex!important}body.auth-locked{overflow:hidden!important}
+.auth-shell{width:min(980px,100%);min-height:610px;display:grid;grid-template-columns:1.05fr .95fr;border:1px solid rgba(255,255,255,.10);border-radius:28px;overflow:hidden;background:rgba(16,18,25,.94);box-shadow:0 30px 100px rgba(0,0,0,.55)}
+.auth-brand{padding:52px;background:linear-gradient(145deg,rgba(214,0,88,.22),rgba(11,12,18,.3));display:flex;flex-direction:column;justify-content:space-between}
+.auth-brand .auth-logo{display:flex;align-items:center;gap:13px;font-size:22px;font-weight:900}.auth-brand .auth-dot{width:13px;height:13px;border-radius:50%;background:#d9005b;box-shadow:0 0 25px rgba(217,0,91,.65)}
+.auth-brand h2{font-size:42px;line-height:1.04;margin:25px 0 14px;max-width:430px}.auth-brand p{color:#aeb4c2;line-height:1.7;max-width:430px}.auth-feature{display:grid;gap:10px;margin-top:28px}.auth-feature div{padding:13px 15px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.025);color:#d8dce6;font-size:13px}
+.auth-panel{padding:52px 46px;display:flex;align-items:center}.auth-card{width:100%;max-width:420px;margin:auto}.auth-card h3{font-size:30px;margin:0 0 8px}.auth-card .auth-sub{color:#8e96a7;margin:0 0 28px;line-height:1.55}.auth-field{margin-bottom:16px}.auth-field label{display:block;font-size:12px;color:#aab0bf;margin-bottom:7px}.auth-field input{width:100%;height:48px;border:1px solid #343a49;background:#0b0d13;color:#fff;border-radius:10px;padding:0 14px;outline:none}.auth-field input:focus{border-color:#d9005b;box-shadow:0 0 0 3px rgba(217,0,91,.12)}.auth-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:18px 0}.auth-link{border:0;background:none;color:#ff4f98;cursor:pointer;padding:4px;font:inherit}.auth-primary{width:100%;height:50px;border:0;border-radius:11px;background:#d9005b;color:#fff;font-weight:800;cursor:pointer}.auth-primary:hover{filter:brightness(1.08)}.auth-message{min-height:20px;margin:12px 0;font-size:13px;color:#f0a4a4;line-height:1.45}.auth-recovery{padding:14px;border:1px solid rgba(255,255,255,.10);background:#0b0d13;border-radius:12px;margin:15px 0;color:#cdd3df;font-size:13px}.auth-recovery code{display:block;font-size:20px;letter-spacing:2px;color:#fff;margin-top:8px;text-align:center}.auth-small{color:#737b8d;font-size:11px;margin-top:16px;line-height:1.5}.logout-btn{margin-top:14px;width:100%;height:38px}.top .danger{border-color:#5a2634;background:#24151b;color:#ff9aa8}#no[readonly]{cursor:not-allowed;opacity:.9}
+@media(max-width:760px){.auth-shell{grid-template-columns:1fr;min-height:auto}.auth-brand{display:none}.auth-panel{padding:34px 22px}.auth-card h3{font-size:26px}}
+
+/* FBI branded authentication screen */
+.auth-screen, #auth-overlay {
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255,193,7,.10), transparent 34%),
+    #080a0f !important;
+}
+.fbi-login-brand{
+  width:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin:0 auto 22px;
+  overflow:hidden;
+  border-radius:18px;
+  background:#080a0f;
+}
+.fbi-login-brand img{
+  display:block;
+  width:min(100%,420px);
+  height:auto;
+  max-height:190px;
+  object-fit:contain;
+  border-radius:16px;
+  box-shadow:0 14px 45px rgba(0,0,0,.45);
+}
+
+/* ===== FBI CINEMATIC LANDSCAPE LOGIN — FINAL DESIGN ===== */
+body.auth-locked{overflow:hidden!important}
+#authView{position:fixed!important;inset:0!important;z-index:99999!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:clamp(18px,3vw,42px)!important;background:radial-gradient(circle at 15% 20%,rgba(189,27,99,.18),transparent 28%),radial-gradient(circle at 85% 75%,rgba(225,174,70,.10),transparent 30%),#07090e!important;color:#fff!important}
+#authView[hidden]{display:none!important}
+.fbi-auth-shell{width:min(1260px,96vw);height:min(760px,88vh);min-height:620px;display:grid;grid-template-columns:1.12fr .88fr;overflow:hidden;position:relative;border:1px solid rgba(255,255,255,.16);border-radius:26px;background:#0d1016;box-shadow:0 35px 100px rgba(0,0,0,.65),0 0 80px rgba(189,27,99,.08)}
+.fbi-auth-visual{position:relative;overflow:hidden;min-width:0;background:#07080c}
+.fbi-auth-visual-bg{position:absolute;inset:0;background-image:url("assets/login-bg.png");background-size:200% 100%;background-position:left center;background-repeat:no-repeat;filter:saturate(.9) contrast(1.05);transform:scale(1.015)}
+.fbi-auth-visual-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.12),rgba(0,0,0,.06) 58%,rgba(7,9,14,.34)),linear-gradient(180deg,rgba(7,9,14,.05),rgba(7,9,14,.18))}
+.fbi-auth-visual-content{position:relative;z-index:2;height:100%;padding:48px;display:flex;flex-direction:column;justify-content:space-between}
+.fbi-auth-kicker{font-size:10px;letter-spacing:3px;line-height:1.9;color:#e8e9ed;max-width:330px;text-transform:uppercase}
+.fbi-auth-logo-wrap{width:min(430px,80%);margin-top:28px}.fbi-auth-logo-wrap img{width:100%;height:auto;display:block;filter:drop-shadow(0 12px 22px rgba(0,0,0,.45))}
+.fbi-auth-tagline{font-family:cursive;font-style:italic;font-size:34px;line-height:1.05;color:#e5b83f;text-shadow:0 3px 18px #000;margin-top:12px;max-width:280px}
+.fbi-auth-benefits{display:grid;grid-template-columns:repeat(4,1fr);gap:0;max-width:650px;margin-top:auto;padding-top:30px}
+.fbi-auth-benefits>div{padding:0 20px;border-right:1px solid rgba(255,255,255,.24);display:flex;flex-direction:column;gap:4px}.fbi-auth-benefits>div:first-child{padding-left:0}.fbi-auth-benefits>div:last-child{border-right:0}.fbi-auth-benefits span{font-size:22px;color:#e5b83f}.fbi-auth-benefits b{font-size:12px;letter-spacing:1px}.fbi-auth-benefits small{font-size:10px;color:#aeb5c2}
+.fbi-auth-panel{position:relative;background:linear-gradient(145deg,#11151c,#0b0e14);padding:46px 56px;display:flex;flex-direction:column;justify-content:center}
+.fbi-auth-panel-top{display:flex;align-items:center;gap:12px;margin-bottom:42px}.fbi-auth-dot{width:13px;height:13px;border-radius:50%;background:#d01963;box-shadow:0 0 22px rgba(208,25,99,.6)}.fbi-auth-panel-top strong{display:block;font-size:14px;letter-spacing:1.5px}.fbi-auth-panel-top small{display:block;color:#8e96a5;font-size:11px;margin-top:4px}
+.fbi-auth-card{width:100%;max-width:470px;margin:0 auto}.fbi-auth-card h3{font-size:38px;line-height:1.1;margin:0 0 9px;letter-spacing:-.8px}.fbi-auth-card .auth-sub{font-size:14px;color:#929aa9;line-height:1.55;margin:0 0 28px}.fbi-auth-card .auth-field{margin-bottom:16px}.fbi-auth-card .auth-field label{display:block;font-size:11px;color:#b0b6c3;margin:0 0 7px}.fbi-auth-card .auth-field input{height:54px;background:#0b0f15;border:1px solid #37404e;border-radius:10px;padding:0 15px;color:#fff;font-size:13px}.fbi-auth-card .auth-field input:focus{border-color:#d01963;box-shadow:0 0 0 3px rgba(208,25,99,.12)}
+.fbi-password-wrap{position:relative}.fbi-password-wrap input{padding-right:52px!important}.fbi-eye{position:absolute;right:7px;top:7px;height:40px;width:40px;border:0;background:transparent;color:#aab1bf;cursor:pointer}.fbi-eye:hover{color:#fff}
+.fbi-auth-card .auth-actions{display:flex;align-items:center;justify-content:space-between;margin:17px 0 20px}.fbi-remember{display:flex!important;align-items:center;gap:8px!important;color:#c3c8d2!important;font-size:12px!important;margin:0!important;cursor:pointer}.fbi-remember input{width:16px!important;height:16px!important;accent-color:#d01963;cursor:pointer}
+.auth-link{border:0;background:none;color:#e72b78;cursor:pointer;padding:3px;font-size:12px}.auth-primary{width:100%;height:54px;border:0;border-radius:10px;background:linear-gradient(90deg,#bd0e56,#dc176d);color:#fff;font-weight:900;letter-spacing:.2px;cursor:pointer;box-shadow:0 12px 28px rgba(189,14,86,.22)}.auth-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.fbi-or{display:flex;align-items:center;gap:12px;margin:25px 0}.fbi-or span{height:1px;background:#303744;flex:1}.fbi-or b{font-size:10px;color:#87909f;font-weight:500}.fbi-create{width:100%;height:52px;border:1px solid #8d939d;border-radius:9px;background:transparent;color:#fff;font-weight:800;cursor:pointer}.fbi-create:hover{border-color:#e5b83f;color:#e5b83f}
+.auth-message{min-height:20px;margin:12px 0;font-size:12px;color:#f0a4a4;line-height:1.45}.fbi-quote{text-align:center;color:#7e8695;font-size:11px;font-style:italic;letter-spacing:.5px;margin-top:30px}.fbi-auth-panel-foot{position:absolute;left:56px;right:56px;bottom:20px;display:flex;justify-content:space-between;gap:15px;color:#646d7d;font-size:9px}
+@media(max-width:980px){.fbi-auth-shell{width:96vw;height:90vh;grid-template-columns:1fr .9fr}.fbi-auth-visual-content{padding:32px}.fbi-auth-panel{padding:34px}.fbi-auth-card h3{font-size:31px}.fbi-auth-panel-foot{left:34px;right:34px}}
+@media(max-width:760px){#authView{padding:12px!important}.fbi-auth-shell{width:100%;height:100%;min-height:0;max-height:none;grid-template-columns:1fr;border-radius:18px}.fbi-auth-visual{display:none}.fbi-auth-panel{padding:32px 24px}.fbi-auth-panel-top{margin-bottom:28px}.fbi-auth-card h3{font-size:30px}.fbi-auth-panel-foot{position:static;margin-top:28px;flex-direction:column;text-align:center}}
+
+
+/* Final invoice readability override: line items are intentionally larger and bolder. */
+.paper .invtable th{font-size:12px !important}
+.paper .invtable td{font-size:14px !important;font-weight:600 !important}
+.paper .pay p,.paper .bill-info,.paper .invoice-meta,.paper .paper-footer{font-size:12px}
+</style>
+
+<script>
+(function(){
+  window.__FBI_NAV__=function(v){
+    try{
+      document.querySelectorAll('.view').forEach(function(el){el.classList.remove('active','print-view');});
+      var target=document.getElementById('view-'+v);
+      if(target) target.classList.add('active');
+      document.querySelectorAll('.nav button').forEach(function(btn){btn.classList.toggle('active',btn.getAttribute('data-v')===v);});
+      var titles={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']};
+      var t=titles[v]||['Invoice Studio',''];
+      var title=document.getElementById('title'); if(title) title.textContent=t[0];
+      var sub=document.getElementById('subtitle'); if(sub) sub.textContent=t[1];
+      var side=document.getElementById('side'); if(side) side.classList.remove('open');
+      // Call application-specific renderers if they exist.
+      try{ if(v==='dashboard' && typeof window.dashboard==='function') window.dashboard(); }catch(e){}
+      try{ if(v==='clients' && typeof window.renderClients==='function') window.renderClients(); }catch(e){}
+      try{ if(v==='saved' && typeof window.renderSaved==='function') window.renderSaved(); }catch(e){}
+      try{ if(v==='receipts' && typeof window.renderReceipts==='function') window.renderReceipts(); }catch(e){}
+      try{ if(v==='create' && typeof window.populateClientSelect==='function') window.populateClientSelect(); }catch(e){}
+      return false;
+    }catch(e){console.error('Navigation error',e);return false;}
+  };
+})();
+</script>
+<script>
+(function(){
+ function sync(){
+  var id=location.hash.replace(/^#/,'');
+  var valid={dashboard:1,create:1,clients:1,saved:1,receipts:1,settings:1,whatsapp:1};
+  var v=id.replace(/^view-/,''); if(!valid[v]) v='dashboard';
+  document.querySelectorAll('.nav-link').forEach(function(a){a.classList.toggle('active',a.dataset.v===v);});
+  var title={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']}[v];
+  if(document.getElementById('title')) document.getElementById('title').textContent=title[0];
+  if(document.getElementById('subtitle')) document.getElementById('subtitle').textContent=title[1];
+  try{if(v==='create' && typeof initServiceCatalog==='function')initServiceCatalog();}catch(e){}
+ }
+ window.addEventListener('hashchange',sync);
+ document.addEventListener('DOMContentLoaded',sync);
+})();
+</script>
+</head>
+<body>
+<div id="authView" hidden aria-label="FBI Invoice Studio authentication">
+  <div class="fbi-auth-shell">
+    <section class="fbi-auth-visual" aria-label="FBI branding">
+      <div class="fbi-auth-visual-bg"></div>
+      <div class="fbi-auth-visual-overlay"></div>
+      <div class="fbi-auth-visual-content">
+        <div class="fbi-auth-kicker">PRODUCTION · LIVE STREAMING · PHOTOGRAPHY · ADVERTISING · DRONE WORKS</div>
+        <div class="fbi-auth-logo-wrap">
+          <img src="assets/fbi-logo-default.jpg" alt="FBI — Film Beyond Imagination">
+        </div>
+        <div class="fbi-auth-tagline">Turning Ideas Into Reality</div>
+        <div class="fbi-auth-benefits">
+          <div><span>▣</span><b>INVOICES</b><small>Professional</small></div>
+          <div><span>♧</span><b>CLIENTS</b><small>Organised</small></div>
+          <div><span>☁</span><b>CLOUD</b><small>Local Storage</small></div>
+          <div><span>▥</span><b>GROWTH</b><small>Simplified</small></div>
+        </div>
+      </div>
+    </section>
+    <section class="fbi-auth-panel">
+      <div class="fbi-auth-panel-top"><span class="fbi-auth-dot"></span><div><strong>FBI INVOICE STUDIO</strong><small>Your Business. Our Technology.</small></div></div>
+      <div class="fbi-auth-card">
+        <div id="loginPanel">
+          <h3 id="authTitle">Welcome Back</h3>
+          <p class="auth-sub" id="authSub">Sign in to access your invoicing workspace.</p>
+          <form id="authForm" onsubmit="return handleAuth(event)">
+            <div class="auth-field"><label>Username</label><input id="authUser" autocomplete="username" required placeholder="Enter your username"></div>
+            <div class="auth-field"><label>Password</label><div class="fbi-password-wrap"><input id="authPass" type="password" autocomplete="current-password" required placeholder="Enter your password"><button type="button" class="fbi-eye" onclick="togglePasswordField('authPass',this)" aria-label="Show password">◉</button></div></div>
+            <div class="auth-field" id="authConfirmWrap" style="display:none"><label>Confirm Password</label><input id="authPassConfirm" type="password" autocomplete="new-password" placeholder="Confirm your password"></div>
+            <div class="auth-actions">
+              <label class="fbi-remember"><input type="checkbox" id="rememberMe"> <span>Remember me</span></label>
+              <button type="button" class="auth-link" onclick="showForgotPassword()">Forgot password?</button>
+            </div>
+            <button class="auth-primary" id="authSubmit" type="submit">Sign In</button>
+            <div class="fbi-or"><span></span><b>OR</b><span></span></div>
+            <button type="button" class="fbi-create" id="createAccountLink" onclick="switchToCreateAccount()">＋ &nbsp;Create Account</button>
+            <div id="authMsg" class="auth-message"></div>
+          </form>
+          <div class="fbi-quote">“Tools for a more organised creative business.”</div>
+        </div>
+        <div id="forgotPanel" style="display:none">
+          <h3>Reset Your Password</h3>
+          <p class="auth-sub">Use the recovery code generated when your account was created.</p>
+          <div class="auth-field"><label>Username</label><input id="forgotUser" autocomplete="username"></div>
+          <div class="auth-field"><label>Recovery Code</label><input id="forgotCode" autocomplete="off" placeholder="XXXX-XXXX-XXXX-XXXX"></div>
+          <div class="auth-field"><label>New Password</label><input id="forgotNew" type="password" autocomplete="new-password"></div>
+          <div class="auth-field"><label>Confirm New Password</label><input id="forgotNewConfirm" type="password" autocomplete="new-password"></div>
+          <button class="auth-primary" type="button" onclick="resetPasswordWithRecovery()">Reset Password</button>
+          <div id="forgotMsg" class="auth-message"></div>
+          <div class="auth-actions"><button type="button" class="auth-link" onclick="hideForgotPassword()">← Back to sign in</button></div>
+        </div>
+      </div>
+      <div class="fbi-auth-panel-foot"><span>© 2026 FBI Invoice Studio. All rights reserved.</span><span>Accra, Ghana&nbsp; | &nbsp;Film Beyond Imagination</span></div>
+    </section>
+  </div>
+</div>
+<aside class="side" id="side">
+  <div class="brand"><span class="dot"></span><div>Invoice Studio<small>Professional invoicing system</small></div></div>
+  <div class="nav">
+    <button type="button" class="nav-link active" data-v="dashboard" onclick="show('dashboard')">📊 Overview</button>
+    <button type="button" class="nav-link" data-v="create" onclick="show('create')">🧾 Create Invoice</button>
+    <button type="button" class="nav-link" data-v="clients" onclick="show('clients')">👥 Client Database</button>
+    <button type="button" class="nav-link" data-v="saved" onclick="show('saved')">💾 Saved Invoices</button>
+    <button type="button" class="nav-link" data-v="receipts" onclick="show('receipts')">🧾 Official Receipts</button>
+    <button type="button" class="nav-link" data-v="settings" onclick="show('settings')">⚙️ Business Settings</button>
+    <button type="button" class="nav-link" data-v="whatsapp" onclick="show('whatsapp')">📱 WhatsApp Alerts</button>
+  </div>
+  <div class="sidefoot">Invoices are stored in this browser.<br>Print to PDF for a clean A4 document.</div>
+</aside>
+<main class="main">
+<header class="top no-print">
+  <div style="display:flex;align-items:center;gap:10px"><button class="btn hamb" style="display:none" onclick="side.classList.toggle('open')">☰</button><div><h1 id="title">Overview</h1><small id="subtitle">Your invoicing control center</small></div></div>
+  <div style="display:flex;align-items:center;gap:7px"><button class="btn" onclick="newInvoice()">New Invoice</button><button class="btn primary" onclick="newInvoice()">＋ Create Invoice</button><button class="btn danger" onclick="logoutApp()">Sign Out</button></div>
+</header>
+
+<section class="view active" id="view-dashboard">
+  <div class="report-toolbar"><button class="btn primary" type="button" onclick="openReportModal()">📊 Generate Report</button></div>
+  <div class="stats dashboard-stats">
+    <div class="stat"><span>Total Invoices</span><b id="sCount">0</b><small id="sCountMeta">All records</small></div>
+    <div class="stat"><span>Total Invoiced</span><b id="sInvoiced">GHS₵0.00</b><small id="sInvoicedMeta">All saved invoices</small></div>
+    <div class="stat"><span>Paid</span><b id="sPaid">GHS₵0.00</b><small id="sPaidMeta">0 invoices</small></div>
+    <div class="stat"><span>Outstanding</span><b class="accent" id="sDue">GHS₵0.00</b><small id="sDueMeta">0 invoices</small></div>
+    <div class="stat"><span>Overdue</span><b id="sOverdue">GHS₵0.00</b><small id="sOverdueMeta">0 invoices</small></div>
+    <div class="stat"><span>Due Soon</span><b id="sDueSoon">GHS₵0.00</b><small id="sDueSoonMeta">Next 7 days</small></div>
+    <div class="stat"><span>Drafts</span><b id="sDraft">0</b><small id="sDraftMeta">Not yet sent</small></div>
+    <div class="stat"><span>Clients</span><b id="sClients">0</b><small id="sClientsMeta">Client database</small></div>
+  </div>
+
+  <div class="grid2 dashboard-main-grid">
+    <div class="card">
+      <h3>System Overview</h3>
+      <div class="overview-grid">
+        <div class="overview-item"><span>Sent / Awaiting Payment</span><b id="ovSent">0</b></div>
+        <div class="overview-item"><span>Partially Paid</span><b id="ovPartial">0</b></div>
+        <div class="overview-item"><span>Paid Invoices</span><b id="ovPaid">0</b></div>
+        <div class="overview-item"><span>Overdue Invoices</span><b id="ovOverdue">0</b></div>
+        <div class="overview-item"><span>Draft Invoices</span><b id="ovDraft">0</b></div>
+        <div class="overview-item"><span>Collection Rate</span><b id="ovCollection">0%</b></div>
+        <div class="overview-item"><span>Average Invoice</span><b id="ovAverage">GHS₵0.00</b></div>
+        <div class="overview-item"><span>Equipment Rental Invoices</span><b id="ovRentals">0</b></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Needs Attention</h3>
+      <div id="attentionList" class="attention-list"></div>
+    </div>
+  </div>
+
+  <div class="card recent">
+    <div class="dashboard-section-head"><div><h3 style="margin-bottom:3px">Recent Invoices</h3><small>Every invoice shows its current status, client, dates, amount and outstanding position.</small></div><button class="btn" onclick="show('saved')">View All Invoices →</button></div>
+    <div class="invoice-table-wrap">
+      <table class="dashboard-table">
+        <thead><tr><th>Invoice</th><th>Client</th><th>Date</th><th>Due</th><th>Status</th><th>Amount</th><th>Balance</th><th></th></tr></thead>
+        <tbody id="recent"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>Upcoming & Overdue</h3>
+      <div id="dueList" class="due-list"></div>
+    </div>
+    <div class="card">
+      <h3>Client & Activity Summary</h3>
+      <div class="summary-lines">
+        <div><span>Clients in Database</span><b id="sumClients">0</b></div>
+        <div><span>Invoices With Clients</span><b id="sumClientInvoices">0</b></div>
+        <div><span>Invoices Without Client</span><b id="sumNoClient">0</b></div>
+        <div><span>Latest Invoice</span><b id="sumLatest">—</b></div>
+        <div><span>Latest Client</span><b id="sumLatestClient">—</b></div>
+        <div><span>Data Stored</span><b>Browser Local Storage</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Overview Reports Modal -->
+<div class="report-modal no-print" id="reportModal" aria-hidden="true">
+  <div class="report-dialog">
+    <div class="report-head">
+      <div><h3>Overview Report Generator</h3><small>Generate a report from your saved Invoice Studio records.</small></div>
+      <button class="btn" type="button" onclick="closeReportModal()">✕ Close</button>
+    </div>
+    <div class="report-body">
+      <div class="report-filters">
+        <div><label>From Date</label><input id="reportFrom" type="date"></div>
+        <div><label>To Date</label><input id="reportTo" type="date"></div>
+        <div><label>Status</label><select id="reportStatus"><option value="">All Statuses</option><option value="Draft">Draft</option><option value="Sent">Sent</option><option value="Partially Paid">Partially Paid</option><option value="Paid">Paid</option><option value="Overdue">Overdue</option></select></div>
+        <div><label>Client</label><select id="reportClient"><option value="">All Clients</option></select></div>
+        <div><label>Category</label><select id="reportCategory"><option value="">All Categories</option></select></div>
+      </div>
+      <div class="report-actions">
+        <button class="btn" type="button" onclick="resetReportFilters()">Reset</button>
+        <button class="btn" type="button" onclick="updateReportPreview()">Refresh Report</button>
+        <button class="btn" type="button" onclick="exportReportCsv()">⬇ Export CSV</button>
+        <button class="btn primary" type="button" onclick="printOverviewReport()">🖨 Print / Save PDF</button>
+      </div>
+      <div class="report-preview" id="reportPreview"></div>
+    </div>
+  </div>
+</div>
+
+<section class="view" id="view-create">
+<div class="card service-selector-card" id="catalogPanel">
+  <h3>Invoice Category & Quick Equipment / Service Selection</h3>
+  <div class="grid2">
+    <div>
+      <label>Service Category</label>
+      <select id="serviceCategory"><option value="">Select a service category...</option></select>
+    </div>
+    <div>
+      <label>Brand / Model Group</label>
+      <select id="brandModelFilter"><option value="">All Brands / Models</option></select>
+      <label>Search Item</label>
+      <input id="itemSearch" type="search" placeholder="Type to filter items..." autocomplete="off">
+      <label>Select Item</label>
+      <select id="catalogItemSelect" size="6" style="width:100%;min-height:150px"><option value="">Select a category first...</option></select>
+    </div>
+  </div>
+  <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">
+    <button type="button" class="btn primary" id="addSelectedCatalogBtn">＋ Add Selected Item</button>
+    <button type="button" class="btn" id="addCategoryItemsBtn">＋ Add 25 From Group</button>
+  </div>
+  <small id="catalogCount" style="display:block;color:#777;margin-top:7px"></small>
+</div>
+
+  <div class="card" id="eventDateCard" style="display:none">
+    <h3>Event Details</h3>
+    <div class="grid2">
+      <div>
+        <label>Event Date</label>
+        <input id="eventDate" type="date">
+      </div>
+      <div>
+        <label>Event Date Status</label>
+        <div id="eventDateHint" style="padding:9px 10px;border:1px solid #303642;border-radius:7px;background:#0b0d12;color:#858e9f;font-size:12px">
+          Select an event date for this service category.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Invoice Header</h3>
+    <div class="grid2">
+      <div><label>Invoice Number</label><input id="no" readonly aria-readonly="true" title="Invoice numbers are assigned automatically"><div class="row"><div><label>Date</label><input id="date" type="date"></div><div><label>Due</label><input id="due" type="text" value="On Receipt"></div></div></div>
+      <div><label>Status</label><select id="status"><option>Draft</option><option>Sent</option><option>Paid</option><option>Partially Paid</option><option>Overdue</option></select><label>Currency</label><select id="cur"><option>GHS</option><option>USD</option><option>EUR</option><option>GBP</option></select><label>Invoice Template</label><select id="template"><option value="classic">Classic Professional</option><option value="modern">Modern Studio</option><option value="minimal">Minimal Executive</option><option value="bold">Bold Premium</option><option value="elegant">Elegant Creative</option></select><div class="template-picker no-print">
+<div class="template-card" data-template-card="classic"><b>Classic</b><span>Clean business layout</span></div>
+<div class="template-card" data-template-card="modern"><b>Modern</b><span>Contemporary studio look</span></div>
+<div class="template-card" data-template-card="minimal"><b>Minimal</b><span>Quiet executive style</span></div>
+<div class="template-card" data-template-card="bold"><b>Bold</b><span>Strong premium header</span></div>
+<div class="template-card" data-template-card="elegant"><b>Elegant</b><span>Refined creative style</span></div>
+</div></div>
+    </div>
+  </div>
+  <div class="card"><h3>Bill To</h3>
+    <div style="display:flex;gap:8px;align-items:end;margin-bottom:4px"><div style="flex:1"><label>Select Existing Client</label><select id="clientSelect" onchange="applySelectedClient()"><option value="">— New / Manual Client —</option></select></div><button class="btn" onclick="show('clients')">＋ Client Database</button><button class="btn" onclick="saveCurrentClient()">Save Client</button></div>
+    <div class="grid2"><div><label>Client Name</label><input id="client" placeholder="Chris"><label>Client Address</label><textarea id="clientAddress" rows="2"></textarea></div><div><label>Phone</label><input id="clientPhone"><label>Email</label><input id="clientEmail"></div></div>
+  </div>
+  <div class="card" id="rentalDetailsCard" style="display:none">
+    <h3>Equipment Rental Details</h3>
+    <div class="grid2">
+      <div><label>Rental Start</label><input id="rentalStart" type="date"><label>Rental End / Return</label><input id="rentalEnd" type="date"><label>Job / Delivery Location</label><input id="jobLocation" placeholder="Event venue / production location"></div>
+      <div><label>Rental Agreement / Reference</label><input id="rentalRef" placeholder="Agreement or booking reference"><label>Pricing Unit</label><select id="rentalUnit"><option>Per Hour</option><option selected>Per Day</option><option>Per Week</option><option>Per Month</option><option>Per Event</option></select><label>Security Deposit</label><input id="deposit" type="number" min="0" step=".01" value="0"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Invoice Items</h3>
+    <div class="items-head"><div>Description</div><div>Rate</div><div>Qty</div><div>Amount</div><div></div></div>
+    <div id="items"></div><button class="btn" onclick="addItem()">＋ Add Item</button>
+    <div style="max-width:330px;margin:16px 0 0 auto">
+      <div class="row"><label style="flex:1">Tax (%)<input id="tax" type="number" min="0" step=".01" value="20" oninput="calc()"></label><label style="flex:1">Discount<input id="discount" type="number" min="0" step=".01" value="0" oninput="calc()"></label></div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid #343a46;padding-top:10px;font-size:16px;font-weight:900"><span>Total</span><span id="total">GHS 0.00</span></div>
+    </div>
+  </div>
+  <div class="card"><h3>Payment Info</h3><textarea id="payment" rows="6" placeholder="Bank Name: Cal Bank&#10;Account Name: FILM BEYOND IMAGINATION (FBI)&#10;Account Number: 1400010238562&#10;Branch: Dansoman&#10;&#10;Momo service Name: MTN&#10;Momo Number: 0257407350&#10;Account Name: Jerbel Mark Addeh"></textarea><label>Additional Notes</label><textarea id="notes" rows="3"></textarea><label style="display:flex;align-items:center;gap:8px;margin-top:12px"><input id="vatInclusive" type="checkbox" style="width:auto" checked> Show note: <b>This invoice is VAT inclusive.</b></label>
+    <div class="no-print" style="display:flex;gap:7px;margin-top:12px"><button class="btn" onclick="save()">💾 Save Invoice</button><button class="btn primary" onclick="preview()">👁 Preview</button><button class="btn" onclick="printInvoice()">🖨 Print / PDF</button><button class="btn primary no-print" type="button" onclick="savePdfToDrive()">Print / Save Invoice PDF</button></div>
+  </div>
+  <div class="card"><h3>Payment Received & Official Receipt</h3><div class="grid2"><div><label>Amount Paid</label><input id="amountPaid" type="number" min="0" step="0.01" value="0" placeholder="0.00"><label>Payment Date</label><input id="paymentDate" type="date"><label>Payment Method</label><select id="paymentMethod"><option>Cash</option><option selected>Mobile Money</option><option>Bank Transfer</option><option>Card</option><option>Cheque</option><option>Other</option></select></div><div><label>Transaction / Payment Reference</label><input id="transactionRef" placeholder="Bank / MoMo / card / payment reference"><label>Received By</label><input id="receivedBy" placeholder="Accounts / Cashier"><label>Receipt Number</label><input id="receiptNo" readonly placeholder="Generated when payment is recorded"></div></div><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:12px;padding:11px 12px;border:1px solid #303642;background:#0e1117;border-radius:8px"><div><div style="font-size:9px;color:#858e9f;text-transform:uppercase;letter-spacing:.7px">Remaining Balance</div><b id="paymentBalancePreview" style="font-size:15px">GHS₵0.00</b></div><button class="btn primary" onclick="recordPayment()">🧾 Record Payment & Generate Receipt</button></div><small style="display:block;color:#727b89;font-size:9px;line-height:1.5;margin-top:8px">A professional payment receipt is generated from the recorded payment and linked to this invoice. Partial payments generate a receipt for the amount actually received.</small></div>
+</section>
+
+<section class="view" id="view-receipts"><div class="card"><div class="dashboard-section-head"><div><h3 style="margin-bottom:3px">Official Payment Receipts</h3><small>Print a professional receipt for every payment recorded against an invoice.</small></div><button class="btn" onclick="show('saved')">View Invoices →</button></div><div id="receiptList" class="receipt-list"></div></div></section>
+
+<section class="view" id="view-clients">
+  <div class="grid2">
+    <div class="card">
+      <h3>Client Database</h3>
+      <label>Search Clients</label><input id="clientSearch" placeholder="Search name, phone or email" oninput="renderClients()">
+      <div style="margin-top:10px;padding:10px;border:1px dashed #343a46;border-radius:8px;background:#0b0e13">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+          <div><b style="color:#fff">Import Client Data</b><div style="font-size:9px;color:#7f8794;margin-top:3px">Upload CSV or JSON. CSV columns: Name, Phone, Email, Address, Notes.</div></div>
+          <input id="clientImportFile" type="file" accept=".csv,.txt,.json" onchange="importClientsFile(event)" style="max-width:230px">
+        </div>
+        <div id="clientImportStatus" style="font-size:9px;color:#8e97a6;margin-top:7px"></div>
+      </div>
+      <div id="clientList" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <h3 id="clientFormTitle">Add Client</h3>
+      <input id="clientId" type="hidden">
+      <label>Client / Company Name *</label><input id="dbClientName" placeholder="Client or company name">
+      <label>Phone</label><input id="dbClientPhone" placeholder="0250000000">
+      <label>Email</label><input id="dbClientEmail" type="email" placeholder="client@example.com">
+      <label>Address</label><textarea id="dbClientAddress" rows="3" placeholder="Client address"></textarea>
+      <label>Notes</label><textarea id="dbClientNotes" rows="3" placeholder="Additional client notes"></textarea>
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn primary" onclick="saveClient()">Save Client</button><button class="btn" onclick="clearClientForm()">Clear</button></div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="view-saved"><div class="card"><h3>Saved Invoices</h3><div id="saved"></div></div></section>
+
+<section class="view" id="view-settings">
+  <div class="card" id="dataBackupCard"><h3>Local Data Protection</h3><div style="font-size:10px;color:#858e9f;line-height:1.6">Invoice Studio stores your invoices, clients and settings in the local SQLite database. Draft work is also autosaved so a refresh does not erase what you were entering.</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn" type="button" onclick="exportStudioBackup()">Export Data Backup</button><label class="btn" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">Import Data Backup<input type="file" accept=".json,application/json" onchange="importStudioBackup(event)" style="display:none"></label></div><small id="storageStatus" style="display:block;color:#6f7888;margin-top:8px"></small></div>
+  <div class="grid2">
+    <div class="card"><h3>Business Details</h3><label>Business Name</label><input id="biz" value="FILM BEYOND IMAGINATION (FBI)"><label>Owner / Contact Name</label><input id="owner" value="Jerbel Mark Addeh"><label>Address</label><input id="baddr" value="Dome, Accra"><label>Phone</label><input id="bphone" value="0257407350"><label>Email</label><input id="bemail" value="filmbfbi@gmail.com"><label>Business Number</label><input id="bnum" value="0257407350"></div>
+    <div class="card"><h3>Logo & Default Payment</h3><label>Invoice Logo</label><div style="display:flex;align-items:center;gap:10px;margin:6px 0 10px"><div style="width:92px;height:52px;border-radius:6px;background:#08090c center/contain no-repeat url('assets/fbi-logo-default.jpg');border:1px solid #303642"></div><small style="color:#858e9f">FBI gold logo is set as the default. Upload another image only if you want to replace it.</small></div><input id="logoFile" type="file" accept="image/*"><label>Default Payment Information</label><textarea id="defaultPay" rows="10">Bank Name: Cal Bank
+Account Name: FILM BEYOND IMAGINATION (FBI)
+Account Number: 1400010238562
+Branch: Dansoman
+
+MOMO Service
+*203*0771134#
+Name: (FBI) FILM BEYOND IMAGINATION</textarea><button class="btn primary" onclick="saveSettings()">Save Settings</button></div>
+    <div class="card"><h3>Account Recovery</h3><p style="color:#858e9f;font-size:11px;line-height:1.5">Your local password recovery uses a private recovery code. Keep it offline and do not share it.</p><div style="display:flex;gap:8px;align-items:center"><input id="recoveryDisplay" readonly placeholder="Recovery code hidden"><button class="btn" onclick="showRecoveryCode()">Show Code</button><button class="btn danger" onclick="regenerateRecoveryCode()">Regenerate</button></div></div>
+  </div>
+</section>
+
+
+<section class="view" id="view-whatsapp">
+  <div class="card">
+    <h3>WhatsApp Invoice Alerts</h3>
+    <div class="grid2">
+      <div>
+        <label>Enable automatic invoice notifications</label>
+        <select id="waEnabled">
+          <option value="yes">Enabled</option>
+          <option value="no">Disabled</option>
+        </select>
+        <label>Notification number</label>
+        <input id="waRecipient" value="233257407350" placeholder="233257407350">
+        <small style="color:#777;display:block;margin-top:5px">Use international format without + or spaces.</small>
+        <label>Backend API URL</label>
+        <input id="waApiUrl" value="/api/whatsapp/invoice-created" readonly>
+      </div>
+      <div>
+        <label>WhatsApp template name</label>
+        <input id="waTemplate" value="hello_world" placeholder="hello_world">
+        <label>Template language</label>
+        <input id="waLanguage" value="en_US">
+        <label>Notification events</label>
+        <select id="waEvent">
+          <option value="created">Invoice created</option>
+          <option value="created_paid">Invoice created or marked paid</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:15px;padding:12px;border:1px solid #343a46;background:#0d1016;border-radius:8px;color:#aab1bd;font-size:11px;line-height:1.6">
+      <b style="color:#fff">How it works:</b><br>
+      When an invoice is saved, Invoice Studio sends the invoice details to your secure backend. The backend sends the WhatsApp message through the WhatsApp Business Cloud API. Your Meta access token stays on the server and is never stored in this HTML file.
+    </div>
+    <div class="no-print" style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn primary" onclick="saveWhatsAppSettings()">Save WhatsApp Settings</button>
+      <button class="btn" onclick="testWhatsApp()">📱 Send Test Alert</button> <button class="btn" onclick="window.open('http://127.0.0.1:3000/health','_blank')">🔎 Server Health</button>
+    </div>
+    <div id="waStatus" style="margin-top:10px;color:#777;font-size:11px;white-space:pre-wrap"></div>
+    <div style="margin-top:12px;padding:12px;border:1px solid #343a46;background:#0b0e13;border-radius:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="color:#fff">WhatsApp Debug Log</b><button class="btn" onclick="refreshWhatsAppDebug()">↻ Refresh Log</button></div>
+      <pre id="waDebug" style="max-height:260px;overflow:auto;white-space:pre-wrap;color:#aab1bd;font-size:10px;margin:10px 0 0">No log yet.</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Recommended Meta Setup</h3>
+    <ol style="font-size:11px;color:#aab1bd;line-height:1.8">
+      <li>Create/verify your Meta Business portfolio and WhatsApp Business Account.</li>
+      <li>Add/register the WhatsApp Business phone number you want to use for sending.</li>
+      <li>Create an approved WhatsApp utility template named <b>invoice_created</b>.</li>
+      <li>Put your Meta access token and WhatsApp Phone Number ID in the backend server, not in this HTML.</li>
+      <li>Run the backend and set its public URL above.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="view print-view" id="view-preview">
+  <div class="no-print" style="padding:12px 24px;background:#11141b;border-bottom:1px solid #2b303c;display:flex;gap:7px"><button class="btn" onclick="show('create')">← Edit</button><button class="btn primary" onclick="printInvoice()">🖨 Print / Save PDF</button><button class="btn" onclick="save()">💾 Save</button></div>
+  <div class="preview-wrap"><div class="paper" id="paper"></div></div>
+</section>
+
+<section class="view print-view" id="view-receipt-preview"><div class="no-print" style="padding:12px 24px;background:#11141b;border-bottom:1px solid #2b303c;display:flex;gap:7px;flex-wrap:wrap"><button class="btn" onclick="show('receipts')">← Back to Receipts</button><button class="btn primary" onclick="printReceipt()">🖨 Print / Save Receipt PDF</button><button class="btn" onclick="saveReceiptToDrive()">💾 Print / Save Receipt PDF</button><button class="btn" onclick="show('create');if(current)loadInvoice(current.id)">✏️ Open Invoice</button></div><div class="preview-wrap"><div class="receipt-paper" id="receiptPaper"></div></div></section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY="invoice-studio-fbi-v2";let data=[],clients=[],settings={},current=null;
+const $=id=>document.getElementById(id);
