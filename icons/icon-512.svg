@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="72" fill="#08090c"/>
+  <rect x="41" y="41" width="430" height="430" rx="56" fill="none" stroke="#bfa045" stroke-width="9"/>
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="159" font-weight="900" fill="#ffffff">FBI</text>
+  <text x="50%" y="343" dominant-baseline="middle" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="37" font-weight="700" fill="#bfa045" letter-spacing="2">INVOICE STUDIO</text>
+</svg>
