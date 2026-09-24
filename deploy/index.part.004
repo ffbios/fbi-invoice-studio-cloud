@@ -558,7 +558,7 @@ body.auth-locked{overflow:hidden!important}
   </div>
   <div class="card">
     <h3>Invoice Items</h3>
-    <div class="items-head"><div>Description</div><div>Rate</div><div>Qty</div><div>Amount</div><div></div></div>
+    <div class="items-head"><div>Description</div><div>Rate / Day</div><div>Days</div><div>Qty</div><div>Amount</div><div></div></div>
     <div id="items"></div><button class="btn" onclick="addItem()">＋ Add Item</button>
     <div style="max-width:330px;margin:16px 0 0 auto">
       <div class="row"><label style="flex:1">Tax (%)<input id="tax" type="number" min="0" step=".01" value="20" oninput="calc()"></label><label style="flex:1">Discount<input id="discount" type="number" min="0" step=".01" value="0" oninput="calc()"></label></div>
