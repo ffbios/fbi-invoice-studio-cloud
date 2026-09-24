@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="500" viewBox="0 0 900 500">
+<defs>
+  <radialGradient id="bg" cx="50%" cy="38%" r="70%">
+    <stop offset="0" stop-color="#4f5561"/><stop offset=".55" stop-color="#252a34"/><stop offset="1" stop-color="#0b0e14"/>
+  </radialGradient>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#fff2ad"/><stop offset=".22" stop-color="#f4c64d"/>
+    <stop offset=".52" stop-color="#bd7f16"/><stop offset=".78" stop-color="#f2c446"/><stop offset="1" stop-color="#fff1a0"/>
+  </linearGradient>
+  <filter id="shadow"><feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#000" flood-opacity=".55"/></filter>
+</defs>
+<rect width="900" height="500" rx="30" fill="url(#bg)"/>
+<g filter="url(#shadow)">
+  <g transform="translate(175 225)">
+    <g fill="url(#gold)">
+      <path d="M-18-108c25-20 58-31 93-28L54-94c-23-3-42 2-58 13Z"/>
+      <path d="M75-136c35 8 65 27 88 55l-47 8c-15-17-30-27-51-33Z"/>
+      <path d="M163-81c20 30 28 64 26 99l-47-24c3-22-1-39-11-57Z"/>
+      <path d="M189 18c-5 35-19 67-44 92l-23-48c16-15 25-31 29-52Z"/>
+      <path d="M145 110c-30 21-65 30-101 27l24-47c22 3 41-2 59-13Z"/>
+      <path d="M44 137c-35-5-68-20-94-47l48-8c14 17 30 28 52 34Z"/>
+      <path d="M-50 90c-21-29-30-63-27-98l47 24c-3 22 2 39 12 57Z"/>
+      <path d="M-77-8c5-36 20-68 45-93l23 48c-15 15-24 31-28 53Z"/>
+    </g>
+    <circle cx="54" cy="0" r="57" fill="#12161d"/>
+    <circle cx="54" cy="0" r="61" fill="none" stroke="#f3c74e" stroke-width="2" opacity=".28"/>
+  </g>
+  <text x="620" y="252" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="190" font-weight="900" letter-spacing="-10" fill="url(#gold)">FBI</text>
+  <text x="620" y="338" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="39" font-weight="700" letter-spacing="4" fill="#f0d37a">FILM BEYOND IMAGINATION</text>
+</g>
+</svg>
