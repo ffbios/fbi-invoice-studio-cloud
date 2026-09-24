@@ -10,6 +10,13 @@ const ROOT = __dirname;
 const INDEX_FILE = path.join(ROOT, 'index.html');
 const SEED_FILE = path.join(ROOT, 'seed-state.json');
 const ARCHIVE_IMPORT_FILE = path.join(ROOT, 'archive-import.json');
+const STATIC_FILES = {
+  '/manifest.json': { file: path.join(ROOT, 'manifest.json'), type: 'application/manifest+json; charset=utf-8' },
+  '/sw.js': { file: path.join(ROOT, 'sw.js'), type: 'application/javascript; charset=utf-8' },
+  '/icons/icon-192.svg': { file: path.join(ROOT, 'icons', 'icon-192.svg'), type: 'image/svg+xml' },
+  '/icons/icon-512.svg': { file: path.join(ROOT, 'icons', 'icon-512.svg'), type: 'image/svg+xml' },
+  '/icons/icon-maskable-512.svg': { file: path.join(ROOT, 'icons', 'icon-maskable-512.svg'), type: 'image/svg+xml' }
+};
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const IS_PRODUCTION = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 const COOKIE_SECURE = process.env.COOKIE_SECURE
@@ -162,6 +169,20 @@ function json(res, status, body, extraHeaders = {}) {
     ...extraHeaders
   });
   res.end(raw);
+}
+
+function sendStatic(res, pathname) {
+  const entry = STATIC_FILES[pathname];
+  if (!entry || !fs.existsSync(entry.file)) return false;
+  const stat = fs.statSync(entry.file);
+  res.writeHead(200, {
+    'Content-Type': entry.type,
+    'Content-Length': stat.size,
+    'Cache-Control': pathname === '/sw.js' ? 'no-cache' : 'public, max-age=86400',
+    'X-Content-Type-Options': 'nosniff'
+  });
+  fs.createReadStream(entry.file).pipe(res);
+  return true;
 }
 
 function sendIndex(res) {
@@ -555,6 +576,8 @@ const server = http.createServer(async (req, res) => {
       return res.end();
     }
 
+    if (req.method === 'GET' && sendStatic(res, url.pathname)) return;
+    
     if (url.pathname === '/api/health' && req.method === 'GET') {
       const dbResult = await pool.query('SELECT 1 AS ok');
       const state = await pool.query('SELECT saved_at FROM app_state WHERE id=1');
