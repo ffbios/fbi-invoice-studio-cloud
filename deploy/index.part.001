@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FBI Studio">
 <link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icons/icon-192.svg">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <title>Invoice Studio | FBI</title>
 <style>
 :root{--bg:#08090c;--panel:#11141b;--panel2:#171b23;--border:#2b303c;--muted:#858e9f;--text:#f7f8fb;--accent:#bd1b63;--green:#43d18b}

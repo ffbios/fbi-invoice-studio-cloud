@@ -1,9 +1,15 @@
-const CACHE = "fbi-invoice-studio-pwa-v6";
-const APP_SHELL = ["/", "/calendar.js", "/manifest.json", "/assets/fbi-brand-logo.svg", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png", "/icons/icon-192.svg", "/icons/icon-512.svg", "/icons/icon-maskable-512.svg"];
+const CACHE = "fbi-invoice-studio-pwa-v7";
+const APP_SHELL = ["/", "/calendar.js", "/manifest.json", "/assets/fbi-brand-logo.svg", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png"];
 
 self.addEventListener("install", event => {
   self.skipWaiting();
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(APP_SHELL)));
+  event.waitUntil(
+    caches.open(CACHE).then(async cache => {
+      await Promise.all(APP_SHELL.map(async url => {
+        try { await cache.add(url); } catch (err) { console.warn("PWA cache skipped", url, err); }
+      }));
+    })
+  );
 });
 
 self.addEventListener("activate", event => {
@@ -30,7 +36,7 @@ self.addEventListener("fetch", event => {
           caches.open(CACHE).then(cache => cache.put("/", copy)).catch(() => {});
           return response;
         })
-        .catch(() => caches.match("/") || caches.match("/index.html"))
+        .catch(() => caches.match("/") || Response.error())
     );
     return;
   }
@@ -38,13 +44,7 @@ self.addEventListener("fetch", event => {
   event.respondWith(
     caches.match(req).then(cached => {
       if (cached) return cached;
-      return fetch(req).then(response => {
-        if (response.ok && (url.pathname === "/manifest.json" || url.pathname.startsWith("/icons/"))) {
-          const copy = response.clone();
-          caches.open(CACHE).then(cache => cache.put(req, copy)).catch(() => {});
-        }
-        return response;
-      });
+      return fetch(req);
     })
   );
 });
