@@ -148,7 +148,6 @@ async function initDb() {
   await pool.query('ALTER TABLE app_state ADD COLUMN IF NOT EXISTS draft_json JSONB');
 
   const state = await pool.query('SELECT id FROM app_state WHERE id=1');
-  await importArchiveState();
   if (state.rowCount === 0 && process.env.SEED_ON_EMPTY !== 'false' && fs.existsSync(SEED_FILE)) {
     try {
       const seed = JSON.parse(fs.readFileSync(SEED_FILE, 'utf8'));
@@ -162,6 +161,9 @@ async function initDb() {
       console.warn('Seed state could not be loaded:', err.message);
     }
   }
+  // Load the recovered archive after the empty database has been seeded.
+  // This keeps the recovered invoices/clients available on a fresh cloud database.
+  await importArchiveState();
 }
 
 function json(res, status, body, extraHeaders = {}) {
