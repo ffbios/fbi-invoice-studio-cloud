@@ -1,56 +1,25 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Film Beyond Imagination">
-  <defs>
-    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#fff0a3"/>
-      <stop offset="0.28" stop-color="#f6c84b"/>
-      <stop offset="0.58" stop-color="#c98b1f"/>
-      <stop offset="0.8" stop-color="#f3c64a"/>
-      <stop offset="1" stop-color="#fff0a3"/>
-    </linearGradient>
-    <filter id="noise" x="-20%" y="-20%" width="140%" height="140%">
-      <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" seed="9" result="n"/>
-      <feColorMatrix in="n" type="saturate" values="0" result="g"/>
-      <feComponentTransfer in="g" result="a">
-        <feFuncA type="table" tableValues="0 .12"/>
-      </feComponentTransfer>
-      <feBlend in="SourceGraphic" in2="a" mode="overlay"/>
-    </filter>
-    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity=".55"/>
-    </filter>
-  </defs>
-
-  <rect width="512" height="512" rx="72" fill="#0a0d12"/>
-  <rect x="10" y="10" width="492" height="492" rx="66" fill="#11151d" opacity=".78"/>
-  <rect x="10" y="10" width="492" height="492" rx="66" fill="#5f6470" opacity=".22" filter="url(#noise)"/>
-
-  <g transform="" filter="url(#shadow)">
-    <!-- stylized camera-aperture mark based on the supplied FBI logo -->
-    <g transform="translate(154 228)">
-      <g fill="url(#gold)">
-        <path d="M-20-96 C3-113 36-121 67-116 L48-78 C29-84 8-81-9-70 Z"/>
-        <path d="M68-116 C99-110 126-93 143-69 L101-65 C92-80 77-91 60-98 Z"/>
-        <path d="M143-69 C159-43 165-12 160 18 L123-5 C127-23 123-42 114-57 Z"/>
-        <path d="M160 18 C153 48 137 74 114 92 L97 53 C111 43 121 28 126 12 Z"/>
-        <path d="M114 92 C89 109 60 117 29 112 L49 74 C67 79 86 76 102 68 Z"/>
-        <path d="M29 112 C-2 106-28 91-47 68 L-5 64 C4 79 20 90 36 97 Z"/>
-        <path d="M-47 68 C-63 43-69 14-64-16 L-26 7 C-30 25-26 43-17 57 Z"/>
-        <path d="M-64-16 C-58-47-43-73-19-91 L-3-52 C-18-42-28-27-33-10 Z"/>
-      </g>
-      <circle cx="48" cy="-2" r="44" fill="#10141b"/>
-      <circle cx="48" cy="-2" r="47" fill="none" stroke="#f2c54a" stroke-opacity=".22" stroke-width="2"/>
-    </g>
-
-    <text x="330" y="266" text-anchor="middle"
-      font-family="Arial, Helvetica, sans-serif" font-size="137" font-weight="900"
-      letter-spacing="-6" fill="url(#gold)">FBI</text>
-
-    <text x="330" y="322" text-anchor="middle"
-      font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700"
-      letter-spacing="3.2" fill="#f2d27a">FILM BEYOND</text>
-    <text x="330" y="350" text-anchor="middle"
-      font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700"
-      letter-spacing="3.2" fill="#f2d27a">IMAGINATION</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<defs>
+<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1a0"/><stop offset=".28" stop-color="#f0bf3e"/><stop offset=".55" stop-color="#b87812"/><stop offset=".8" stop-color="#f0bd3c"/><stop offset="1" stop-color="#fff0a0"/></linearGradient>
+<filter id="s"><feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#000" flood-opacity=".55"/></filter>
+</defs>
+<rect width="512" height="512" rx="72" fill="#090c11"/>
+<rect x="10" y="10" width="492" height="492" rx="66" fill="#20252f" opacity=".55"/>
+<g  filter="url(#s)">
+<g transform="translate(128 218)" fill="url(#g)">
+<path d="M-12-91c23-18 52-27 83-25L55-82c-20-3-37 2-52 12Z"/>
+<path d="M71-116c31 7 58 24 78 49l-42 8c-13-15-28-25-47-31Z"/>
+<path d="M149-67c18 27 25 56 22 87l-42-22c3-19-1-35-10-51Z"/>
+<path d="M171 20c-5 31-17 59-39 81l-20-43c14-14 22-27 26-47Z"/>
+<path d="M132 101c-27 18-57 26-88 24l21-43c19 3 36-1 52-11Z"/>
+<path d="M44 125c-31-5-59-18-81-41l42-8c12 15 27 24 46 30Z"/>
+<path d="M-37 84c-18-26-25-55-22-86l42 21c-3 20 1 36 10 52Z"/>
+<path d="M-59-3c5-31 17-60 39-82l20 43c-14 14-22 28-26 48Z"/>
+</g>
+<circle cx="182" cy="216" r="50" fill="#11151c"/>
+<circle cx="182" cy="216" r="53" fill="none" stroke="#f5cf63" stroke-opacity=".23" stroke-width="2"/>
+<text x="336" y="250" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="143" font-weight="900" letter-spacing="-7" fill="url(#g)">FBI</text>
+<text x="336" y="320" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="24" font-weight="700" letter-spacing="2.4" fill="#f1d37c">FILM BEYOND</text>
+<text x="336" y="349" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="24" font-weight="700" letter-spacing="2.4" fill="#f1d37c">IMAGINATION</text>
+</g>
 </svg>
