@@ -84,7 +84,9 @@ function renderPaper(){
  let status=(x.status||"Draft").toLowerCase();
  let statusClass=status.includes("paid")&&!status.includes("partial")?"status-paid":status.includes("overdue")?"status-overdue":status.includes("partial")?"status-partial":status.includes("sent")?"status-sent":"status-draft";
  let rental=x.category==="Equipment Rentals"?`<div class="rental-box"><div class="rental-title">Equipment Rental Details</div><div class="rental-grid"><div>Period<b>${esc(x.rentalStart||"—")} → ${esc(x.rentalEnd||"—")}</b></div><div>Rate Unit<b>${esc(x.rentalUnit||"Per Day")}</b></div><div>Job Location<b>${esc(x.jobLocation||"—")}</b></div><div>Reference / Deposit<b>${esc(x.rentalRef||"—")}${x.deposit?" · "+esc(money(x.deposit))+" deposit":""}</b></div></div></div>`:"";
- let eventDetails=isMediaServiceCategory(x.category)&&x.eventDate?`<div class="rental-box"><div class="rental-title">Event Details</div><div class="rental-grid"><div>Service Category<b>${esc(x.category)}</b></div><div>Event Date<b>${esc(x.eventDate)}</b></div></div></div>`:"";
+ let eventEnd=x.eventEndDate||x.eventDate;
+ let eventLabel=x.eventDate?(x.eventEndDate&&x.eventEndDate!==x.eventDate?x.eventDate+" → "+x.eventEndDate:x.eventDate):"";
+ let eventDetails=isMediaServiceCategory(x.category)&&x.eventDate?`<div class="rental-box"><div class="rental-title">Event Details</div><div class="rental-grid"><div>Service Category<b>${esc(x.category)}</b></div><div>Event Date / Period<b>${esc(eventLabel)}</b></div></div></div>`:"";
  $("paper").className="paper template-100";
  $("paper").innerHTML=`
  <div class="paper-top">
