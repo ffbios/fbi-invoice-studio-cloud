@@ -1,4 +1,4 @@
-const CACHE = "fbi-invoice-studio-pwa-v1";
+const CACHE = "fbi-invoice-studio-pwa-v2";
 const APP_SHELL = ["/", "/manifest.json", "/icons/icon-192.svg", "/icons/icon-512.svg", "/icons/icon-maskable-512.svg"];
 
 self.addEventListener("install", event => {
