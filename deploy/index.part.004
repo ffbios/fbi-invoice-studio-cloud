@@ -96,6 +96,187 @@ body.auth-locked{overflow:hidden!important}
 .paper .invtable th{font-size:12px !important}
 .paper .invtable td{font-size:14px !important;font-weight:600 !important}
 .paper .pay p{font-size:14px !important}.paper .bill-info,.paper .invoice-meta,.paper .paper-footer{font-size:12px}
+
+/* ===== FBI PROFESSIONAL AUTHENTICATION REFRESH ===== */
+#authView{
+  padding:20px!important;
+  background:
+    radial-gradient(900px 520px at 8% 12%,rgba(209,31,104,.18),transparent 60%),
+    radial-gradient(760px 520px at 92% 88%,rgba(230,181,72,.10),transparent 62%),
+    #07090d!important;
+}
+.fbi-auth-shell{
+  width:min(1160px,100%);
+  min-height:min(720px,92vh);
+  height:auto;
+  grid-template-columns:1.02fr .98fr;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:24px;
+  background:#0b0e14;
+  box-shadow:0 30px 110px rgba(0,0,0,.68),0 0 90px rgba(208,25,99,.08);
+}
+.fbi-auth-visual{
+  background:#090b10;
+  border-right:1px solid rgba(255,255,255,.07);
+}
+.fbi-auth-visual-bg{
+  background:
+    radial-gradient(circle at 20% 25%,rgba(205,28,101,.22),transparent 30%),
+    linear-gradient(145deg,#05070a 0%,#120b11 50%,#090d13 100%)!important;
+}
+.fbi-auth-visual-overlay{
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.32)),
+    linear-gradient(90deg,rgba(0,0,0,.12),rgba(0,0,0,.05) 58%,rgba(6,8,12,.36))!important;
+}
+.fbi-auth-visual-content{
+  padding:42px 44px 34px;
+}
+.fbi-auth-kicker{
+  font-size:9px;
+  letter-spacing:2.6px;
+  color:#cfd3dc;
+  opacity:.9;
+  max-width:390px;
+}
+.fbi-auth-logo-wrap{
+  width:min(560px,100%);
+  margin-top:24px;
+  padding:0;
+  border:0;
+  background:none;
+}
+.fbi-auth-logo-wrap img{
+  width:100%;
+  max-height:245px;
+  object-fit:contain;
+  object-position:left center;
+  filter:drop-shadow(0 18px 28px rgba(0,0,0,.5));
+}
+.fbi-auth-tagline{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:36px;
+  line-height:1.02;
+  font-weight:700;
+  font-style:italic;
+  letter-spacing:-.5px;
+  color:#efc24a;
+  text-shadow:0 5px 22px rgba(0,0,0,.52);
+  max-width:380px;
+  margin-top:8px;
+}
+.fbi-auth-benefits{
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  max-width:520px;
+  padding-top:18px;
+}
+.fbi-auth-benefits>div{
+  min-height:58px;
+  padding:11px 13px!important;
+  border:1px solid rgba(255,255,255,.09)!important;
+  border-radius:11px;
+  background:rgba(255,255,255,.025);
+}
+.fbi-auth-benefits span{font-size:15px!important}
+.fbi-auth-benefits b{font-size:10px!important;letter-spacing:1.2px}
+.fbi-auth-benefits small{font-size:9px!important;color:#8f97a6!important}
+.fbi-auth-panel{
+  padding:40px 54px 28px;
+  justify-content:flex-start;
+}
+.fbi-auth-panel-top{
+  margin-bottom:28px;
+  padding-bottom:18px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+.fbi-auth-panel-top strong{font-size:13px;letter-spacing:1.7px}
+.fbi-auth-panel-top small{font-size:10px}
+.fbi-auth-card{
+  max-width:430px;
+  margin:auto;
+}
+.fbi-auth-card h3{
+  font-size:36px;
+  margin-bottom:7px;
+  letter-spacing:-1px;
+}
+.fbi-auth-card .auth-sub{
+  font-size:13px;
+  max-width:380px;
+  margin-bottom:26px;
+}
+.fbi-auth-card .auth-field input{
+  height:52px;
+  border-radius:10px;
+  background:#080c12;
+  border-color:#303846;
+  transition:border-color .2s,box-shadow .2s,transform .2s;
+}
+.fbi-auth-card .auth-field input:hover{border-color:#4b5565}
+.fbi-auth-card .auth-field input:focus{
+  border-color:#d01963;
+  box-shadow:0 0 0 3px rgba(208,25,99,.10);
+}
+.auth-primary{
+  height:54px;
+  border-radius:10px;
+  background:linear-gradient(100deg,#b90852,#e51a72);
+}
+.auth-primary:hover{box-shadow:0 14px 30px rgba(208,25,99,.26)}
+.fbi-create{
+  height:50px;
+  border-color:#3a414d;
+  background:#0a0d13;
+  color:#dce0e7;
+}
+.fbi-create:hover{
+  border-color:#d6ad47;
+  background:rgba(214,173,71,.05);
+}
+.auth-message{min-height:18px}
+.fbi-quote{margin-top:22px;color:#70798a}
+.fbi-auth-panel-foot{
+  position:static;
+  margin-top:auto;
+  padding-top:20px;
+  color:#606978;
+  font-size:9px;
+  line-height:1.5;
+}
+@media(max-width:900px){
+  #authView{padding:12px!important;overflow:auto!important;align-items:flex-start!important}
+  .fbi-auth-shell{
+    width:100%;
+    min-height:calc(100vh - 24px);
+    grid-template-columns:1fr;
+    border-radius:18px;
+  }
+  .fbi-auth-visual{
+    min-height:245px;
+    border-right:0;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .fbi-auth-visual-content{
+    padding:24px 22px 20px;
+    justify-content:flex-start;
+  }
+  .fbi-auth-kicker{max-width:100%;font-size:8px;letter-spacing:2px;line-height:1.7}
+  .fbi-auth-logo-wrap{width:min(520px,100%);margin-top:12px}
+  .fbi-auth-logo-wrap img{max-height:135px}
+  .fbi-auth-tagline{font-size:25px;max-width:320px}
+  .fbi-auth-benefits{display:none}
+  .fbi-auth-panel{padding:28px 22px 20px}
+  .fbi-auth-panel-top{margin-bottom:22px}
+  .fbi-auth-card h3{font-size:30px}
+  .fbi-auth-panel-foot{margin-top:22px;text-align:center;justify-content:center;flex-direction:column}
+}
+@media(max-width:520px){
+  .fbi-auth-logo-wrap img{max-height:110px}
+  .fbi-auth-tagline{font-size:22px}
+  .fbi-auth-card .auth-sub{font-size:12px}
+  .fbi-auth-panel{padding-left:18px;padding-right:18px}
+}
 </style>
 
 <script>
@@ -148,7 +329,7 @@ body.auth-locked{overflow:hidden!important}
       <div class="fbi-auth-visual-content">
         <div class="fbi-auth-kicker">PRODUCTION · LIVE STREAMING · PHOTOGRAPHY · ADVERTISING · DRONE WORKS</div>
         <div class="fbi-auth-logo-wrap">
-          <img src="data:image/svg+xml,%3Csvg xmlns='http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' viewBox='0 0 240 90'%3E%3Crect width='240' height='90' rx='14' fill='%2308090c'/%3E%3Ctext x='120' y='57' text-anchor='middle' font-family='Arial' font-size='48' font-weight='900' fill='white'%3EFBI%3C%2Ftext%3E%3C%2Fsvg%3E" alt="FBI — Film Beyond Imagination">
+          <img src="/assets/fbi-brand-logo.svg" alt="FBI — Film Beyond Imagination">
         </div>
         <div class="fbi-auth-tagline">Turning Ideas Into Reality</div>
         <div class="fbi-auth-benefits">
