@@ -227,7 +227,7 @@ let draftSaveTimer=null;
 function collectDraft(){
   if(!$('no')||!$('date')||!$('items'))return null;
   return {
-    id:current?.id||null,no:$('no').value,date:$('date').value,due:$('due').value,status:$('status').value,cur:$('cur').value,client:$('client').value,clientAddress:$('clientAddress').value,clientPhone:$('clientPhone').value,clientEmail:$('clientEmail').value,tax:$('tax').value,discount:$('discount').value,payment:$('payment').value,notes:$('notes').value,template:$('template').value,vatInclusive:$('vatInclusive').checked,amountPaid:$('amountPaid').value,paymentDate:$('paymentDate').value,paymentMethod:$('paymentMethod').value,transactionRef:$('transactionRef').value,receivedBy:$('receivedBy').value,receiptNo:$('receiptNo').value,eventDate:$('eventDate')?.value||'',rentalStart:$('rentalStart')?.value||'',rentalEnd:$('rentalEnd')?.value||'',jobLocation:$('jobLocation')?.value||'',rentalRef:$('rentalRef')?.value||'',rentalUnit:$('rentalUnit')?.value||'Per Day',deposit:$('deposit')?.value||0,category:$('serviceCategory')?.value||'',serviceBrand:$('brandModelFilter')?.value||'',serviceItem:$('catalogItemSelect')?.value||$('itemSearch')?.value||'',items:[...document.querySelectorAll('.item')].map(r=>({desc:r.querySelector('.desc')?.value||'',qty:r.querySelector('.qty')?.value||0,rate:r.querySelector('.rate')?.value||0}))
+    id:current?.id||null,no:$('no').value,date:$('date').value,due:$('due').value,status:$('status').value,cur:$('cur').value,client:$('client').value,clientAddress:$('clientAddress').value,clientPhone:$('clientPhone').value,clientEmail:$('clientEmail').value,tax:$('tax').value,discount:$('discount').value,payment:$('payment').value,notes:$('notes').value,template:$('template').value,vatInclusive:$('vatInclusive').checked,amountPaid:$('amountPaid').value,paymentDate:$('paymentDate').value,paymentMethod:$('paymentMethod').value,transactionRef:$('transactionRef').value,receivedBy:$('receivedBy').value,receiptNo:$('receiptNo').value,eventDate:$('eventDate')?.value||'',eventEndDate:$('eventEndDate')?.value||'',rentalStart:$('rentalStart')?.value||'',rentalEnd:$('rentalEnd')?.value||'',jobLocation:$('jobLocation')?.value||'',rentalRef:$('rentalRef')?.value||'',rentalUnit:$('rentalUnit')?.value||'Per Day',deposit:$('deposit')?.value||0,category:$('serviceCategory')?.value||'',serviceBrand:$('brandModelFilter')?.value||'',serviceItem:$('catalogItemSelect')?.value||$('itemSearch')?.value||'',items:[...document.querySelectorAll('.item')].map(r=>({desc:r.querySelector('.desc')?.value||'',qty:r.querySelector('.qty')?.value||0,rate:r.querySelector('.rate')?.value||0}))
   };
 }
 function scheduleDraftSave(){
@@ -243,6 +243,7 @@ function applyDraftEntry(entry,showMessage){
     ['no','date','due','status','cur','client','clientAddress','clientPhone','clientEmail','tax','discount','payment','notes','template','amountPaid','paymentDate','paymentMethod','transactionRef','receivedBy','receiptNo'].forEach(id=>{if($(id)&&x[id]!==undefined)$(id).value=x[id]});
     if($('vatInclusive'))$('vatInclusive').checked=x.vatInclusive!==false;
     if($('eventDate'))$('eventDate').value=x.eventDate||'';
+    if($('eventEndDate'))$('eventEndDate').value=x.eventEndDate||x.eventDate||'';
     if($('rentalStart'))$('rentalStart').value=x.rentalStart||'';
     if($('rentalEnd'))$('rentalEnd').value=x.rentalEnd||'';
     if($('jobLocation'))$('jobLocation').value=x.jobLocation||'';
@@ -350,11 +351,27 @@ function nextInvoiceSequence(){
 function nextInvoiceNumber(){return "INV"+String(nextInvoiceSequence()).padStart(4,"0")}
 function validateMediaEventDate(invoice,focus=true){
   if(!isMediaServiceCategory(invoice?.category))return true;
-  if(String(invoice?.eventDate||"").trim())return true;
-  toggleEventDate();
-  toast("Event Date is required for media invoices");
-  if(focus)$("eventDate")?.focus();
-  return false;
+  const start=String(invoice?.eventDate||"").trim();
+  const end=String(invoice?.eventEndDate||invoice?.eventDate||"").trim();
+  if(!start){
+    toggleEventDate();
+    toast("Event Start Date is required for media invoices");
+    if(focus)$("eventDate")?.focus();
+    return false;
+  }
+  if(!end){
+    toggleEventDate();
+    toast("Event End Date is required for media invoices");
+    if(focus)$("eventEndDate")?.focus();
+    return false;
+  }
+  if(end<start){
+    toggleEventDate();
+    toast("Event End Date cannot be before the start date");
+    if(focus)$("eventEndDate")?.focus();
+    return false;
+  }
+  return true;
 }
 function setTemplate(v){settings.template=v;document.querySelectorAll("[data-template-card]").forEach(c=>c.classList.toggle("selected",c.dataset.templateCard===v));persist()}
 const IT_SERVICE_CATEGORIES=["Networking","CCTV","Smart Home Automation"];
@@ -368,15 +385,28 @@ function toggleEventDate(){
   const show=isMediaServiceCategory(category);
   const card=$("eventDateCard");
   if(card)card.style.display=show?"block":"none";
-  const input=$("eventDate");
-  if(input)input.required=show;
+  const start=$("eventDate");
+  const end=$("eventEndDate");
+  if(start)start.required=show;
+  if(end)end.required=show;
+  if(end&&start&&start.value&&!end.value)end.value=start.value;
   const hint=$("eventDateHint");
-  if(hint)hint.textContent=show?"Required for media invoices: select the event date for "+category+".":"No event date is required for IT invoices.";
+  if(hint)hint.textContent=show?"Required for media invoices: enter the event start and end dates for "+category+".":"No event date is required for IT invoices.";
 }
-function clearEventDate(){if($("eventDate"))$("eventDate").value="";}
+function clearEventDate(){
+  if($("eventDate"))$("eventDate").value="";
+  if($("eventEndDate"))$("eventEndDate").value="";
+}
+function syncEventEndDate(){
+  const start=$("eventDate"),end=$("eventEndDate");
+  if(start&&end&&start.value&&!end.value)end.value=start.value;
+  toggleEventDate();
+}
 function toggleRentalDetails(){const isRental=$("serviceCategory")?.value==="Equipment Rentals";const el=$("rentalDetailsCard");if(el)el.style.display=isRental?"block":"none";}
 function clearRentalDetails(){["rentalStart","rentalEnd","jobLocation","rentalRef"].forEach(id=>{if($(id))$(id).value=""});if($("rentalUnit"))$("rentalUnit").value="Per Day";if($("deposit"))$("deposit").value=0;}
 function nextReceiptNumber(){let max=0;data.forEach(x=>{let m=String(x.receiptNo||"").match(/(\d+)$/);if(m)max=Math.max(max,parseInt(m[1],10)||0)});return "REC"+String(max+1).padStart(4,"0")}
+$("eventDate")?.addEventListener("change",syncEventEndDate);
+$("eventEndDate")?.addEventListener("change",toggleEventDate);
 function paymentTotals(x){const total=Number(x.total||0),paid=Math.max(0,Number(x.amountPaid||0));return{total,paid,balance:Math.max(0,total-paid)}}
 function updatePaymentBalancePreview(totalOverride){const el=$("paymentBalancePreview");if(!el)return;let total=Number(totalOverride);if(!Number.isFinite(total)){let sub=0;document.querySelectorAll(".item").forEach(r=>{let q=+r.querySelector(".qty").value||0,p=+r.querySelector(".rate").value||0;sub+=q*p});let dis=+$("discount").value||0,tax=Math.max(0,sub-dis)*(+$("tax").value||0)/100;total=Math.max(0,sub-dis)+tax}const paid=Math.max(0,Number($("amountPaid")?.value||0));el.textContent=fmtMoney(Math.max(0,total-paid),$("cur")?.value||"GHS")}
 function renderReceipts(){const el=$("receiptList");if(!el)return;const list=data.filter(x=>Number(x.amountPaid||0)>0).sort((a,b)=>String(b.paymentDate||b.date||"").localeCompare(String(a.paymentDate||a.date||"")));if(!list.length){el.innerHTML='<div class="receipt-empty">No payment receipts have been recorded yet. Record a payment on an invoice to generate the first receipt.</div>';return}el.innerHTML=list.map(x=>{const p=paymentTotals(x),full=p.balance<=0.005;return `<div class="receipt-row"><div class="grow"><div class="main">${esc(x.receiptNo||"—")} · ${esc(x.no||"")}</div><div class="meta">${esc(x.client||"No client")} · ${esc(x.paymentDate||x.date||"—")} · ${esc(x.paymentMethod||"Payment")}</div></div><div class="amount">${fmtMoney(p.paid,x.cur)}</div><span class="status-pill ${full?"status-paid":"status-partial"}">${full?"Paid in Full":"Partial Payment"}</span><button class="btn" onclick="showReceipt('${x.id}')">View</button><button class="btn primary" onclick="showReceipt('${x.id}');setTimeout(printReceipt,30)">Print</button></div>`}).join("")}
@@ -437,7 +467,7 @@ function newInvoice(){
 }
 function addItem(desc="",qty=1,rate=0){let d=document.createElement("div");d.className="item";d.innerHTML=`<div><input class="desc" list="itemOptions" placeholder="Description" value="${esc(desc)}"></div><div><input class="rate" type="number" min="0" step=".01" value="${rate}"></div><div><input class="qty" type="number" min="0" step=".01" value="${qty}"></div><div><input class="amt" readonly value="${money(qty*rate)}"></div><button class="rm" onclick="this.parentElement.remove();calc()">✕</button>`;$("items").appendChild(d);d.querySelectorAll("input").forEach(i=>i.oninput=calc);calc()}
 function calc(){let sub=0;document.querySelectorAll(".item").forEach(r=>{let q=+r.querySelector(".qty").value||0,p=+r.querySelector(".rate").value||0,a=q*p;sub+=a;r.querySelector(".amt").value=money(a)});let dis=+$("discount").value||0,tax=Math.max(0,sub-dis)*(+$("tax").value||0)/100,total=Math.max(0,sub-dis)+tax;$("total").textContent=money(total);updatePaymentBalancePreview(total);return{sub,dis,tax,total}}
-function get(){let c=calc();let paid=Math.max(0,Number($("amountPaid")?.value||0));if($("status")?.value==="Paid")paid=c.total;if(paid>0.005&&paid<c.total-0.005)$("status").value="Partially Paid";if(paid>=c.total-0.005&&c.total>0)$("status").value="Paid";let receiptNo=$("receiptNo")?.value||current?.receiptNo||"";if(paid>0.005&&!receiptNo)receiptNo=nextReceiptNumber();return{id:current?.id||("av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10)),no:$("no").value,date:$("date").value,due:$("due").value,status:$("status").value,cur:$("cur").value,template:$("template").value||settings.template||"classic",client:$("client").value,clientAddress:$("clientAddress").value,clientPhone:$("clientPhone").value,clientEmail:$("clientEmail").value,items:[...document.querySelectorAll(".item")].map(r=>({desc:r.querySelector(".desc").value,qty:+r.querySelector(".qty").value||0,rate:+r.querySelector(".rate").value||0})).filter(x=>x.desc),taxRate:+$("tax").value||0,discount:+$("discount").value||0,vatInclusive:$("vatInclusive").checked,...c,payment:$("payment").value,notes:$("notes").value,template:selectedTemplate(),category:$("serviceCategory")?.value||"Media Works",serviceBrand:$("brandModelFilter")?.value||"",serviceItem:$("catalogItemSelect")?.value||$("itemSearch")?.value||"",eventDate:$("eventDate")?.value||"",rentalStart:$("rentalStart")?.value||"",rentalEnd:$("rentalEnd")?.value||"",jobLocation:$("jobLocation")?.value||"",rentalRef:$("rentalRef")?.value||"",rentalUnit:$("rentalUnit")?.value||"Per Day",deposit:+($("deposit")?.value||0),amountPaid:paid,paymentDate:$("paymentDate")?.value||"",paymentMethod:$("paymentMethod")?.value||"",transactionRef:$("transactionRef")?.value||"",receivedBy:$("receivedBy")?.value||"",receiptNo}}
+function get(){let c=calc();let paid=Math.max(0,Number($("amountPaid")?.value||0));if($("status")?.value==="Paid")paid=c.total;if(paid>0.005&&paid<c.total-0.005)$("status").value="Partially Paid";if(paid>=c.total-0.005&&c.total>0)$("status").value="Paid";let receiptNo=$("receiptNo")?.value||current?.receiptNo||"";if(paid>0.005&&!receiptNo)receiptNo=nextReceiptNumber();return{id:current?.id||("av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10)),no:$("no").value,date:$("date").value,due:$("due").value,status:$("status").value,cur:$("cur").value,template:$("template").value||settings.template||"classic",client:$("client").value,clientAddress:$("clientAddress").value,clientPhone:$("clientPhone").value,clientEmail:$("clientEmail").value,items:[...document.querySelectorAll(".item")].map(r=>({desc:r.querySelector(".desc").value,qty:+r.querySelector(".qty").value||0,rate:+r.querySelector(".rate").value||0})).filter(x=>x.desc),taxRate:+$("tax").value||0,discount:+$("discount").value||0,vatInclusive:$("vatInclusive").checked,...c,payment:$("payment").value,notes:$("notes").value,template:selectedTemplate(),category:$("serviceCategory")?.value||"Media Works",serviceBrand:$("brandModelFilter")?.value||"",serviceItem:$("catalogItemSelect")?.value||$("itemSearch")?.value||"",eventDate:$("eventDate")?.value||"",eventEndDate:$("eventEndDate")?.value||$("eventDate")?.value||"",rentalStart:$("rentalStart")?.value||"",rentalEnd:$("rentalEnd")?.value||"",jobLocation:$("jobLocation")?.value||"",rentalRef:$("rentalRef")?.value||"",rentalUnit:$("rentalUnit")?.value||"Per Day",deposit:+($("deposit")?.value||0),amountPaid:paid,paymentDate:$("paymentDate")?.value||"",paymentMethod:$("paymentMethod")?.value||"",transactionRef:$("transactionRef")?.value||"",receivedBy:$("receivedBy")?.value||"",receiptNo}}
 async function save(){
   try{
     let x=get();
@@ -481,7 +511,7 @@ function loadInvoice(id){
   let x=data.find(a=>a.id===id);if(!x)return;current=x;invoiceNumberReserved=x.no||"";
   ["no","date","due","status","cur","client","clientAddress","clientPhone","clientEmail","tax","discount","payment","notes"].forEach(k=>$(k).value=x[{no:"no",date:"date",due:"due",status:"status",cur:"cur",client:"client",clientAddress:"clientAddress",clientPhone:"clientPhone",clientEmail:"clientEmail",tax:"taxRate",discount:"discount",payment:"payment",notes:"notes"}[k]]??"");
   $("template").value=String(Number(x.template)||100);$("vatInclusive").checked=x.vatInclusive!==false;$("amountPaid").value=Number(x.amountPaid||0);$("paymentDate").value=x.paymentDate||"";$("paymentMethod").value=x.paymentMethod||"Mobile Money";$("transactionRef").value=x.transactionRef||"";$("receivedBy").value=x.receivedBy||"";$("receiptNo").value=x.receiptNo||"";
-  $("eventDate").value=x.eventDate||"";$("rentalStart").value=x.rentalStart||"";$("rentalEnd").value=x.rentalEnd||"";$("jobLocation").value=x.jobLocation||"";$("rentalRef").value=x.rentalRef||"";$("rentalUnit").value=x.rentalUnit||"Per Day";$("deposit").value=x.deposit||0;
+  $("eventDate").value=x.eventDate||"";$("eventEndDate").value=x.eventEndDate||x.eventDate||"";$("rentalStart").value=x.rentalStart||"";$("rentalEnd").value=x.rentalEnd||"";$("jobLocation").value=x.jobLocation||"";$("rentalRef").value=x.rentalRef||"";$("rentalUnit").value=x.rentalUnit||"Per Day";$("deposit").value=x.deposit||0;
   if($("payment") && !String(x.payment||"").trim())$("payment").value=settings.defaultPay||"";
   setTemplate($("template").value);$("items").innerHTML="";(x.items||[]).forEach(a=>addItem(a.desc,a.qty,a.rate));initTemplates();$("template").value=String(Number(x.template)||100);
   restoreServiceSelection(x);show("create");populateClientSelect();if($("clientSelect"))$("clientSelect").value=(clients.find(c=>c.name===x.client)||{}).id||"";updatePaymentBalancePreview();
@@ -559,8 +589,18 @@ function renderSaved(){
 let calendarCursor=new Date();calendarCursor.setDate(1);
 function calendarDateKey(year,month,day){return String(year).padStart(4,"0")+"-"+String(month+1).padStart(2,"0")+"-"+String(day).padStart(2,"0")}
 function calendarLocalDate(value){if(!value)return null;const parts=String(value).split("-").map(Number);if(parts.length!==3||parts.some(n=>!Number.isFinite(n)))return null;return new Date(parts[0],parts[1]-1,parts[2])}
+function calendarEventStart(x){return calendarLocalDate(x?.eventDate)}
+function calendarEventEnd(x){return calendarLocalDate(x?.eventEndDate||x?.eventDate)}
 function calendarHumanDate(value){const d=calendarLocalDate(value);return d?d.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"—"}
-function calendarEvents(){return data.filter(x=>isMediaServiceCategory(x.category)&&String(x.eventDate||"").trim()).sort((a,b)=>String(a.eventDate).localeCompare(String(b.eventDate))||String(a.no||"").localeCompare(String(b.no||"")))}
+function calendarHumanRange(x){
+  const s=calendarEventStart(x),e=calendarEventEnd(x)||s;
+  if(!s)return "—";
+  if(!e||s.getTime()===e.getTime())return calendarHumanDate(x.eventDate);
+  return s.toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"})+" – "+e.toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"});
+}
+function calendarEvents(){
+  return data.filter(x=>isMediaServiceCategory(x.category)&&calendarEventStart(x)).sort((a,b)=>String(a.eventDate).localeCompare(String(b.eventDate))||String(a.no||"").localeCompare(String(b.no||"")));
+}
 function calendarPrevMonth(){calendarCursor.setMonth(calendarCursor.getMonth()-1);renderCalendar()}
 function calendarNextMonth(){calendarCursor.setMonth(calendarCursor.getMonth()+1);renderCalendar()}
 function calendarToday(){const now=new Date();calendarCursor=new Date(now.getFullYear(),now.getMonth(),1);renderCalendar()}
@@ -571,7 +611,18 @@ function renderCalendar(){
   const year=calendarCursor.getFullYear(),month=calendarCursor.getMonth();
   title.textContent=calendarCursor.toLocaleDateString(undefined,{month:"long",year:"numeric"});
   const events=calendarEvents(),byDate={};
-  events.forEach(x=>{const k=String(x.eventDate);(byDate[k]||(byDate[k]=[])).push(x)});
+  events.forEach(x=>{
+    const s=calendarEventStart(x),e=calendarEventEnd(x)||s;
+    if(!s)return;
+    const cursor=new Date(s.getTime()),finish=new Date(e.getTime());
+    if(finish<s)finish=new Date(s.getTime());
+    let guard=0;
+    while(cursor<=finish&&guard<370){
+      const k=calendarDateKey(cursor.getFullYear(),cursor.getMonth(),cursor.getDate());
+      (byDate[k]||(byDate[k]=[])).push(x);
+      cursor.setDate(cursor.getDate()+1);guard++;
+    }
+  });
   const first=new Date(year,month,1),startOffset=first.getDay(),days=new Date(year,month+1,0).getDate(),prevDays=new Date(year,month,0).getDate();
   const today=new Date(),cells=[];
   ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>cells.push('<div class="calendar-weekday">'+d+'</div>'));
@@ -584,16 +635,20 @@ function renderCalendar(){
     const isToday=key===calendarDateKey(today.getFullYear(),today.getMonth(),today.getDate());
     let html='<div class="calendar-day '+(other?'other-month ':'')+(isToday?'today':'')+'"><div class="calendar-day-number">'+day+'</div>';
     dayEvents.slice(0,3).forEach(x=>{
-      html+='<button type="button" class="calendar-event" onclick="openCalendarInvoice(\''+esc(x.id)+'\')"><span class="event-no">'+esc(x.no||"Invoice")+' · '+esc(fmtMoney(x.total,x.cur))+'</span><span class="event-client">'+esc(x.client||"No client")+'</span><span class="event-cat">'+esc(x.category||"Media")+'</span></button>';
+      html+='<button type="button" class="calendar-event" onclick="openCalendarInvoice(\''+esc(x.id)+'\')"><span class="event-no">'+esc(x.no||"Invoice")+' · '+esc(fmtMoney(x.total,x.cur))+'</span><span class="event-client">'+esc(x.client||"No client")+'</span><span class="event-cat">'+esc(x.category||"Media")+'</span><span class="event-status">'+calendarStatusPill(x)+'</span></button>';
     });
     if(dayEvents.length>3)html+='<div class="calendar-more">+'+(dayEvents.length-3)+' more</div>';
     cells.push(html+'</div>');
   }
   grid.innerHTML=cells.join("");
-  const monthEvents=events.filter(x=>{const d=calendarLocalDate(x.eventDate);return d&&d.getFullYear()===year&&d.getMonth()===month});
+  const monthStart=new Date(year,month,1),monthEnd=new Date(year,month+1,1);
+  const monthEvents=events.filter(x=>{
+    const s=calendarEventStart(x),e=calendarEventEnd(x)||s;
+    return s&&e&&e>=monthStart&&s<monthEnd;
+  });
   list.innerHTML=monthEvents.length?monthEvents.map(x=>{
-    const d=calendarLocalDate(x.eventDate),p=paymentTotals(x);
-    return '<button type="button" class="calendar-list-row" style="width:100%;background:none;border:0;color:inherit;text-align:left;cursor:pointer" onclick="openCalendarInvoice(\''+esc(x.id)+'\')"><span class="calendar-list-date"><b>'+d.getDate()+'</b><small>'+d.toLocaleDateString(undefined,{month:"short"})+'</small></span><span class="calendar-list-main"><b>'+esc(x.no||"Invoice")+' · '+esc(x.client||"No client")+'</b><small>'+esc(x.category||"Media")+' · '+calendarStatusPill(x)+' · '+esc(calendarHumanDate(x.eventDate))+'</small></span><span class="calendar-list-right"><b>'+esc(fmtMoney(x.total,x.cur))+'</b><small>Balance '+esc(fmtMoney(p.balance,x.cur))+'</small></span></button>';
+    const d=calendarEventStart(x),p=paymentTotals(x);
+    return '<button type="button" class="calendar-list-row" style="width:100%;background:none;border:0;color:inherit;text-align:left;cursor:pointer" onclick="openCalendarInvoice(\''+esc(x.id)+'\')"><span class="calendar-list-date"><b>'+d.getDate()+'</b><small>'+d.toLocaleDateString(undefined,{month:"short"})+'</small></span><span class="calendar-list-main"><b>'+esc(x.no||"Invoice")+' · '+esc(x.client||"No client")+'</b><small>'+esc(x.category||"Media")+' · '+calendarStatusPill(x)+' · '+esc(calendarHumanRange(x))+'</small></span><span class="calendar-list-right"><b>'+esc(fmtMoney(x.total,x.cur))+'</b><small>Balance '+esc(fmtMoney(p.balance,x.cur))+'</small></span></button>';
   }).join(""):'<div style="color:#777;text-align:center;padding:20px">No media events scheduled for this month.</div>';
 }
 function closeCalendarModal(){const m=$("calendarModal");if(m){m.classList.remove("show");m.setAttribute("aria-hidden","true")}}
@@ -605,11 +660,11 @@ function openCalendarInvoice(id){
   const payments=Number(x.amountPaid||0)>0?'<div class="calendar-detail-card"><span>Payment Received</span><b>'+esc(fmtMoney(x.amountPaid,x.cur))+' · '+esc(x.paymentMethod||"Payment")+' · '+esc(x.paymentDate||"—")+' · Receipt '+esc(x.receiptNo||"—")+'</b></div><div class="calendar-detail-card"><span>Payment Reference</span><b>'+esc(x.transactionRef||"—")+' · Received by '+esc(x.receivedBy||"—")+'</b></div>':'<div class="calendar-detail-card full"><span>Payment Received</span><b>No payment recorded.</b></div>';
   const rows=items.map(i=>'<tr><td>'+esc(i.desc||"")+'</td><td>'+esc(money(i.rate))+'</td><td>'+esc(i.qty)+'</td><td>'+esc(money(i.qty*i.rate))+'</td></tr>').join("");
   $("calendarModalTitle").textContent=(x.no||"Invoice")+" · "+(x.client||"No client");
-  $("calendarModalSubtitle").textContent=calendarHumanDate(x.eventDate);
+  $("calendarModalSubtitle").textContent=calendarHumanRange(x);
   body.innerHTML='<div class="calendar-detail-grid">'+
     '<div class="calendar-detail-card"><span>Invoice Number</span><b>'+esc(x.no||"—")+'</b></div>'+
     '<div class="calendar-detail-card"><span>Status</span><b>'+calendarStatusPill(x)+'</b></div>'+
-    '<div class="calendar-detail-card"><span>Event Date</span><b>'+esc(calendarHumanDate(x.eventDate))+'</b></div>'+
+    '<div class="calendar-detail-card"><span>Event Date</span><b>'+esc(calendarHumanRange(x))+'</b></div>'+
     '<div class="calendar-detail-card"><span>Service Category</span><b>'+esc(x.category||"Media")+'</b></div>'+
     '<div class="calendar-detail-card"><span>Brand / Model Group</span><b>'+esc(x.serviceBrand||"—")+'</b></div>'+
     '<div class="calendar-detail-card"><span>Service / Equipment Item</span><b>'+esc(x.serviceItem||"—")+'</b></div>'+
