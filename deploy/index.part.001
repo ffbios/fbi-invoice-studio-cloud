@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#a80e4d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FBI Studio">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-192.svg">
 <title>Invoice Studio | FBI</title>
 <style>
 :root{--bg:#08090c;--panel:#11141b;--panel2:#171b23;--border:#2b303c;--muted:#858e9f;--text:#f7f8fb;--accent:#bd1b63;--green:#43d18b}
@@ -17,7 +24,7 @@ body{display:flex;min-height:100vh}button,input,textarea,select{font:inherit}but
 /* Native navigation fallback */
 /* Tab navigation is controlled exclusively by .view.active; URL hash targets must not override it. */
 .nav .nav-link{display:block;width:100%;padding:12px 18px;text-align:left;border:0;border-left:3px solid transparent;background:none;color:#939baa;font-size:13px;text-decoration:none;cursor:pointer}.nav .nav-link:hover,.nav .nav-link.active{background:#1a1d26;color:#fff;border-left-color:#c71954}
-.btn{padding:9px 13px;border-radius:8px;border:1px solid #343a48;background:#1a1e27;color:#fff;font-size:11px;font-weight:800}.primary{background:#a80e4d;border-color:#bd1b63}.danger{color:#ff9aa8;background:#28151d;border-color:#4d2733}
+#installAppBtn{display:none}.install-app-btn{border-color:#bfa045!important;color:#fff!important;background:#1b1a15!important} .btn{padding:9px 13px;border-radius:8px;border:1px solid #343a48;background:#1a1e27;color:#fff;font-size:11px;font-weight:800}.primary{background:#a80e4d;border-color:#bd1b63}.danger{color:#ff9aa8;background:#28151d;border-color:#4d2733}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{background:linear-gradient(180deg,#171b23,#13161d);border:1px solid var(--border);border-radius:12px;padding:17px;margin-bottom:16px}.card h3{margin:0 0 13px;color:#e63d7e;font-size:12px;text-transform:uppercase;letter-spacing:.7px}
 label{display:block;color:#a0a8b7;font-size:11px;margin:10px 0 5px}input,textarea,select{width:100%;background:#0b0d12;color:#fff;border:1px solid #303642;border-radius:7px;padding:9px 10px;font-size:12px;outline:none}textarea{resize:vertical}.row{display:flex;gap:9px}.row>*{flex:1}
 .items-head,.item{display:grid;grid-template-columns:2.5fr .65fr 1fr 1fr 35px;gap:8px;align-items:end}.items-head{color:#808896;font-size:9px;text-transform:uppercase;padding:0 8px 5px}.item{padding:8px;border:1px solid #2b303b;background:#10131a;border-radius:8px;margin-bottom:7px}.item .rm{height:35px;border:1px solid #4d2733;background:#28151d;color:#ff9aa8;border-radius:7px}
