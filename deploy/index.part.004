@@ -207,12 +207,12 @@ body.auth-locked{overflow:hidden!important}
     <button type="button" class="nav-link" data-v="settings" onclick="show('settings')">⚙️ Business Settings</button>
     <button type="button" class="nav-link" data-v="whatsapp" onclick="show('whatsapp')">📱 WhatsApp Alerts</button>
   </div>
-  <div class="sidefoot">Invoices are stored in this browser.<br>Print to PDF for a clean A4 document.</div>
+  <div class="sidefoot">Invoices are stored securely in the cloud database.<br>Install this app on your phone or PC for quick access.</div>
 </aside>
 <main class="main">
 <header class="top no-print">
   <div style="display:flex;align-items:center;gap:10px"><button class="btn hamb" style="display:none" onclick="side.classList.toggle('open')">☰</button><div><h1 id="title">Overview</h1><small id="subtitle">Your invoicing control center</small></div></div>
-  <div style="display:flex;align-items:center;gap:7px"><button class="btn" onclick="newInvoice()">New Invoice</button><button class="btn primary" onclick="newInvoice()">＋ Create Invoice</button><button class="btn danger" onclick="logoutApp()">Sign Out</button></div>
+  <div style="display:flex;align-items:center;gap:7px"><button id="installAppBtn" class="btn install-app-btn" type="button" onclick="installFBIApp()">⬇ Install App</button><button class="btn" onclick="newInvoice()">New Invoice</button><button class="btn primary" onclick="newInvoice()">＋ Create Invoice</button><button class="btn danger" onclick="logoutApp()">Sign Out</button></div>
 </header>
 
 <section class="view active" id="view-dashboard">
