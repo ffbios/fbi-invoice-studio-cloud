@@ -16,6 +16,7 @@ const STATIC_FILES = {
   '/icons/icon-192.svg': { file: path.join(ROOT, 'icons', 'icon-192.svg'), type: 'image/svg+xml' },
   '/icons/icon-512.svg': { file: path.join(ROOT, 'icons', 'icon-512.svg'), type: 'image/svg+xml' },
   '/icons/icon-maskable-512.svg': { file: path.join(ROOT, 'icons', 'icon-maskable-512.svg'), type: 'image/svg+xml' },
+  '/assets/fbi-brand-logo.svg': { file: path.join(ROOT, 'assets', 'fbi-brand-logo.svg'), type: 'image/svg+xml' },
   '/icons/icon-192.png': { file: path.join(ROOT, 'icons', 'icon-192.png'), type: 'image/png' },
   '/icons/icon-512.png': { file: path.join(ROOT, 'icons', 'icon-512.png'), type: 'image/png' },
   '/icons/icon-maskable-512.png': { file: path.join(ROOT, 'icons', 'icon-maskable-512.png'), type: 'image/png' }
