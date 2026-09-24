@@ -515,5 +515,67 @@ window.addEventListener("load",function(){
   window.addEventListener('load',tryBoot);
 })();
 </script>
+<script>
+(function(){
+  let deferredInstallPrompt=null;
+  function installButton(){return document.getElementById("installAppBtn")}
+  function setInstallButtonVisible(visible){
+    const b=installButton(); if(b) b.style.display=visible?"inline-flex":"none";
+  }
+  window.installFBIApp=async function(){
+    if(deferredInstallPrompt){
+      try{
+        deferredInstallPrompt.prompt();
+        const choice=await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt=null;
+        setInstallButtonVisible(false);
+        if(choice && choice.outcome==="accepted")toast("FBI Invoice Studio installed");
+      }catch(e){console.warn("Install prompt failed",e)}
+      return;
+    }
+    const standalone=window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
+    const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    if(standalone){
+      toast("FBI Invoice Studio is already installed");
+    }else if(ios){
+      alert("Install FBI Invoice Studio:\n\n1. Open this site in Safari.\n2. Tap Share.\n3. Choose “Add to Home Screen”.\n4. Keep “Open as Web App” enabled.\n5. Tap Add.");
+    }else{
+      alert("Install FBI Invoice Studio from your browser menu:\n\nChrome / Edge on PC: choose the Install app icon in the address bar or open the browser menu and choose “Install FBI Invoice Studio”.\n\nAndroid: use the browser menu and choose “Install app” or “Add to Home screen”.");
+    }
+  };
+  window.addEventListener("beforeinstallprompt",function(e){
+    e.preventDefault();
+    deferredInstallPrompt=e;
+    setInstallButtonVisible(true);
+  });
+  window.addEventListener("appinstalled",function(){
+    deferredInstallPrompt=null;
+    setInstallButtonVisible(false);
+    try{toast("FBI Invoice Studio installed successfully");}catch(e){}
+  });
+  function registerPWA(){
+    if(!("serviceWorker" in navigator))return;
+    navigator.serviceWorker.register("/sw.js",{scope:"/"})
+      .then(function(reg){
+        if(reg && reg.update)reg.update().catch(function(){});
+      })
+      .catch(function(err){console.warn("PWA service worker registration failed:",err)});
+  }
+  if(document.readyState==="loading"){
+    document.addEventListener("DOMContentLoaded",registerPWA);
+  }else{
+    registerPWA();
+  }
+  window.addEventListener("load",function(){
+    setTimeout(function(){
+      const b=installButton();
+      if(!b)return;
+      const standalone=window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
+      if(standalone)b.style.display="none";
+      else if(!deferredInstallPrompt)b.style.display="inline-flex";
+    },800);
+  });
+})();
+</script>
 </body>
 </html>
