@@ -49,10 +49,16 @@ async function importArchiveState() {
     let state = result.rows[0].state_json;
     if (typeof state === 'string') state = JSON.parse(state);
     if (!state || !state.data || !Array.isArray(state.data.data) || !Array.isArray(state.data.clients) || !state.data.settings) return;
-    if (Number(state.archiveImportVersion || 0) >= Number(archive.version)) return;
 
     const invoices = Array.isArray(archive.invoices) ? archive.invoices : [];
     const clients = Array.isArray(archive.clients) ? archive.clients : [];
+    const archiveAlreadyPresent =
+      invoices.every(incoming => state.data.data.some(x => String(x.no || '').trim() === String(incoming.no || '').trim())) &&
+      clients.every(incoming => state.data.clients.some(x =>
+        String(x.name || '').trim().toLowerCase() === String(incoming.name || '').trim().toLowerCase() &&
+        String(x.phone || '').replace(/\D/g, '') === String(incoming.phone || '').replace(/\D/g, '')
+      ));
+    if (Number(state.archiveImportVersion || 0) >= Number(archive.version) && archiveAlreadyPresent) return;
 
     for (const incoming of clients) {
       const name = String(incoming.name || '').trim().toLowerCase();
@@ -406,23 +412,81 @@ async function handleStateGet(req, res) {
   return json(res, 200, { ok: true, state });
 }
 
+function mergeInvoiceStates(existingState, incomingState) {
+  const existingData = existingState && existingState.data && Array.isArray(existingState.data.data)
+    ? existingState.data.data : [];
+  const incomingData = incomingState.data.data;
+
+  const invoiceMap = new Map();
+  for (const item of existingData) {
+    const key = String(item.id || item.no || ('existing-' + invoiceMap.size));
+    invoiceMap.set(key, item);
+  }
+  for (const item of incomingData) {
+    const key = String(item.id || item.no || ('incoming-' + invoiceMap.size));
+    invoiceMap.set(key, item);
+  }
+
+  const existingClients = existingState && existingState.data && Array.isArray(existingState.data.clients)
+    ? existingState.data.clients : [];
+  const incomingClients = incomingState.data.clients;
+  const clientMap = new Map();
+  function clientKey(item) {
+    const id = String(item.id || '').trim();
+    if (id) return 'id:' + id;
+    const name = String(item.name || '').trim().toLowerCase();
+    const phone = String(item.phone || '').replace(/\D/g, '');
+    return 'contact:' + name + '|' + phone;
+  }
+  for (const item of existingClients) clientMap.set(clientKey(item), item);
+  for (const item of incomingClients) clientMap.set(clientKey(item), item);
+
+  const existingSettings = existingState && existingState.data && existingState.data.settings
+    ? existingState.data.settings : {};
+
+  return {
+    version: Math.max(Number(existingState?.version) || 1, Number(incomingState.version) || 1),
+    savedAt: Math.max(Number(existingState?.savedAt) || 0, Number(incomingState.savedAt) || 0, Date.now()),
+    data: {
+      data: Array.from(invoiceMap.values()),
+      clients: Array.from(clientMap.values()),
+      settings: { ...existingSettings, ...incomingState.data.settings }
+    }
+  };
+}
+
 async function handleStateWrite(req, res) {
   const session = await requireAuth(req, res);
   if (!session) return;
   try {
     const raw = await readBody(req);
-    const state = JSON.parse(raw || '{}');
-    if (!state || !state.data || !Array.isArray(state.data.data) || !Array.isArray(state.data.clients) || !state.data.settings) {
+    const incoming = JSON.parse(raw || '{}');
+    if (!incoming || !incoming.data || !Array.isArray(incoming.data.data) || !Array.isArray(incoming.data.clients) || !incoming.data.settings) {
       return json(res, 400, { ok: false, error: 'Invalid Invoice Studio state.' });
     }
-    const savedAt = Number(state.savedAt) || Date.now();
-    const version = Number(state.version) || 1;
+
+    const currentResult = await pool.query('SELECT version,saved_at,state_json FROM app_state WHERE id=1');
+    let merged = incoming;
+    if (currentResult.rows[0]) {
+      let currentState = currentResult.rows[0].state_json;
+      if (typeof currentState === 'string') currentState = JSON.parse(currentState);
+      if (currentState && currentState.data) {
+        merged = mergeInvoiceStates(currentState, incoming);
+      }
+    }
+
     await pool.query(
       `INSERT INTO app_state (id,version,saved_at,state_json) VALUES (1,$1,$2,$3::jsonb)
        ON CONFLICT(id) DO UPDATE SET version=EXCLUDED.version,saved_at=EXCLUDED.saved_at,state_json=EXCLUDED.state_json`,
-      [version, savedAt, JSON.stringify(state)]
+      [Number(merged.version) || 1, Number(merged.savedAt) || Date.now(), JSON.stringify(merged)]
     );
-    return json(res, 200, { ok: true, savedAt });
+
+    return json(res, 200, {
+      ok: true,
+      savedAt: Number(merged.savedAt) || Date.now(),
+      invoiceCount: merged.data.data.length,
+      clientCount: merged.data.clients.length
+    });
   } catch (err) {
     console.error('Database write failed:', err);
     return json(res, 500, { ok: false, error: err.message || 'Database write failed.' });
