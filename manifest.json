@@ -41,5 +41,9 @@
       "type": "image/svg+xml",
       "purpose": "any"
     }
+  ],
+  "categories": [
+    "business",
+    "productivity"
   ]
 }
