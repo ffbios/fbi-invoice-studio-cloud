@@ -179,6 +179,43 @@ body.fbi-payroll-mode .fbi-payroll-modal{z-index:300}
   body.fbi-payroll-mode .top>div:last-child{padding-right:0}
   body.fbi-payroll-mode .top .theme-switcher{position:static!important;transform:none!important;margin-left:2px!important}
 }
+
+/* ===== PAYROLL DASHBOARD EXPERIENCE V4 ===== */
+/* Reference-inspired finance dashboard layout for Payroll. Visual/module-only, engine untouched. */
+.fbi-payroll-dashboard{display:grid;gap:14px}
+.fbi-payroll-dashboard-hero{display:flex;justify-content:space-between;align-items:stretch;gap:16px;padding:20px 22px;border:1px solid #2a3441;border-radius:15px;background:linear-gradient(135deg,#111a24,#17232f 58%,#10261f);box-shadow:0 16px 42px rgba(0,0,0,.18);overflow:hidden;position:relative}
+.fbi-payroll-dashboard-hero:before{content:"";position:absolute;width:330px;height:220px;right:-90px;top:-100px;border-radius:50%;background:radial-gradient(circle,rgba(93,220,132,.20),transparent 68%);pointer-events:none}
+.fbi-payroll-dashboard-hero-main{position:relative;z-index:1;min-width:0}
+.fbi-payroll-dashboard-eyebrow{font-size:8px;letter-spacing:1.7px;text-transform:uppercase;font-weight:900;color:#d8ba61;margin-bottom:6px}
+.fbi-payroll-dashboard-title{margin:0;font-size:24px;letter-spacing:-.55px;color:#fff}
+.fbi-payroll-dashboard-sub{margin:6px 0 0;color:#9aa6b6;font-size:9px;line-height:1.5;max-width:640px}
+.fbi-payroll-dashboard-tools{display:flex;align-items:center;gap:8px;position:relative;z-index:1;align-self:center;flex-wrap:wrap;justify-content:flex-end}
+.fbi-payroll-period{border:1px solid #364252;background:#0f151d;color:#e7edf4;border-radius:9px;padding:9px 11px;font-size:9px;min-height:36px}
+.fbi-payroll-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.fbi-payroll-kpi{padding:14px;border:1px solid #dfe4eb;border-radius:12px;background:#fff;box-shadow:0 7px 20px rgba(15,23,42,.045);position:relative;overflow:hidden}
+.fbi-payroll-kpi:after{content:"";position:absolute;right:-25px;top:-30px;width:75px;height:75px;border-radius:50%;background:rgba(180,144,50,.08)}
+.fbi-payroll-kpi span{display:block;color:#7a8798;font-size:7.5px;letter-spacing:.9px;text-transform:uppercase;font-weight:850}
+.fbi-payroll-kpi b{display:block;color:#17202d;font-size:20px;letter-spacing:-.35px;margin-top:8px}
+.fbi-payroll-kpi small{display:block;color:#8791a0;font-size:7.5px;margin-top:4px}
+.fbi-payroll-kpi.gold{border-top:2px solid #b89032}.fbi-payroll-kpi.green{border-top:2px solid #43b977}.fbi-payroll-kpi.blue{border-top:2px solid #5f94d9}.fbi-payroll-kpi.pink{border-top:2px solid #bd1b63}.fbi-payroll-kpi.orange{border-top:2px solid #d08a29}
+.fbi-payroll-dashboard-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,.85fr);gap:12px}
+.fbi-payroll-widget{border:1px solid #dfe4eb;border-radius:13px;background:#fff;padding:15px;box-shadow:0 7px 22px rgba(15,23,42,.045);min-width:0}
+.fbi-payroll-widget-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px}.fbi-payroll-widget-head h3{margin:0;color:#1f2937;font-size:12px}.fbi-payroll-widget-head small{display:block;color:#7b8796;font-size:8px;margin-top:3px}
+.fbi-payroll-chart{display:grid;gap:8px}.fbi-payroll-chart-row{display:grid;grid-template-columns:50px minmax(0,1fr) 72px;gap:9px;align-items:center}.fbi-payroll-chart-label{font-size:8px;color:#7a8493}.fbi-payroll-bars{display:grid;gap:4px}.fbi-payroll-bar-track{height:8px;background:#edf1f4;border-radius:999px;overflow:hidden}.fbi-payroll-bar-fill{height:100%;border-radius:999px}.fbi-payroll-bar-fill.net{background:linear-gradient(90deg,#172d28,#43b977)}.fbi-payroll-bar-fill.paid{background:linear-gradient(90deg,#b89032,#dfbf63)}.fbi-payroll-chart-value{text-align:right;font-size:8px;color:#273244;font-weight:800}
+.fbi-payroll-health{display:grid;grid-template-columns:108px 1fr;gap:15px;align-items:center}.fbi-payroll-donut{width:108px;height:108px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#42be79 0deg 250deg,#dfe7e4 250deg 360deg);position:relative}.fbi-payroll-donut:after{content:"";width:76px;height:76px;border-radius:50%;background:#fff;position:absolute}.fbi-payroll-donut b{position:relative;z-index:1;color:#17202d;font-size:20px}.fbi-payroll-health-copy b{display:block;color:#17202d;font-size:16px}.fbi-payroll-health-copy small{display:block;color:#7d8897;font-size:8px;line-height:1.45;margin-top:5px}.fbi-payroll-health-stats{display:grid;gap:7px;margin-top:9px}.fbi-payroll-health-stat{display:flex;justify-content:space-between;gap:10px;font-size:8px}.fbi-payroll-health-stat span{color:#7d8794}.fbi-payroll-health-stat b{color:#1d2734}
+.fbi-payroll-lists{display:grid;grid-template-columns:1.35fr .8fr;gap:12px}.fbi-payroll-list{display:grid;gap:0}.fbi-payroll-list-row{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #edf0f4}.fbi-payroll-list-row:last-child{border-bottom:0}.fbi-payroll-avatar{width:31px;height:31px;border-radius:9px;display:grid;place-items:center;background:#f4ebef;color:#a80e4d;font-size:11px;font-weight:900;flex:0 0 auto}.fbi-payroll-list-row .grow{flex:1;min-width:0}.fbi-payroll-list-row b{display:block;color:#263141;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fbi-payroll-list-row small{display:block;color:#7e8897;font-size:7.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fbi-payroll-list-amount{text-align:right}.fbi-payroll-list-amount b{font-size:9px}.fbi-payroll-list-amount small{color:#768292}
+.fbi-payroll-dept{display:grid;gap:8px}.fbi-payroll-dept-row{display:grid;grid-template-columns:1fr 76px;gap:8px;align-items:center}.fbi-payroll-dept-label{font-size:8px;color:#455163}.fbi-payroll-dept-bar{height:7px;background:#edf1f5;border-radius:999px;overflow:hidden;margin-top:4px}.fbi-payroll-dept-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#bd1b63,#d7b15a)}
+.fbi-payroll-quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.fbi-payroll-quick{display:flex;align-items:center;gap:8px;padding:11px;border:1px solid #e1e5eb;border-radius:10px;background:#fff;color:#263141;text-align:left;cursor:pointer}.fbi-payroll-quick:hover{border-color:#d0d8e1;box-shadow:0 7px 16px rgba(15,23,42,.05);transform:translateY(-1px)}.fbi-payroll-quick-icon{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:#f4ebef;color:#a80e4d;font-size:13px;flex:0 0 auto}.fbi-payroll-quick b{font-size:8.5px}.fbi-payroll-quick small{display:block;color:#7a8796;font-size:7px;margin-top:2px}
+.fbi-payroll-overview-table-wrap{margin-top:0}.fbi-payroll-dashboard .fbi-payroll-info{margin-top:0}
+[data-theme="dark"] .fbi-payroll-widget,[data-theme="dark"] .fbi-payroll-kpi{background:linear-gradient(180deg,#141922,#10151b);border-color:#2b3440;box-shadow:0 10px 28px rgba(0,0,0,.16)}
+[data-theme="dark"] .fbi-payroll-kpi span,[data-theme="dark"] .fbi-payroll-chart-label,[data-theme="dark"] .fbi-payroll-widget-head small,[data-theme="dark"] .fbi-payroll-list-row small,[data-theme="dark"] .fbi-payroll-dept-label,[data-theme="dark"] .fbi-payroll-health-copy small{color:#8792a2}
+[data-theme="dark"] .fbi-payroll-kpi b,[data-theme="dark"] .fbi-payroll-widget-head h3,[data-theme="dark"] .fbi-payroll-chart-value,[data-theme="dark"] .fbi-payroll-health-copy b,[data-theme="dark"] .fbi-payroll-health-stat b,[data-theme="dark"] .fbi-payroll-list-row b{color:#eef2f7}
+[data-theme="dark"] .fbi-payroll-bar-track,[data-theme="dark"] .fbi-payroll-dept-bar{background:#232a34}
+[data-theme="dark"] .fbi-payroll-donut:after{background:#11161d}.fbi-payroll-dashboard .fbi-payroll-donut{background:conic-gradient(#43b977 0deg 250deg,#27332f 250deg 360deg)}
+[data-theme="dark"] .fbi-payroll-quick{background:#11161d;border-color:#2b3440;color:#e9edf3}.fbi-payroll-quick-icon{background:rgba(189,27,99,.10)}
+@media(max-width:1180px){.fbi-payroll-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.fbi-payroll-dashboard-grid{grid-template-columns:1fr}.fbi-payroll-lists{grid-template-columns:1fr}}
+@media(max-width:780px){.fbi-payroll-dashboard-hero{flex-direction:column}.fbi-payroll-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.fbi-payroll-quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.fbi-payroll-kpis{grid-template-columns:1fr}.fbi-payroll-health{grid-template-columns:1fr}.fbi-payroll-donut{margin:auto}.fbi-payroll-quick-grid{grid-template-columns:1fr}.fbi-payroll-chart-row{grid-template-columns:42px minmax(0,1fr) 62px}}
 </style>
 
 <section class="view" id="fbiPayrollView" aria-label="Payroll">
@@ -213,13 +250,79 @@ body.fbi-payroll-mode .fbi-payroll-modal{z-index:300}
       </div>
 
       <div class="fbi-payroll-panel active" data-payroll-panel="overview">
-        <div class="fbi-payroll-section-head">
-          <div><h3>Payroll Overview</h3><p>Current payroll position and recent worker payments.</p></div>
-          <div class="fbi-payroll-actions"><button class="btn" type="button" id="fbiPayrollOverviewPrint">🖨 Print</button></div>
+        <div class="fbi-payroll-dashboard">
+          <div class="fbi-payroll-dashboard-hero">
+            <div class="fbi-payroll-dashboard-hero-main">
+              <div class="fbi-payroll-dashboard-eyebrow">FBI PEOPLE & PAYMENTS</div>
+              <h2 class="fbi-payroll-dashboard-title">Payroll Command Center</h2>
+              <p class="fbi-payroll-dashboard-sub">Manage worker earnings, payment progress, payroll exposure and payslips from one finance workspace.</p>
+            </div>
+            <div class="fbi-payroll-dashboard-tools">
+              <select class="fbi-payroll-period" id="fbiPayrollOverviewPeriod" aria-label="Payroll period">
+                <option value="all">All time</option>
+                <option value="month">This month</option>
+                <option value="quarter">This quarter</option>
+              </select>
+              <button class="btn" type="button" id="fbiPayrollOverviewPrint">🖨 Print</button>
+              <button class="btn" type="button" id="fbiPayrollQuickWorkers">＋ Add Worker</button>
+              <button class="btn primary" type="button" id="fbiPayrollQuickRecord">＋ New Payroll</button>
+            </div>
+          </div>
+
+          <div class="fbi-payroll-kpis" id="fbiPayrollDashboardKpis"></div>
+
+          <div class="fbi-payroll-dashboard-grid">
+            <div class="fbi-payroll-widget">
+              <div class="fbi-payroll-widget-head">
+                <div><h3>Payroll Cashflow</h3><small>Net payroll against recorded payments</small></div>
+                <small id="fbiPayrollChartRange">Last 6 months</small>
+              </div>
+              <div class="fbi-payroll-chart" id="fbiPayrollCashflowChart"></div>
+            </div>
+
+            <div class="fbi-payroll-widget">
+              <div class="fbi-payroll-widget-head">
+                <div><h3>Payroll Health</h3><small>How much current payroll has been settled</small></div>
+              </div>
+              <div id="fbiPayrollHealth"></div>
+            </div>
+          </div>
+
+          <div class="fbi-payroll-lists">
+            <div class="fbi-payroll-widget">
+              <div class="fbi-payroll-widget-head">
+                <div><h3>Recent Payroll Activity</h3><small>Latest work records and payment movement</small></div>
+                <button class="fbi-payroll-mini-btn" type="button" id="fbiPayrollViewRecords">View Records</button>
+              </div>
+              <div class="fbi-payroll-list" id="fbiPayrollRecentActivity"></div>
+            </div>
+            <div class="fbi-payroll-widget">
+              <div class="fbi-payroll-widget-head">
+                <div><h3>Payroll by Department</h3><small>Net payroll exposure by team</small></div>
+              </div>
+              <div class="fbi-payroll-dept" id="fbiPayrollDepartments"></div>
+            </div>
+          </div>
+
+          <div class="fbi-payroll-widget">
+            <div class="fbi-payroll-widget-head">
+              <div><h3>Quick Actions</h3><small>Jump directly into your daily payroll workflow</small></div>
+            </div>
+            <div class="fbi-payroll-quick-grid">
+              <button class="fbi-payroll-quick" type="button" id="fbiPayrollQAWorker"><span class="fbi-payroll-quick-icon">👤</span><span><b>Add Worker</b><small>Create a new worker profile</small></span></button>
+              <button class="fbi-payroll-quick" type="button" id="fbiPayrollQARecord"><span class="fbi-payroll-quick-icon">＋</span><span><b>New Payroll</b><small>Enter work and earnings</small></span></button>
+              <button class="fbi-payroll-quick" type="button" id="fbiPayrollQAPayslip"><span class="fbi-payroll-quick-icon">🧾</span><span><b>Payslips</b><small>View and print payslips</small></span></button>
+              <button class="fbi-payroll-quick" type="button" id="fbiPayrollQAReport"><span class="fbi-payroll-quick-icon">📊</span><span><b>Reports</b><small>Filter, print or export</small></span></button>
+            </div>
+          </div>
+
+          <div class="fbi-payroll-widget">
+            <div class="fbi-payroll-widget-head">
+              <div><h3>Latest Payroll Records</h3><small>Full financial detail remains available under Payroll Records</small></div>
+            </div>
+            <div id="fbiPayrollOverviewTable" class="fbi-payroll-overview-table-wrap"></div>
+          </div>
         </div>
-        <div class="fbi-payroll-info">Payroll is isolated from the Invoice Studio engine. Existing invoices, clients, invoice payments, receipts, jobs and database state remain untouched. Invoice/job information shown in Payroll is read-only.</div>
-        <div class="fbi-payroll-summary" id="fbiPayrollOverviewSummary"></div>
-        <div id="fbiPayrollOverviewTable"></div>
       </div>
 
       <div class="fbi-payroll-panel" data-payroll-panel="workers">
@@ -704,18 +807,72 @@ body.fbi-payroll-mode .fbi-payroll-modal{z-index:300}
 
   function renderOverview(){
     var rows=STATE.records.slice().sort(function(a,b){return String(b.workDate||'').localeCompare(String(a.workDate||''));});
-    var totalNet=rows.reduce(function(s,r){return s+net(r);},0),totalPaid=rows.reduce(function(s,r){return s+paid(r);},0),totalBal=rows.reduce(function(s,r){return s+balance(r);},0);
-    q('fbiPayrollOverviewSummary').innerHTML=
-      summary('Gross',money(rows.reduce(function(s,r){return s+gross(r);},0)))+
-      summary('Net Pay',money(totalNet))+
-      summary('Paid',money(totalPaid))+
-      summary('Outstanding',money(totalBal))+
-      summary('Pending / Partial',rows.filter(function(r){return status(r)!=='Paid';}).length);
+    var now=new Date(),period=(q('fbiPayrollOverviewPeriod')&&q('fbiPayrollOverviewPeriod').value)||'all';
+    function inPeriod(r){
+      if(period==='all')return true;
+      var d=new Date((r.workDate||today())+'T00:00:00');
+      if(Number.isNaN(d.getTime()))return false;
+      if(period==='month')return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+      var qNow=Math.floor(now.getMonth()/3),qD=Math.floor(d.getMonth()/3);
+      return qNow===qD&&now.getFullYear()===d.getFullYear();
+    }
+    var scoped=rows.filter(inPeriod),grossTotal=scoped.reduce(function(s,r){return s+gross(r);},0),netTotal=scoped.reduce(function(s,r){return s+net(r);},0),paidTotal=scoped.reduce(function(s,r){return s+paid(r);},0),balTotal=scoped.reduce(function(s,r){return s+balance(r);},0);
+    var activeWorkers=STATE.workers.filter(function(w){return (w.status||'Active')==='Active';}).length;
+    var paidPct=netTotal>0?Math.max(0,Math.min(100,(paidTotal/netTotal)*100)):0;
+    var pending=scoped.filter(function(r){return status(r)!=='Paid';}).length;
+    var kpi=(function(){
+      function k(lbl,val,meta,cls){return '<div class="fbi-payroll-kpi '+cls+'"><span>'+esc(lbl)+'</span><b>'+esc(val)+'</b><small>'+esc(meta)+'</small></div>';}
+      return k('Net Payroll',money(netTotal),scoped.length+' records', 'gold')+
+             k('Paid',money(paidTotal),Math.round(paidPct)+'% settled', 'green')+
+             k('Outstanding',money(balTotal),pending+' records still due', 'orange')+
+             k('Active Workers',String(activeWorkers),STATE.workers.length+' total workers', 'blue')+
+             k('Payroll Records',String(scoped.length),'work records in period', 'pink');
+    })();
+    if(q('fbiPayrollDashboardKpis'))q('fbiPayrollDashboardKpis').innerHTML=kpi;
+    if(q('fbiPayrollOverviewPeriod')&&!q('fbiPayrollOverviewPeriod').dataset.bound){q('fbiPayrollOverviewPeriod').dataset.bound='1';q('fbiPayrollOverviewPeriod').addEventListener('change',renderOverview);}
+    
+    var monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],months=[];
+    for(var i=5;i>=0;i--){var d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push({key:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),label:monthNames[d.getMonth()]});}
+    var mvals=months.map(function(m){var a=scoped.filter(function(r){return String(r.workDate||'').slice(0,7)===m.key;});return {label:m.label,net:a.reduce(function(s,r){return s+net(r);},0),paid:a.reduce(function(s,r){return s+paid(r);},0)};});
+    var mx=Math.max(1,Math.max.apply(Math,mvals.map(function(x){return x.net;})));
+    if(q('fbiPayrollChartRange'))q('fbiPayrollChartRange').textContent=(period==='all'?'Last 6 months':period==='month'?'This month':'This quarter');
+    if(q('fbiPayrollCashflowChart'))q('fbiPayrollCashflowChart').innerHTML=mvals.map(function(x){
+      var nw=x.net/mx*100,pw=x.paid/mx*100;
+      return '<div class="fbi-payroll-chart-row"><div class="fbi-payroll-chart-label">'+esc(x.label)+'</div><div class="fbi-payroll-bars"><div class="fbi-payroll-bar-track"><div class="fbi-payroll-bar-fill net" style="width:'+nw.toFixed(1)+'%"></div></div><div class="fbi-payroll-bar-track"><div class="fbi-payroll-bar-fill paid" style="width:'+pw.toFixed(1)+'%"></div></div></div><div class="fbi-payroll-chart-value">'+esc(money(x.net))+'</div></div>';
+    }).join('');
+
+    var pctDeg=Math.round(paidPct*3.6);
+    if(q('fbiPayrollHealth'))q('fbiPayrollHealth').innerHTML='<div class="fbi-payroll-health"><div class="fbi-payroll-donut" style="background:conic-gradient(#43b977 0deg '+pctDeg+'deg,#dfe7e4 '+pctDeg+'deg 360deg)"><b>'+Math.round(paidPct)+'%</b></div><div class="fbi-payroll-health-copy"><b>'+esc(paidPct>=100?'Fully settled':paidPct>=70?'Healthy payment position':paidPct>0?'Payments in progress':'No payments yet')+'</b><small>'+esc(money(paidTotal))+' paid from '+esc(money(netTotal))+' net payroll.</small><div class="fbi-payroll-health-stats"><div class="fbi-payroll-health-stat"><span>Gross</span><b>'+esc(money(grossTotal))+'</b></div><div class="fbi-payroll-health-stat"><span>Outstanding</span><b>'+esc(money(balTotal))+'</b></div><div class="fbi-payroll-health-stat"><span>Pending / Partial</span><b>'+pending+'</b></div></div></div></div>';
+
+    var activity=[];
+    scoped.forEach(function(r){
+      var w=getWorker(r.workerId)||{},ps=Array.isArray(r.payments)?r.payments:[];
+      if(ps.length){ps.forEach(function(p){activity.push({type:'payment',date:p.date||r.workDate||'',name:w.name||'Unknown worker',meta:(r.project||r.role||'Payroll payment')+' · '+(p.method||''),amount:num(p.amount),recordId:r.id});});}
+      else activity.push({type:'work',date:r.workDate||'',name:w.name||'Unknown worker',meta:(r.project||r.role||'Payroll work')+' · '+(r.basis||''),amount:net(r),recordId:r.id});
+    });
+    activity.sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''));});
+    activity=activity.slice(0,7);
+    if(q('fbiPayrollRecentActivity'))q('fbiPayrollRecentActivity').innerHTML=activity.length?activity.map(function(a){var initials=String(a.name||'W').trim().split(/\s+/).slice(0,2).map(function(s){return s.charAt(0);}).join('').toUpperCase();return '<div class="fbi-payroll-list-row"><div class="fbi-payroll-avatar">'+esc(initials||'W')+'</div><div class="grow"><b>'+esc(a.name)+'</b><small>'+esc(a.meta)+' · '+esc(a.date)+'</small></div><div class="fbi-payroll-list-amount"><b>'+esc(money(a.amount))+'</b><small>'+esc(a.type==='payment'?'Paid':'Net')</small></div></div>';}).join(''):'<div class="fbi-payroll-empty">No payroll activity yet.</div>';
+
+    var dept={};
+    scoped.forEach(function(r){var w=getWorker(r.workerId)||{},key=w.department||'Unassigned';dept[key]=(dept[key]||0)+net(r);});
+    var depts=Object.keys(dept).sort(function(a,b){return dept[b]-dept[a];}).slice(0,6),dmax=depts.length?Math.max.apply(Math,depts.map(function(k){return dept[k];})):1;
+    if(q('fbiPayrollDepartments'))q('fbiPayrollDepartments').innerHTML=depts.length?depts.map(function(k){return '<div class="fbi-payroll-dept-row"><div><div class="fbi-payroll-dept-label">'+esc(k)+'</div><div class="fbi-payroll-dept-bar"><div class="fbi-payroll-dept-fill" style="width:'+((dept[k]/dmax)*100).toFixed(1)+'%"></div></div></div><div class="fbi-payroll-chart-value">'+esc(money(dept[k]))+'</div></div>';}).join(''):'<div class="fbi-payroll-empty">Department totals will appear when payroll records exist.</div>';
+
     var recent=rows.slice(0,10);
-    if(!recent.length){q('fbiPayrollOverviewTable').innerHTML='<div class="fbi-payroll-empty">No payroll activity yet.</div>';return;}
-    q('fbiPayrollOverviewTable').innerHTML='<div class="fbi-payroll-table-wrap"><table class="fbi-payroll-table"><thead><tr><th>Worker</th><th>Project / Event</th><th>Date</th><th class="num">Net</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>'+
-      recent.map(function(r){var w=getWorker(r.workerId);return '<tr><td>'+esc(w?.name||'Unknown')+'</td><td>'+esc(r.project||r.role||'')+'</td><td>'+esc(r.workDate||'')+'</td><td class="num">'+esc(money(net(r)))+'</td><td class="num">'+esc(money(paid(r)))+'</td><td class="num">'+esc(money(balance(r)))+'</td><td>'+badge(status(r))+'</td></tr>';}).join('')+
-      '</tbody></table></div>';
+    if(!recent.length){q('fbiPayrollOverviewTable').innerHTML='<div class="fbi-payroll-empty">No payroll activity yet. Create a worker and payroll record to populate the dashboard.</div>';}
+    else q('fbiPayrollOverviewTable').innerHTML='<div class="fbi-payroll-table-wrap"><table class="fbi-payroll-table"><thead><tr><th>Worker</th><th>Project / Event</th><th>Date</th><th class="num">Net</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>'+
+      recent.map(function(r){var w=getWorker(r.workerId);return '<tr><td><b>'+esc(w?.name||'Unknown')+'</b><span class="sub">'+esc(w?.role||'')+'</span></td><td>'+esc(r.project||r.role||'')+'</td><td>'+esc(r.workDate||'')+'</td><td class="num">'+esc(money(net(r)))+'</td><td class="num">'+esc(money(paid(r)))+'</td><td class="num">'+esc(money(balance(r)))+'</td><td>'+badge(status(r))+'</td></tr>';}).join('')+'</tbody></table></div>';
+
+    [
+      ['fbiPayrollQuickWorkers','workers',function(){showWorkerForm();}],
+      ['fbiPayrollQAWorker','workers',function(){showWorkerForm();}],
+      ['fbiPayrollQuickRecord','records',function(){showRecordForm();}],
+      ['fbiPayrollQARecord','records',function(){showRecordForm();}],
+      ['fbiPayrollQAPayslip','payslips',function(){tabs('payslips');}],
+      ['fbiPayrollQAReport','reports',function(){tabs('reports');}],
+      ['fbiPayrollViewRecords','records',function(){tabs('records');}]
+    ].forEach(function(x){var el=q(x[0]);if(el&&!el.dataset.bound){el.dataset.bound='1';el.onclick=x[2];}});
   }
   function summary(k,v){return '<div class="fbi-payroll-summary-item"><span>'+esc(k)+'</span><b>'+esc(v)+'</b></div>';}
 
