@@ -458,7 +458,8 @@ async function startApp(){
     },250);
   }catch(e){
     console.error("Invoice Studio startup error",e);
-    try{init(true);initServiceCatalog();enterApp()}catch(ignore){}
+    // Never replace a cloud read/render failure with an empty local/default state.
+    try{enterApp()}catch(ignore){}
   }
 }
 
@@ -641,6 +642,32 @@ window.addEventListener("load",function(){
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){setTimeout(bootCloudState,350)});
   else setTimeout(bootCloudState,350);
   window.addEventListener("load",function(){setTimeout(bootCloudState,500)});
+})();
+</script>
+<script>
+(function(){
+  async function enforceCloud(){
+    try{
+      const res=await fetch("/api/state?enforce="+Date.now(),{cache:"no-store",credentials:"same-origin"});
+      if(!res.ok)return;
+      const body=await res.json(), state=body&&body.state, payload=state&&state.data;
+      if(!payload||!Array.isArray(payload.data)||!Array.isArray(payload.clients))return;
+      data=payload.data.slice(); clients=payload.clients.slice();
+      settings={biz:"FILM BEYOND IMAGINATION (FBI)",owner:"Jerbel Mark Addeh",baddr:"Dome, Accra",bphone:"0257407350",bemail:"filmbfbi@gmail.com",bnum:"0257407350",logo:typeof DEFAULT_FBI_LOGO!=="undefined"?DEFAULT_FBI_LOGO:"",template:100,defaultPay:"",...(payload.settings||{})};
+      if(typeof normalizePaymentSettings==="function")normalizePaymentSettings();
+      serverDbOnline=true;
+      if(typeof populateClientSelect==="function")populateClientSelect();
+      if(typeof renderClients==="function")renderClients();
+      if(typeof dashboard==="function")dashboard();
+      if(typeof renderSaved==="function")renderSaved();
+      if(typeof renderReceipts==="function")renderReceipts();
+      const st=document.getElementById("storageStatus");
+      if(st)st.textContent="Cloud PostgreSQL connected — "+data.length+" invoices and "+clients.length+" clients restored.";
+      console.log("FINAL CLOUD ENFORCER v2:",data.length,"invoices,",clients.length,"clients");
+    }catch(e){console.warn("Final cloud enforcement failed:",e)}
+  }
+  function schedule(){setTimeout(enforceCloud,1200);setTimeout(enforceCloud,3000);}
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",schedule);else schedule();
 })();
 </script>
 </body>
