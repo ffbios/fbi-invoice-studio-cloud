@@ -1254,3 +1254,25 @@ body{font-size:13px}
 [data-theme="dark"] .activity-row small{color:#8b98a9!important}
 [data-theme="dark"] .invoice-table-wrap{background:#111821!important}
 
+
+/* ===== FBI COMMAND CENTER — FINAL THEME OVERRIDE ===== */
+/* The command-center heading follows the actual surface theme explicitly. */
+[data-theme="light"] .dashboard-hero,
+[data-theme="light"] .dashboard-hero h2,
+[data-theme="light"] .dashboard-hero p{
+  color:#17202d!important;
+}
+[data-theme="light"] .dashboard-hero .eyebrow{color:#9a7927!important}
+[data-theme="dark"] .dashboard-hero,
+[data-theme="dark"] .dashboard-hero h2{
+  color:#fff!important;
+}
+[data-theme="dark"] .dashboard-hero p{color:#aab6c6!important}
+[data-theme="dark"] .dashboard-hero .eyebrow{color:#d7bc6e!important}
+/* Financial KPI values also remain readable on their respective surfaces. */
+[data-theme="light"] .dashboard-stats .stat b,
+[data-theme="light"] .hero-metric b,
+[data-theme="light"] .overview-item b{color:#17202d!important}
+[data-theme="dark"] .dashboard-stats .stat b,
+[data-theme="dark"] .hero-metric b,
+[data-theme="dark"] .overview-item b{color:#fff!important}
