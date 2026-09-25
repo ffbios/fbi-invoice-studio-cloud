@@ -586,5 +586,46 @@ window.addEventListener("load",function(){
   });
 })();
 </script>
+<script>
+/* CLOUD STATE BOOTSTRAP v1: force the live PostgreSQL state into the UI on startup. */
+(function(){
+  async function bootCloudState(){
+    if(window.__FBI_CLOUD_BOOTED)return;
+    try{
+      const res=await fetch("/api/state?boot="+Date.now(),{cache:"no-store",credentials:"same-origin"});
+      if(!res.ok)throw new Error("Cloud state HTTP "+res.status);
+      const body=await res.json();
+      const raw=body&&body.state;
+      const payload=raw&&raw.data;
+      if(!payload||!Array.isArray(payload.data)||!Array.isArray(payload.clients)){
+        throw new Error("Cloud state has an unexpected format");
+      }
+      const preloaded={
+        data:payload.data,
+        clients:payload.clients,
+        settings:payload.settings||{},
+        savedAt:Number(raw.savedAt)||Date.now()
+      };
+      window.__FBI_CLOUD_BOOTED=true;
+      if(typeof init==="function"){
+        init(true,preloaded);
+        if(typeof initTemplates==="function")initTemplates();
+        if(typeof initServiceCatalog==="function")initServiceCatalog();
+        if(typeof paintLoadedState_==="function")paintLoadedState_();
+        if(typeof enterApp==="function")enterApp();
+      }else{
+        console.warn("Invoice Studio main initializer is unavailable; cloud state was fetched successfully.",preloaded.data.length,preloaded.clients.length);
+      }
+      const status=document.getElementById("storageStatus");
+      if(status)status.textContent="Cloud PostgreSQL connected — "+preloaded.data.length+" invoices and "+preloaded.clients.length+" clients restored.";
+    }catch(err){
+      console.error("Cloud state bootstrap failed:",err);
+    }
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){setTimeout(bootCloudState,350)});
+  else setTimeout(bootCloudState,350);
+  window.addEventListener("load",function(){setTimeout(bootCloudState,500)});
+})();
+</script>
 </body>
 </html>
