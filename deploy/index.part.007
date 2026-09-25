@@ -251,6 +251,49 @@ body.fbi-payroll-mode .fbi-payroll-modal{z-index:300}
   .fbi-payroll-tabs .fbi-payroll-tab:hover,.fbi-payroll-tabs .fbi-payroll-tab.active,.fbi-payroll-tabs .fbi-payroll-tab:active,
   .fbi-payroll-quick:hover,.fbi-payroll-mini-btn:hover,.fbi-payroll-dashboard-tools .btn:hover,.fbi-payroll-actions .btn:hover{transform:none!important}
 }
+
+/* ===== PAYROLL DEDICATED WORKSPACE V3 ===== */
+/* Payroll gets a dedicated workspace. The invoice header tools are hidden while Payroll is open. */
+body.fbi-payroll-mode .top{display:none!important}
+body.fbi-payroll-mode .main{width:100%;min-width:0}
+body.fbi-payroll-mode #fbiPayrollView{
+  display:block;
+  width:100%;
+  max-width:none;
+  margin:0;
+  padding:20px 22px 44px;
+  min-height:100vh;
+}
+body.fbi-payroll-mode .fbi-payroll-shell{width:min(1240px,100%);max-width:1240px;margin:0 auto}
+body.fbi-payroll-mode .fbi-payroll-dashboard{width:100%}
+body.fbi-payroll-mode .fbi-payroll-dashboard-hero{padding:18px 20px;border-radius:14px;min-height:116px}
+body.fbi-payroll-mode .fbi-payroll-dashboard-title{font-size:23px}
+body.fbi-payroll-mode .fbi-payroll-dashboard-sub{font-size:9px;max-width:590px}
+body.fbi-payroll-mode .fbi-payroll-dashboard-tools{gap:6px}
+body.fbi-payroll-mode .fbi-payroll-dashboard-tools .btn,
+body.fbi-payroll-mode .fbi-payroll-dashboard-tools .fbi-payroll-period{min-height:34px;padding:8px 10px;font-size:8.5px}
+body.fbi-payroll-mode .fbi-payroll-kpis{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+body.fbi-payroll-mode .fbi-payroll-kpi{padding:12px;min-height:88px}
+body.fbi-payroll-mode .fbi-payroll-kpi b{font-size:18px;margin-top:7px}
+body.fbi-payroll-mode .fbi-payroll-dashboard-grid{grid-template-columns:minmax(0,1.45fr) minmax(285px,.8fr);gap:10px}
+body.fbi-payroll-mode .fbi-payroll-lists{grid-template-columns:minmax(0,1.2fr) minmax(285px,.8fr);gap:10px}
+body.fbi-payroll-mode .fbi-payroll-widget{padding:13px;border-radius:12px}
+body.fbi-payroll-mode .fbi-payroll-widget-head{margin-bottom:9px}
+body.fbi-payroll-mode .fbi-payroll-quick-grid{gap:7px}
+body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
+@media(max-width:1180px){
+  body.fbi-payroll-mode #fbiPayrollView{padding:18px 16px 40px}
+  body.fbi-payroll-mode .fbi-payroll-shell{width:100%;max-width:1180px}
+}
+@media(max-width:900px){
+  body.fbi-payroll-mode .fbi-payroll-dashboard-hero{padding:16px;gap:14px}
+  body.fbi-payroll-mode .fbi-payroll-dashboard-tools{width:100%;justify-content:flex-start}
+}
+@media(max-width:640px){
+  body.fbi-payroll-mode #fbiPayrollView{padding:12px 10px 30px}
+  body.fbi-payroll-mode .fbi-payroll-dashboard-title{font-size:20px}
+  body.fbi-payroll-mode .fbi-payroll-dashboard-hero{border-radius:12px}
+}
 </style>
 
 <section class="view" id="fbiPayrollView" aria-label="Payroll">
