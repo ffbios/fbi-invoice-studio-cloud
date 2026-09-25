@@ -293,7 +293,7 @@ body.auth-locked{overflow:hidden!important}
       var target=document.getElementById('view-'+v);
       if(target) target.classList.add('active');
       document.querySelectorAll('.nav button').forEach(function(btn){btn.classList.toggle('active',btn.getAttribute('data-v')===v);});
-      var titles={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Completed Jobs','Track finished work and generate completion reports'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']};
+      var titles={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Jobs','Manage job status linked to every invoice'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']};
       var t=titles[v]||['Invoice Studio',''];
       var title=document.getElementById('title'); if(title) title.textContent=t[0];
       var sub=document.getElementById('subtitle'); if(sub) sub.textContent=t[1];
@@ -317,7 +317,7 @@ body.auth-locked{overflow:hidden!important}
   var valid={dashboard:1,create:1,clients:1,saved:1,calendar:1,receipts:1,settings:1,whatsapp:1,completed:1};
   var v=id.replace(/^view-/,''); if(!valid[v]) v='dashboard';
   document.querySelectorAll('.nav-link').forEach(function(a){a.classList.toggle('active',a.dataset.v===v);});
-  var title={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Completed Jobs','Track finished work and generate completion reports'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']}[v];
+  var title={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Jobs','Manage job status linked to every invoice'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']}[v];
   if(document.getElementById('title')) document.getElementById('title').textContent=title[0];
   if(document.getElementById('subtitle')) document.getElementById('subtitle').textContent=title[1];
   try{if(v==='create' && typeof initServiceCatalog==='function')initServiceCatalog();}catch(e){}
@@ -642,8 +642,8 @@ body.auth-locked{overflow:hidden!important}
 <section class="view" id="view-completed">
   <div class="card completed-jobs-head">
     <div>
-      <h3>Completed Jobs</h3>
-      <p style="margin:4px 0 0;color:#7d8593">Mark work as completed independently from payment status. Use this section for monthly and yearly job-completion reporting.</p>
+      <h3>Jobs</h3>
+      <p style="margin:4px 0 0;color:#7d8593">Every job is linked to its invoice. Payment status and job status are tracked separately.</p>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" type="button" onclick="exportCompletedJobsCsv()">⬇ Export CSV</button>
@@ -651,16 +651,17 @@ body.auth-locked{overflow:hidden!important}
     </div>
   </div>
   <div class="stats dashboard-stats completed-job-stats">
-    <div class="stat"><span>Completed Jobs</span><b id="completedCount">0</b><small id="completedCountMeta">All completed work</small></div>
-    <div class="stat"><span>Completed Value</span><b id="completedValue">GHS₵0.00</b><small id="completedValueMeta">Invoice value</small></div>
-    <div class="stat"><span>Collected</span><b id="completedCollected">GHS₵0.00</b><small id="completedCollectedMeta">Amount received</small></div>
-    <div class="stat"><span>Outstanding</span><b id="completedBalance">GHS₵0.00</b><small id="completedBalanceMeta">On completed jobs</small></div>
+    <div class="stat"><span>Total Jobs</span><b id="completedCount">0</b><small id="completedCountMeta">Linked to invoices</small></div>
+    <div class="stat"><span>Completed</span><b id="completedValue">0</b><small id="completedValueMeta">Jobs finished</small></div>
+    <div class="stat"><span>In Progress</span><b id="completedCollected">0</b><small id="completedCollectedMeta">Scheduled + active</small></div>
+    <div class="stat"><span>Outstanding</span><b id="completedBalance">GHS₵0.00</b><small id="completedBalanceMeta">Balance on jobs</small></div>
   </div>
   <div class="card">
     <div class="report-filters" style="margin-bottom:14px">
-      <div><label>From Completion Date</label><input id="completedFrom" type="date" onchange="renderCompletedJobs()"></div>
-      <div><label>To Completion Date</label><input id="completedTo" type="date" onchange="renderCompletedJobs()"></div>
-      <div><label>Payment</label><select id="completedPayment" onchange="renderCompletedJobs()"><option value="">All Payments</option><option value="Paid">Fully Paid</option><option value="Outstanding">Has Balance</option></select></div>
+      <div><label>From Event Date</label><input id="completedFrom" type="date" onchange="renderCompletedJobs()"></div>
+      <div><label>To Event Date</label><input id="completedTo" type="date" onchange="renderCompletedJobs()"></div>
+      <div><label>Job Status</label><select id="completedJobStatus" onchange="renderCompletedJobs()"><option value="">All Job Statuses</option><option value="Not Started">Not Started</option><option value="Scheduled">Scheduled</option><option value="In Progress">In Progress</option><option value="Completed">Completed</option><option value="Cancelled">Cancelled</option></select></div>
+      <div><label>Payment</label><select id="completedPayment" onchange="renderCompletedJobs()"><option value="">All Payments</option><option value="Paid">Fully Paid</option><option value="Partial">Partially Paid</option><option value="Outstanding">Outstanding</option></select></div>
       <div><label>Client</label><select id="completedClient" onchange="renderCompletedJobs()"><option value="">All Clients</option></select></div>
     </div>
     <div id="completedJobsTable"></div>
