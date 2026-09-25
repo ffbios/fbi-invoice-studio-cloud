@@ -456,24 +456,11 @@ async function startApp(){
     initTemplates();
     initServiceCatalog();
 
-    // The production server explicitly reports loginRequired=false.
-    // In that mode, open the workspace directly and load the cloud records.
-    const authStatus=await refreshAuthStatus();
-    if(authStatus && authStatus.loginRequired===false){
-      await hydrateCloudState();
-      enterApp();
-      return;
-    }
-
-    const authenticated=await refreshAuthSession();
-    if(authenticated){
-      await hydrateCloudState();
-      enterApp();
-    }else{
-      // Do not request private invoice data until authentication succeeds.
-      paintLoadedState_();
-      await showAuthScreen();
-    }
+    // Login is temporarily disabled while the application is being completed.
+    // Keep the authentication code intact so it can be re-enabled later.
+    await hydrateCloudState();
+    enterApp();
+    return;
   }catch(e){
     console.error("Invoice Studio startup error",e);
     try{init(true);initServiceCatalog()}catch(ignore){}
