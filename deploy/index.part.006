@@ -2,12 +2,13 @@
   const overdueCount=infos.filter(o=>o.status==="Overdue").length;
   const dueSoon=infos.filter(o=>o.status!=="Paid"&&o.status!=="Draft"&&o.dueDate&&daysFromToday(o.dueDate)>=0&&daysFromToday(o.dueDate)<=7);
   const dueSoonAmt=dueSoon.reduce((s,o)=>s+invoiceBalance(o.x),0);
-  const collection=total?Math.min(100,(paid/total)*100):0;
+  const collection=total?Math.min(100,(collected/total)*100):0;
   const rentals=data.filter(x=>x.category==="Equipment Rentals").length;
   const avg=data.length?total/data.length:0;
   $("sCount").textContent=data.length;$("sCountMeta").textContent=paidCount+" paid · "+drafts+" drafts";
   $("sInvoiced").textContent=fmtMoney(total,"GHS");$("sInvoicedMeta").textContent=data.length+" saved invoice"+(data.length===1?"":"s");
-  $("sPaid").textContent=fmtMoney(paid,"GHS");$("sPaidMeta").textContent=paidCount+" paid invoice"+(paidCount===1?"":"s");
+  $("sPaid").textContent=fmtMoney(collected,"GHS");$("sPaidMeta").textContent=paidCount+" fully paid · "+partial+" partial";
+  $("sPartial").textContent=fmtMoney(partialCollected,"GHS");$("sPartialMeta").textContent=partial+" partial payment"+(partial===1?"":"s");
   $("sDue").textContent=fmtMoney(outstanding,"GHS");$("sDueMeta").textContent=(sent+partial+overdue)+" open invoice"+((sent+partial+overdue)===1?"":"s");
   $("sOverdue").textContent=fmtMoney(overdue,"GHS");$("sOverdueMeta").textContent=overdueCount+" overdue";
   $("sDueSoon").textContent=fmtMoney(dueSoonAmt,"GHS");$("sDueSoonMeta").textContent=dueSoon.length+" due within 7 days";
@@ -48,7 +49,7 @@ async function refreshWhatsAppDebug(){try{const r=await fetch("/api/whatsapp/deb
 
 function exportStudioBackup(){
   try{
-    const payload={version:3,exportedAt:new Date().toISOString(),data,clients,settings};
+    const payload={version:4,exportedAt:new Date().toISOString(),data,clients,settings,deletedInvoiceIds};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="FBI-Invoice-Studio-backup.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
     toast("Backup exported");
@@ -61,7 +62,7 @@ function importStudioBackup(evt){
     try{
       const obj=JSON.parse(r.result||"{}");
       if(!Array.isArray(obj.data)||!Array.isArray(obj.clients)||!obj.settings)throw new Error("Invalid Invoice Studio backup file");
-      data=obj.data;clients=obj.clients;settings={...settings,...obj.settings};persist();populateClientSelect();renderClients();dashboard();renderSaved();renderReceipts();toast("Backup restored successfully");
+      data=obj.data.filter(x=>!deletedInvoiceIds.includes("id:"+String(x?.id||"").trim())&&!deletedInvoiceIds.includes("no:"+String(x?.no||"").trim()));clients=obj.clients;settings={...settings,...obj.settings};if(Array.isArray(obj.deletedInvoiceIds))deletedInvoiceIds=[...new Set([...deletedInvoiceIds,...obj.deletedInvoiceIds.map(v=>String(v||"").trim()).filter(Boolean)])];persist();populateClientSelect();renderClients();dashboard();renderSaved();renderReceipts();toast("Backup restored successfully");
     }catch(e){console.error(e);toast("Backup restore failed: "+e.message)}
     finally{evt.target.value=""}
   };
@@ -344,6 +345,7 @@ function enterApp(){
   try{show(target)}catch(e){}
 }
 async function logoutApp(){
+  try{await serverPersistQueue}catch(e){}
   try{await authRequest("/api/auth/logout","POST",{})}catch(e){console.warn("Logout request failed",e)}
   try{sessionStorage.removeItem(AUTH_SESSION)}catch(e){}
   authProfile=null;

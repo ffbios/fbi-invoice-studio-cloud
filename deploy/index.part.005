@@ -129,7 +129,7 @@ let serverDbOnline=false;
 let lastServerPersistAt=0;
 
 function persist(){
-  const payload={data,clients,settings};
+  const payload={data,clients,settings,deletedInvoiceIds};
   const envelope={version:4,savedAt:Date.now(),data:payload};
   const json=JSON.stringify(envelope);
   // Keep the existing browser fallback, but make the local SQLite server the primary store.
@@ -308,7 +308,9 @@ const DEFAULT_FBI_LOGO="data:image/svg+xml,%3Csvg xmlns='http%3A%2F%2Fwww.w3.org
 
 function init(skipNewInvoice=false,preloaded=null){
   const d=preloaded||readPersistentPayloadSync()||{};
-  data=Array.isArray(d.data)?d.data:[];
+  deletedInvoiceIds=Array.isArray(d.deletedInvoiceIds)?d.deletedInvoiceIds.map(v=>String(v||"").trim()).filter(Boolean):[];
+  const deletedSet=new Set(deletedInvoiceIds);
+  data=(Array.isArray(d.data)?d.data:[]).filter(x=>!deletedSet.has("id:"+String(x?.id||"").trim())&&!deletedSet.has("no:"+String(x?.no||"").trim()));
   clients=Array.isArray(d.clients)?d.clients:[];
   settings={
     biz:"FILM BEYOND IMAGINATION (FBI)",owner:"Jerbel Mark Addeh",baddr:"Dome, Accra",bphone:"0257407350",bemail:"filmbfbi@gmail.com",bnum:"0257407350",
@@ -569,7 +571,20 @@ function renderClients(){
   };
 }
 
-function del(id){if(confirm("Delete this invoice?")){data=data.filter(x=>x.id!==id);persist();renderSaved();dashboard();toast("Invoice deleted")}}
+async function del(id){
+  const invoice=data.find(x=>x.id===id);
+  if(!invoice)return;
+  if(!confirm("Delete this invoice?"))return;
+  data=data.filter(x=>x.id!==id);
+  const tombstones=["id:"+String(id)];
+  if(invoice.no)tombstones.push("no:"+String(invoice.no));
+  deletedInvoiceIds=[...new Set([...deletedInvoiceIds,...tombstones])];
+  if(current?.id===id)current=null;
+  renderSaved();
+  dashboard();
+  const cloudSaved=await persist();
+  toast(cloudSaved?"Invoice deleted":"Invoice deleted locally; cloud save failed");
+}
 function renderSaved(){
   const el=$("saved");if(!el)return;
   el.innerHTML=data.length?data.map(x=>`<div class="saved" data-invoice-row="${esc(x.id)}"><span class="grow">${esc(x.no)} <span class="meta">${esc(x.client||"No client")} · ${esc(x.status)}</span></span><b>${x.cur}₵${Number(x.total||0).toLocaleString(undefined,{minimumFractionDigits:2})}</b><button type="button" class="btn" data-invoice-action="edit" data-invoice-id="${esc(x.id)}">Edit</button><button type="button" class="btn" data-invoice-action="view" data-invoice-id="${esc(x.id)}">View</button>${Number(x.amountPaid||0)>0?`<button type="button" class="btn primary" data-invoice-action="receipt" data-invoice-id="${esc(x.id)}">Receipt</button>`:""}<button type="button" class="btn danger" data-invoice-action="delete" data-invoice-id="${esc(x.id)}">Delete</button></div>`).join(""):'<div style="color:#777;text-align:center;padding:20px">No saved invoices.</div>';
@@ -692,13 +707,15 @@ window.renderCalendar=renderCalendar;
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&$("calendarModal")?.classList.contains("show"))closeCalendarModal()});
 function previewSaved(id){loadInvoice(id);setTimeout(preview,30)}
 function invoiceStatusInfo(x){const st=String(x.status||"Draft");const due=String(x.due||"");let dueDate=/^\d{4}-\d{2}-\d{2}$/.test(due)?new Date(due+"T23:59:59"):null;const today=new Date();today.setHours(23,59,59,999);let effective=st;if(st!=="Paid"&&dueDate&&dueDate<today)effective="Overdue";let cls=effective==="Paid"?"status-paid":effective==="Overdue"?"status-overdue":effective==="Partially Paid"?"status-partial":effective==="Sent"?"status-sent":"status-draft";return{status:effective,cls,dueDate}}
-function invoiceBalance(x){return x.status==="Paid"?0:Number(x.balanceDue!=null?x.balanceDue:x.total||0)}
+function invoiceBalance(x){const total=Number(x.total||0);if(x.status==="Paid")return 0;if(x.amountPaid!=null)return Math.max(0,total-Math.min(Math.max(Number(x.amountPaid)||0,total));return Math.max(0,Number(x.balanceDue!=null?x.balanceDue:total));}
 function fmtMoney(v,c="GHS"){return String(c||"GHS")+"₵"+Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
 function daysFromToday(d){if(!d)return null;const a=new Date();a.setHours(0,0,0,0);const b=new Date(d);b.setHours(0,0,0,0);return Math.round((b-a)/86400000)}
 function dashboard(){
   const infos=data.map(x=>({x,...invoiceStatusInfo(x)}));
   const total=data.reduce((s,x)=>s+Number(x.total||0),0);
-  const paid=data.filter(x=>x.status==="Paid").reduce((s,x)=>s+Number(x.total||0),0);
+  const collected=data.reduce((s,x)=>s+Math.min(Math.max(Number(x.amountPaid||0),0),Number(x.total||0)),0);
+  const partialCollected=infos.filter(o=>o.status==="Partially Paid").reduce((s,o)=>s+Math.min(Math.max(Number(o.x.amountPaid||0),0),Number(o.x.total||0)),0);
+  const paid=infos.filter(o=>o.status==="Paid").reduce((s,o)=>s+Number(o.x.total||0),0);
   const outstanding=infos.filter(o=>o.status!=="Paid"&&o.status!=="Draft").reduce((s,o)=>s+invoiceBalance(o.x),0);
   const overdue=infos.filter(o=>o.status==="Overdue").reduce((s,o)=>s+invoiceBalance(o.x),0);
   const drafts=infos.filter(o=>o.status==="Draft").length;

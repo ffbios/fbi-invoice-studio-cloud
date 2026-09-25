@@ -404,7 +404,8 @@ body.auth-locked{overflow:hidden!important}
   <div class="stats dashboard-stats">
     <div class="stat"><span>Total Invoices</span><b id="sCount">0</b><small id="sCountMeta">All records</small></div>
     <div class="stat"><span>Total Invoiced</span><b id="sInvoiced">GHS₵0.00</b><small id="sInvoicedMeta">All saved invoices</small></div>
-    <div class="stat"><span>Paid</span><b id="sPaid">GHS₵0.00</b><small id="sPaidMeta">0 invoices</small></div>
+    <div class="stat"><span>Collected</span><b id="sPaid">GHS₵0.00</b><small id="sPaidMeta">0 received</small></div>
+    <div class="stat"><span>Partially Paid</span><b id="sPartial">GHS₵0.00</b><small id="sPartialMeta">0 invoices</small></div>
     <div class="stat"><span>Outstanding</span><b class="accent" id="sDue">GHS₵0.00</b><small id="sDueMeta">0 invoices</small></div>
     <div class="stat"><span>Overdue</span><b id="sOverdue">GHS₵0.00</b><small id="sOverdueMeta">0 invoices</small></div>
     <div class="stat"><span>Due Soon</span><b id="sDueSoon">GHS₵0.00</b><small id="sDueSoonMeta">Next 7 days</small></div>
@@ -724,5 +725,5 @@ Name: (FBI) FILM BEYOND IMAGINATION</textarea><button class="btn primary" onclic
 <div class="toast" id="toast"></div>
 
 <script>
-const KEY="invoice-studio-fbi-v2";let data=[],clients=[],settings={},current=null;
+const KEY="invoice-studio-fbi-v2";let data=[],clients=[],settings={},current=null,deletedInvoiceIds=[];
 const $=id=>document.getElementById(id);
