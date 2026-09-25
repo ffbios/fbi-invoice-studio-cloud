@@ -631,7 +631,7 @@ window.addEventListener("load",function(){
 /* ===== FBI PROFESSIONAL THEME CONTROLLER — UI ONLY ===== */
 (function(){
   const KEY="fbi-invoice-theme-v1";
-  function read(){try{const v=localStorage.getItem(KEY);return v==="light"||v==="dark"||v==="system"?v:"system"}catch(e){return "system"}}
+  function read(){try{const v=localStorage.getItem(KEY);return v==="light"||v==="dark"||v==="system"?v:"light"}catch(e){return "light"}}
   function resolved(pref){
     if(pref==="system") return window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
     return pref;
@@ -668,22 +668,31 @@ window.addEventListener("load",function(){
 (function(){
   function money(n,cur){return (cur||"GHS")+"₵"+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
   function humanDate(v){if(!v)return "No date";const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}
+  function validData(){return typeof data!=="undefined"&&Array.isArray(data)}
+  function renderHero(){
+    if(!validData())return;
+    const collected=data.reduce((s,x)=>s+(typeof amountCollected==="function"?amountCollected(x):Number(x.amountPaid||0)),0);
+    const open=data.filter(x=>String(x.status||"Draft")!=="Paid"&&String(x.status||"Draft")!=="Draft").length;
+    const c=document.getElementById("heroCollected"),o=document.getElementById("heroOpen");
+    if(c)c.textContent=money(collected,"GHS");
+    if(o)o.textContent=String(open);
+  }
   function renderPulse(){
-    const el=document.getElementById("revenuePulse"); if(!el||!typeof data!=="undefined"&&Array.isArray(data))return;
-    const now=new Date(), months=[];
-    for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push(d)}
+    const el=document.getElementById("revenuePulse");if(!el||!validData())return;
+    const now=new Date(),months=[];
+    for(let i=5;i>=0;i--){months.push(new Date(now.getFullYear(),now.getMonth()-i,1))}
     const vals=months.map(d=>data.filter(x=>{const v=new Date(x.date||x.createdAt||"");return !Number.isNaN(v.getTime())&&v.getFullYear()===d.getFullYear()&&v.getMonth()===d.getMonth()}).reduce((s,x)=>s+Number(x.total||0),0));
     const max=Math.max(1,...vals),sum=vals.reduce((a,b)=>a+b,0);
     el.innerHTML=vals.map((v,i)=>'<div class="pulse-bar" style="--h:'+Math.max(8,(v/max)*100)+'%" title="'+money(v,"GHS")+'"><span>'+months[i].toLocaleDateString(undefined,{month:"short"})+'</span></div>').join("");
     const meta=document.getElementById("pulseMeta");if(meta)meta.textContent=sum?"6-month invoiced volume · "+money(sum,"GHS"):"No invoice activity yet";
   }
   function renderActivity(){
-    const el=document.getElementById("dashboardActivity");if(!el||!typeof data!=="undefined"&&Array.isArray(data))return;
+    const el=document.getElementById("dashboardActivity");if(!el||!validData())return;
     const list=data.slice().sort((a,b)=>String(b.updatedAt||b.date||b.createdAt||"").localeCompare(String(a.updatedAt||a.date||a.createdAt||""))).slice(0,5);
     el.innerHTML=list.length?list.map(x=>'<div class="activity-row"><span class="activity-dot"></span><div><b>'+esc(x.no||"Invoice")+' · '+esc(x.client||"No client")+'</b><small>'+esc(x.status||"Draft")+' · '+humanDate(x.updatedAt||x.date||x.createdAt)+'</small></div><strong style="margin-left:auto;font-size:9px">'+money(x.total,x.cur||"GHS")+'</strong></div>').join(""):'<div style="color:var(--muted);font-size:10px;padding:12px 0">No activity yet.</div>';
   }
   function renderAlerts(){
-    const el=document.getElementById("dashboardAlerts"),badge=document.getElementById("headerNotifyCount");if(!el||!typeof data!=="undefined"&&Array.isArray(data))return;
+    const el=document.getElementById("dashboardAlerts"),badge=document.getElementById("headerNotifyCount");if(!el||!validData())return;
     const alerts=[];
     data.forEach(x=>{
       let s="";try{s=invoiceStatusInfo(x).status}catch(e){s=x.status||""}
@@ -693,7 +702,7 @@ window.addEventListener("load",function(){
     const n=alerts.length;if(badge){badge.textContent=n;badge.style.display=n?"grid":"none"}
     el.innerHTML=alerts.slice(0,5).map(a=>'<div class="activity-row"><span style="font-size:14px">'+a.icon+'</span><div><b>'+esc(a.title)+'</b><small>'+esc(a.detail)+'</small></div></div>').join("")||'<div style="color:var(--muted);font-size:10px;padding:12px 0">✓ Nothing needs immediate attention.</div>';
   }
-  window.refreshFBIVisuals=function(){try{renderPulse();renderActivity();renderAlerts()}catch(e){console.warn("FBI visual refresh",e)}};
+  window.refreshFBIVisuals=function(){try{renderHero();renderPulse();renderActivity();renderAlerts()}catch(e){console.warn("FBI visual refresh",e)}};
   const originalDashboard=window.dashboard;
   if(typeof originalDashboard==="function"){
     window.dashboard=function(){const out=originalDashboard.apply(this,arguments);setTimeout(window.refreshFBIVisuals,20);return out};
