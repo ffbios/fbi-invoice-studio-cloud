@@ -247,15 +247,49 @@ function sendStatic(res, pathname) {
   return true;
 }
 
-function sendIndex(res) {
-  const stat = fs.statSync(INDEX_FILE);
-  res.writeHead(200, {
-    'Content-Type': 'text/html; charset=utf-8',
-    'Content-Length': stat.size,
-    'Cache-Control': 'no-cache',
-    'X-Content-Type-Options': 'nosniff'
-  });
-  fs.createReadStream(INDEX_FILE).pipe(res);
+async function sendIndex(res) {
+  try {
+    // Inject the authoritative PostgreSQL state into the initial HTML.
+    // This removes the last client-side race: the app has its records before
+    // any startup renderer, service worker, or async fetch can run.
+    const stateResult = await pool.query('SELECT version,saved_at,state_json FROM app_state WHERE id=1');
+    let state = stateResult.rows[0]?.state_json || null;
+    if (typeof state === 'string') {
+      try { state = JSON.parse(state); } catch { state = null; }
+    }
+
+    let html = fs.readFileSync(INDEX_FILE, 'utf8');
+    if (state && state.data && Array.isArray(state.data.data) && Array.isArray(state.data.clients)) {
+      const safeState = JSON.stringify(state)
+        .replace(/</g, '\\u003c')
+        .replace(/>/g, '\\u003e')
+        .replace(/&/g, '\\u0026');
+      const boot = '<script>window.__FBI_SERVER_STATE__=' + safeState + ';</script>';
+      html = html.replace('</head>', boot + '</head>');
+    }
+
+    const raw = Buffer.from(html, 'utf8');
+    res.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Content-Length': raw.length,
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      'Pragma': 'no-cache',
+      'X-Content-Type-Options': 'nosniff'
+    });
+    res.end(raw);
+  } catch (err) {
+    console.error('Index render failed:', err);
+    // Serve the static shell rather than taking the whole app down.
+    const raw = fs.readFileSync(INDEX_FILE);
+    res.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Content-Length': raw.length,
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      'Pragma': 'no-cache',
+      'X-Content-Type-Options': 'nosniff'
+    });
+    res.end(raw);
+  }
 }
 
 function readBody(req) {
@@ -675,7 +709,7 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/api/whatsapp/invoice-created' && req.method === 'POST') return handleWhatsAppNotConfigured(req, res);
     if (url.pathname === '/api/whatsapp/debug-log' && req.method === 'GET') return json(res, 200, { ok: true, log: 'Cloud WhatsApp integration is not configured.' });
 
-    if (req.method === 'GET') return sendIndex(res);
+    if (req.method === 'GET') return await sendIndex(res);
     return json(res, 404, { ok: false, error: 'Not found.' });
   } catch (err) {
     console.error(err);
