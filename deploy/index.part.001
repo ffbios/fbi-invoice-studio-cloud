@@ -1276,3 +1276,23 @@ body{font-size:13px}
 [data-theme="dark"] .dashboard-stats .stat b,
 [data-theme="dark"] .hero-metric b,
 [data-theme="dark"] .overview-item b{color:#fff!important}
+
+
+/* ===== COMMAND CENTER — LIGHT MODE FORCE VISIBILITY ===== */
+/* Final safeguard: the command-center title must never remain white on a light surface. */
+html[data-theme="light"] section#view-dashboard .dashboard-hero > div:first-child h2,
+html:not([data-theme="dark"]) section#view-dashboard .dashboard-hero > div:first-child h2{
+  color:#17202d!important;
+  -webkit-text-fill-color:#17202d!important;
+  text-shadow:none!important;
+  opacity:1!important;
+}
+html[data-theme="light"] section#view-dashboard .dashboard-hero > div:first-child,
+html:not([data-theme="dark"]) section#view-dashboard .dashboard-hero > div:first-child{
+  color:#17202d!important;
+}
+html[data-theme="light"] section#view-dashboard .dashboard-hero,
+html:not([data-theme="dark"]) section#view-dashboard .dashboard-hero{
+  color:#17202d!important;
+  background:linear-gradient(135deg,#ffffff,#f7f9fc)!important;
+}
