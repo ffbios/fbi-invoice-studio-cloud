@@ -146,6 +146,8 @@ function persist(){
       if(body.ok===false)throw new Error(body.error||'Database save failed');
       serverDbOnline=true;
       lastServerPersistAt=envelope.savedAt;
+      if(deleteIds.length) pendingInvoiceDeletes=pendingInvoiceDeletes.filter(id=>!deleteIds.includes(id));
+      if(clientDeleteIds.length) pendingClientDeletes=pendingClientDeletes.filter(id=>!clientDeleteIds.includes(id));
       const st=$('storageStatus');
       if(st)st.textContent='Cloud PostgreSQL database is connected. Your invoices, clients and settings are stored securely in the cloud.';
       return true;
@@ -522,7 +524,7 @@ function saveCurrentClient(){const name=$("client").value.trim();if(!name){toast
 function clearClientForm(){$("clientId").value="";$("dbClientName").value="";$("dbClientPhone").value="";$("dbClientEmail").value="";$("dbClientAddress").value="";$("dbClientNotes").value="";$("clientFormTitle").textContent="Add Client"}
 function saveClient(){const name=$("dbClientName").value.trim();if(!name){toast("Client name is required");return}const id=$("clientId").value;let c=id?clients.find(x=>x.id===id):null;if(!c){c={id:("av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10)),createdAt:new Date().toISOString()};clients.unshift(c)}c.name=name;c.phone=$("dbClientPhone").value.trim();c.email=$("dbClientEmail").value.trim();c.address=$("dbClientAddress").value.trim();c.notes=$("dbClientNotes").value.trim();persist();clearClientForm();populateClientSelect();renderClients();toast("Client saved")}
 function editClient(id){const c=clients.find(x=>x.id===id);if(!c)return;$("clientId").value=c.id;$("dbClientName").value=c.name||"";$("dbClientPhone").value=c.phone||"";$("dbClientEmail").value=c.email||"";$("dbClientAddress").value=c.address||"";$("dbClientNotes").value=c.notes||"";$("clientFormTitle").textContent="Edit Client";show("clients")}
-function deleteClient(id){if(!confirm("Delete this client from the database? Existing invoices will remain unchanged."))return;clients=clients.filter(x=>x.id!==id);persist();populateClientSelect();renderClients();toast("Client deleted")}
+function deleteClient(id){if(!confirm("Delete this client from the database? Existing invoices will remain unchanged."))return;const target=clients.find(x=>x.id===id);const deleteId=target?.id||id;clients=clients.filter(x=>x.id!==id);if(deleteId)pendingClientDeletes.push(String(deleteId));persist();populateClientSelect();renderClients();toast("Client deleted")}
 function useClient(id){const c=clients.find(x=>x.id===id);if(!c)return;newInvoice();$("client").value=c.name||"";$("clientAddress").value=c.address||"";$("clientPhone").value=c.phone||"";$("clientEmail").value=c.email||"";$("clientSelect").value=c.id;show("create")}
 function parseCsvLine(line){
   const out=[];let cur="",quoted=false;
@@ -569,7 +571,7 @@ function renderClients(){
   };
 }
 
-function del(id){if(confirm("Delete this invoice?")){data=data.filter(x=>x.id!==id);persist();renderSaved();dashboard();toast("Invoice deleted")}}
+function del(id){if(confirm("Delete this invoice?")){const target=data.find(x=>x.id===id);const deleteId=target?.id||target?.no||id;data=data.filter(x=>x.id!==id);if(deleteId)pendingInvoiceDeletes.push(String(deleteId));persist();renderSaved();dashboard();toast("Invoice deleted")}}
 function renderSaved(){
   const el=$("saved");if(!el)return;
   el.innerHTML=data.length?data.map(x=>`<div class="saved" data-invoice-row="${esc(x.id)}"><span class="grow">${esc(x.no)} <span class="meta">${esc(x.client||"No client")} · ${esc(x.status)}</span></span><b>${x.cur}₵${Number(x.total||0).toLocaleString(undefined,{minimumFractionDigits:2})}</b><button type="button" class="btn" data-invoice-action="edit" data-invoice-id="${esc(x.id)}">Edit</button><button type="button" class="btn" data-invoice-action="view" data-invoice-id="${esc(x.id)}">View</button>${Number(x.amountPaid||0)>0?`<button type="button" class="btn primary" data-invoice-action="receipt" data-invoice-id="${esc(x.id)}">Receipt</button>`:""}<button type="button" class="btn danger" data-invoice-action="delete" data-invoice-id="${esc(x.id)}">Delete</button></div>`).join(""):'<div style="color:#777;text-align:center;padding:20px">No saved invoices.</div>';
