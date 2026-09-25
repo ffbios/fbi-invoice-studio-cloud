@@ -217,22 +217,40 @@ body.fbi-payroll-mode .fbi-payroll-modal{z-index:300}
 @media(max-width:780px){.fbi-payroll-dashboard-hero{flex-direction:column}.fbi-payroll-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.fbi-payroll-quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.fbi-payroll-kpis{grid-template-columns:1fr}.fbi-payroll-health{grid-template-columns:1fr}.fbi-payroll-donut{margin:auto}.fbi-payroll-quick-grid{grid-template-columns:1fr}.fbi-payroll-chart-row{grid-template-columns:42px minmax(0,1fr) 62px}}
 
-/* ===== PAYROLL PILL INTERACTION V1 ===== */
-/* Hover motion for the Payroll navigation pill, matching the tactile Overview UI feel. */
+/* ===== PAYROLL INNER-CONTENT INTERACTION V2 ===== */
+/* Keep the outer Payroll navigation pill stable. Apply the tactile motion to the controls inside Payroll instead. */
 .nav button[data-v="payroll"],.nav .nav-link[data-v="payroll"]{
+  transform:none!important;
+  box-shadow:none!important;
+}
+.fbi-payroll-tabs .fbi-payroll-tab{
   transform-origin:center center;
   transition:transform .28s cubic-bezier(.2,.75,.25,1),box-shadow .28s ease,background .28s ease,border-color .28s ease!important;
 }
-.nav button[data-v="payroll"]:hover,.nav .nav-link[data-v="payroll"]:hover{
-  transform:translateX(2px) rotate(1.15deg) scale(1.012)!important;
-  box-shadow:0 7px 22px rgba(0,0,0,.16),inset 0 0 18px rgba(215,177,90,.06)!important;
+.fbi-payroll-tabs .fbi-payroll-tab:hover{
+  transform:translateY(-1px) rotate(1.1deg) scale(1.012)!important;
+  box-shadow:0 7px 20px rgba(0,0,0,.16),inset 0 0 18px rgba(215,177,90,.055)!important;
+  border-color:rgba(215,177,90,.42)!important;
 }
-.nav button[data-v="payroll"].active,.nav .nav-link[data-v="payroll"].active{
-  transform:translateX(1px) rotate(.35deg) scale(1.006)!important;
-  box-shadow:0 5px 18px rgba(189,27,99,.12),inset 0 0 20px rgba(189,27,99,.08)!important;
+.fbi-payroll-tabs .fbi-payroll-tab.active{
+  transform:rotate(.25deg) scale(1.005)!important;
+  box-shadow:0 5px 18px rgba(189,27,99,.10),inset 0 0 20px rgba(189,27,99,.08)!important;
 }
-.nav button[data-v="payroll"]:active,.nav .nav-link[data-v="payroll"]:active{transform:translateX(1px) rotate(.1deg) scale(.99)!important}
-@media(prefers-reduced-motion:reduce){.nav button[data-v="payroll"],.nav .nav-link[data-v="payroll"]{transition:none!important}.nav button[data-v="payroll"]:hover,.nav .nav-link[data-v="payroll"]:hover,.nav button[data-v="payroll"].active,.nav .nav-link[data-v="payroll"].active{transform:none!important}}
+.fbi-payroll-tabs .fbi-payroll-tab:active{
+  transform:translateY(0) rotate(.1deg) scale(.99)!important;
+}
+.fbi-payroll-quick,.fbi-payroll-mini-btn,.fbi-payroll-dashboard-tools .btn,.fbi-payroll-actions .btn{
+  transition:transform .28s cubic-bezier(.2,.75,.25,1),box-shadow .28s ease,border-color .28s ease,background .28s ease!important;
+}
+.fbi-payroll-quick:hover,.fbi-payroll-mini-btn:hover,.fbi-payroll-dashboard-tools .btn:hover,.fbi-payroll-actions .btn:hover{
+  transform:translateY(-1px) rotate(.7deg) scale(1.01)!important;
+  box-shadow:0 7px 20px rgba(0,0,0,.14)!important;
+}
+@media(prefers-reduced-motion:reduce){
+  .fbi-payroll-tabs .fbi-payroll-tab,.fbi-payroll-quick,.fbi-payroll-mini-btn,.fbi-payroll-dashboard-tools .btn,.fbi-payroll-actions .btn{transition:none!important}
+  .fbi-payroll-tabs .fbi-payroll-tab:hover,.fbi-payroll-tabs .fbi-payroll-tab.active,.fbi-payroll-tabs .fbi-payroll-tab:active,
+  .fbi-payroll-quick:hover,.fbi-payroll-mini-btn:hover,.fbi-payroll-dashboard-tools .btn:hover,.fbi-payroll-actions .btn:hover{transform:none!important}
+}
 </style>
 
 <section class="view" id="fbiPayrollView" aria-label="Payroll">
