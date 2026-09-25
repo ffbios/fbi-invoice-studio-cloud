@@ -521,7 +521,7 @@ window.exportReportExcel=function(){
 <script>
 (function(){
   function jobStatus(x){const v=String(x&&x.jobStatus||"Not Started");return v==="Done"?"Completed":v;}
-  function jobDone(x){return jobStatus(x)==="Done";}
+  function jobDone(x){return jobStatus(x)==="Completed";}
   window.setJobStatusFromSelect=async function(id,status){
     const x=data.find(a=>a.id===id); if(!x)return;
     const allowed=["Not Started","Scheduled","In Progress","Completed","Cancelled"]; if(!allowed.includes(status))return;
@@ -560,7 +560,7 @@ window.exportReportExcel=function(){
       delete x.jobStatus;
       delete x.jobCompletedDate;
     }else{
-      x.jobStatus="Done";
+      x.jobStatus="Completed";
       x.jobCompletedDate=new Date().toISOString();
     }
     const ok=await persist();
