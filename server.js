@@ -372,21 +372,20 @@ async function getAccount() {
 }
 
 async function requireAuth(req, res) {
-  const session = await currentSession(req);
-  if (!session) {
-    json(res, 401, { ok: false, error: 'Authentication required.' });
-    return null;
-  }
-  return session;
+  // Invoice Studio is intentionally configured as a login-free private app.
+  // Keep the legacy authentication tables/endpoints for compatibility, but do
+  // not block the cloud state/draft APIs behind a session.
+  return { username: 'local-user', tokenHash: null };
 }
 
 async function handleAuthStatus(res) {
-  return json(res, 200, { ok: true, accountExists: !!(await getAccount()) });
+  // Login is disabled for this Invoice Studio deployment.
+  return json(res, 200, { ok: true, accountExists: false, loginRequired: false });
 }
 
 async function handleAuthMe(req, res) {
-  const session = await currentSession(req);
-  return json(res, 200, { ok: true, authenticated: !!session, username: session?.username || null });
+  // Login is disabled; the cloud app is available directly.
+  return json(res, 200, { ok: true, authenticated: true, username: 'local-user' });
 }
 
 async function handleAuthSetup(req, res) {
