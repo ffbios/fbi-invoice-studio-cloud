@@ -2,12 +2,12 @@
   const overdueCount=infos.filter(o=>o.status==="Overdue").length;
   const dueSoon=infos.filter(o=>o.status!=="Paid"&&o.status!=="Draft"&&o.dueDate&&daysFromToday(o.dueDate)>=0&&daysFromToday(o.dueDate)<=7);
   const dueSoonAmt=dueSoon.reduce((s,o)=>s+invoiceBalance(o.x),0);
-  const collection=total?Math.min(100,(paid/total)*100):0;
+  const collection=total?Math.min(100,(collected/total)*100):0;
   const rentals=data.filter(x=>x.category==="Equipment Rentals").length;
   const avg=data.length?total/data.length:0;
   $("sCount").textContent=data.length;$("sCountMeta").textContent=paidCount+" paid · "+drafts+" drafts";
   $("sInvoiced").textContent=fmtMoney(total,"GHS");$("sInvoicedMeta").textContent=data.length+" saved invoice"+(data.length===1?"":"s");
-  $("sPaid").textContent=fmtMoney(paid,"GHS");$("sPaidMeta").textContent=paidCount+" paid invoice"+(paidCount===1?"":"s");
+  $("sPaid").textContent=fmtMoney(collected,"GHS");$("sPaidMeta").textContent=paidCount+" fully paid · "+partial+" partial";
   $("sDue").textContent=fmtMoney(outstanding,"GHS");$("sDueMeta").textContent=(sent+partial+overdue)+" open invoice"+((sent+partial+overdue)===1?"":"s");
   $("sOverdue").textContent=fmtMoney(overdue,"GHS");$("sOverdueMeta").textContent=overdueCount+" overdue";
   $("sDueSoon").textContent=fmtMoney(dueSoonAmt,"GHS");$("sDueSoonMeta").textContent=dueSoon.length+" due within 7 days";
