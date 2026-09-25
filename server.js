@@ -164,26 +164,6 @@ async function initDb() {
   // Load the recovered archive after the empty database has been seeded.
   // This keeps the recovered invoices/clients available on a fresh cloud database.
   await importArchiveState();
-  try {
-    const check = await pool.query('SELECT state_json,draft_json,draft_saved_at FROM app_state WHERE id=1');
-    const state = check.rows[0]?.state_json || {};
-    const invoices = Array.isArray(state?.data?.data) ? state.data.data : [];
-    const inv7 = invoices.filter(x => String(x?.no || '') === 'INV0007' || /oche/i.test(String(x?.client || '')));
-    const draft = check.rows[0]?.draft_json;
-    console.log('RECOVERY_CHECK', JSON.stringify({
-      invoiceCount: invoices.length,
-      invoiceNumbers: invoices.map(x => x?.no).filter(Boolean),
-      matchingInvoices: inv7.map(x => ({
-        no: x.no, client: x.client, status: x.status, total: x.total,
-        items: Array.isArray(x.items) ? x.items.map(i => ({desc:i.desc, qty:i.qty, rate:i.rate})) : []
-      })),
-      draftSavedAt: check.rows[0]?.draft_saved_at || 0,
-      draftClient: draft?.client || '',
-      draftItems: Array.isArray(draft?.items) ? draft.items.map(i => ({desc:i.desc, qty:i.qty, rate:i.rate})) : []
-    }));
-  } catch (err) {
-    console.warn('RECOVERY_CHECK failed:', err.message);
-  }
 }
 
 function json(res, status, body, extraHeaders = {}) {
