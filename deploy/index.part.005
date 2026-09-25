@@ -713,7 +713,7 @@ function daysFromToday(d){if(!d)return null;const a=new Date();a.setHours(0,0,0,
 function dashboard(){
   const infos=data.map(x=>({x,...invoiceStatusInfo(x)}));
   const total=data.reduce((s,x)=>s+Number(x.total||0),0);
-  const collected=data.reduce((s,x)=>s+Math.min(Math.max(Number(x.amountPaid||0),0),Number(x.total||0)),0);
+  const collected=data.reduce((s,x)=>{const total=Number(x.total||0);if(x.status==="Paid")return s+total;return s+Math.min(Math.max(Number(x.amountPaid||0),0),total)},0);
   const partialCollected=infos.filter(o=>o.status==="Partially Paid").reduce((s,o)=>s+Math.min(Math.max(Number(o.x.amountPaid||0),0),Number(o.x.total||0)),0);
   const paid=infos.filter(o=>o.status==="Paid").reduce((s,o)=>s+Number(o.x.total||0),0);
   const outstanding=infos.filter(o=>o.status!=="Paid"&&o.status!=="Draft").reduce((s,o)=>s+invoiceBalance(o.x),0);
