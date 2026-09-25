@@ -430,22 +430,35 @@ async function hydrateCloudState(){
 }
 async function startApp(){
   try{
-    init(true);
+    // Cloud PostgreSQL is the source of truth. Load it BEFORE any local/default
+    // initialization so an empty browser cache can never replace real records.
+    const stored=await readPersistentPayload();
+    if(stored && Array.isArray(stored.data)){
+      init(true,stored);
+      window.__FBI_CLOUD_BOOTED=true;
+    }else{
+      init(true);
+    }
     initTemplates();
     initServiceCatalog();
-    const authenticated=await refreshAuthSession();
-    if(authenticated){
-      await hydrateCloudState();
-      enterApp();
-    }else{
-      // Do not request private invoice data until authentication succeeds.
-      paintLoadedState_();
-      await showAuthScreen();
-    }
+    paintLoadedState_();
+    const restoredLocal=restoreDraft();
+    const restoredCloud=restoredLocal?false:await restoreCloudDraft();
+    cloudDraftRestoredOnStartup=!!(restoredLocal||restoredCloud);
+    if(!cloudDraftRestoredOnStartup && !data.length && !current) newInvoice();
+    cloudStateHydrated=true;
+    enterApp();
+    // One final render after navigation/layout changes.
+    setTimeout(function(){
+      try{
+        if(window.__FBI_CLOUD_BOOTED){
+          populateClientSelect();renderClients();dashboard();renderSaved();renderReceipts();
+        }
+      }catch(e){console.warn("Final cloud render failed",e)}
+    },250);
   }catch(e){
     console.error("Invoice Studio startup error",e);
-    try{init(true);initServiceCatalog()}catch(ignore){}
-    try{showAuthScreen()}catch(ignore){}
+    try{init(true);initServiceCatalog();enterApp()}catch(ignore){}
   }
 }
 
@@ -613,6 +626,9 @@ window.addEventListener("load",function(){
         if(typeof initServiceCatalog==="function")initServiceCatalog();
         if(typeof paintLoadedState_==="function")paintLoadedState_();
         if(typeof enterApp==="function")enterApp();
+        setTimeout(function(){
+          try{populateClientSelect();renderClients();dashboard();renderSaved();renderReceipts();}catch(e){console.warn("Cloud bootstrap final render failed",e)}
+        },150);
       }else{
         console.warn("Invoice Studio main initializer is unavailable; cloud state was fetched successfully.",preloaded.data.length,preloaded.clients.length);
       }
