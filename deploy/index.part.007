@@ -1,345 +1,374 @@
 <style id="fbi-payroll-module-style">
-#fbiPayrollView{display:none;padding-bottom:40px;max-width:none;margin:0;width:100%}
-body.fbi-payroll-mode .top{align-items:center}
-body.fbi-payroll-mode #fbiPayrollView{position:relative;z-index:1}
-@media(max-width:1100px){
-  body.fbi-payroll-mode .top{flex-wrap:wrap;row-gap:8px}
-  body.fbi-payroll-mode .top>div:first-child{flex:1 1 240px;min-width:0}
-  body.fbi-payroll-mode .top>div:last-child{flex:1 1 auto;min-width:0;justify-content:flex-end}
-}
-@media(max-width:700px){
-  body.fbi-payroll-mode .top>div:last-child{width:100%;justify-content:flex-end}
-  body.fbi-payroll-mode .top{min-height:0}
-}
+/* ===== FBI PAYROLL MODULE, ISOLATED FROM INVOICE ENGINE ===== */
+#fbiPayrollView{display:none;width:100%;max-width:none;margin:0;padding:0 0 40px;position:relative}
 #fbiPayrollView.fbi-payroll-active{display:block}
-.fbi-payroll-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
-.fbi-payroll-stat{background:var(--card,#12161e);border:1px solid var(--line,#2b303b);border-radius:12px;padding:14px}
-.fbi-payroll-stat span{display:block;color:var(--muted,#8992a2);font-size:9px;text-transform:uppercase;letter-spacing:1px;font-weight:800}
-.fbi-payroll-stat b{display:block;color:var(--text,#f4f6fa);font-size:18px;margin-top:7px}
-.fbi-payroll-toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
-.fbi-payroll-tabs{display:flex;gap:7px;flex-wrap:wrap}
-.fbi-payroll-tab{border:1px solid var(--line,#2b303b);background:var(--card,#12161e);color:var(--muted,#a7afbc);border-radius:8px;padding:8px 11px;font-size:10px;font-weight:800;cursor:pointer}
-.fbi-payroll-tab.active{background:#20151c;border-color:#bd1b63;color:#fff}
-.fbi-payroll-actions{display:flex;gap:7px;flex-wrap:wrap}
-.fbi-payroll-panel{display:none}
-.fbi-payroll-panel.active{display:block}
-.fbi-payroll-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.fbi-payroll-field{display:flex;flex-direction:column;gap:5px}
-.fbi-payroll-field.full{grid-column:1/-1}
-.fbi-payroll-field.half{grid-column:span 2}
-.fbi-payroll-field label{font-size:8px;color:#8e97a7;text-transform:uppercase;letter-spacing:.75px;font-weight:800}
-.fbi-payroll-field input,.fbi-payroll-field select,.fbi-payroll-field textarea{width:100%;border:1px solid #303745;background:#0d1016;color:#edf0f5;border-radius:8px;padding:9px 10px;font:inherit;font-size:10px;box-sizing:border-box}
-.fbi-payroll-field textarea{min-height:80px;resize:vertical}
-.fbi-payroll-inline{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
-.fbi-payroll-table-wrap{overflow:auto;border:1px solid #2b303b;border-radius:10px}
-.fbi-payroll-table{width:100%;min-width:920px;border-collapse:collapse}
-.fbi-payroll-table th{padding:9px 10px;background:#10131a;color:#8992a2;font-size:8px;text-transform:uppercase;letter-spacing:.65px;text-align:left}
-.fbi-payroll-table td{padding:10px;border-top:1px solid #252b34;color:#d9dee7;font-size:9px;vertical-align:top}
-.fbi-payroll-table td.num,.fbi-payroll-table th.num{text-align:right}
-.fbi-payroll-badge{display:inline-flex;align-items:center;padding:4px 7px;border-radius:999px;font-size:8px;font-weight:850;background:#eef1f5;color:#4d5663}
-.fbi-payroll-badge.paid{background:#e7f7ee;color:#147a48}
-.fbi-payroll-badge.partial{background:#fff4dc;color:#8b6500}
-.fbi-payroll-badge.pending{background:#edf4ff;color:#235fa9}
-.fbi-payroll-empty{padding:22px;text-align:center;color:#7f8897;font-size:10px;border:1px dashed #303745;border-radius:10px}
-.fbi-payroll-section-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap}
-.fbi-payroll-section-head h3{margin:0}
+.fbi-payroll-shell{width:100%;max-width:1500px;margin:0 auto}
+.fbi-payroll-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding:20px 0 14px;flex-wrap:wrap}
+.fbi-payroll-kicker{font-size:9px;text-transform:uppercase;letter-spacing:1.8px;color:#b48b2f;font-weight:900;margin-bottom:6px}
+.fbi-payroll-hero h2{margin:0;font-size:22px;letter-spacing:-.35px}
+.fbi-payroll-hero p{margin:6px 0 0;color:#7f8897;font-size:10px}
+.fbi-payroll-actions{display:flex;gap:8px;flex-wrap:wrap}
+.fbi-payroll-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:11px;margin-bottom:14px}
+.fbi-payroll-stat{background:linear-gradient(180deg,#171b23,#13161d);border:1px solid #2b303c;border-radius:12px;padding:14px;min-height:88px}
+.fbi-payroll-stat span{display:block;color:#858e9f;font-size:8px;text-transform:uppercase;letter-spacing:1px;font-weight:900}
+.fbi-payroll-stat b{display:block;color:#f7f8fb;font-size:19px;margin-top:8px}
+.fbi-payroll-stat small{display:block;color:#687180;font-size:8px;margin-top:4px}
+.fbi-payroll-card{background:linear-gradient(180deg,#171b23,#13161d);border:1px solid #2b303c;border-radius:12px;padding:16px;margin-bottom:14px}
+.fbi-payroll-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.fbi-payroll-tab{border:1px solid #343a48;background:#131720;color:#9aa3b1;border-radius:8px;padding:9px 12px;font-size:10px;font-weight:850;cursor:pointer}
+.fbi-payroll-tab.active{background:#23151d;color:#fff;border-color:#bd1b63;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+.fbi-payroll-panel{display:none}.fbi-payroll-panel.active{display:block}
+.fbi-payroll-section-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px}
+.fbi-payroll-section-head h3{margin:0;color:#e8ebf0;font-size:13px}
 .fbi-payroll-section-head p{margin:4px 0 0;color:#7f8897;font-size:9px}
-.fbi-payroll-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:12px 0}
-.fbi-payroll-summary div{border:1px solid #2b303b;background:#0f1218;border-radius:9px;padding:10px}
-.fbi-payroll-summary span{display:block;color:#7f8897;font-size:8px;text-transform:uppercase;letter-spacing:.7px}
-.fbi-payroll-summary b{display:block;color:#f3f5f9;font-size:12px;margin-top:5px}
-.fbi-payroll-pay-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.fbi-payroll-notice{padding:9px 11px;border-radius:8px;background:#151922;border:1px solid #303745;color:#9aa3b1;font-size:9px;margin-bottom:12px}
-@media(max-width:980px){.fbi-payroll-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.fbi-payroll-form{grid-template-columns:repeat(2,minmax(0,1fr))}.fbi-payroll-summary{grid-template-columns:repeat(3,minmax(0,1fr))}.fbi-payroll-pay-grid{grid-template-columns:1fr}}
-@media(max-width:620px){.fbi-payroll-grid,.fbi-payroll-form,.fbi-payroll-summary{grid-template-columns:1fr}.fbi-payroll-field.half{grid-column:1}.fbi-payroll-tabs{width:100%}.fbi-payroll-tab{flex:1}.fbi-payroll-actions{width:100%}}
-@media print{body.fbi-payroll-printing .side,body.fbi-payroll-printing .top,body.fbi-payroll-printing .view{display:none!important}body.fbi-payroll-printing #fbiPayrollView{display:block!important;padding:0}.fbi-payroll-table{min-width:0}.fbi-payroll-table th,.fbi-payroll-table td{font-size:8px}}
+.fbi-payroll-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.fbi-payroll-field{min-width:0}.fbi-payroll-field.full{grid-column:1/-1}.fbi-payroll-field.half{grid-column:span 2}
+.fbi-payroll-field label{display:block;margin:0 0 5px;color:#8f98a7;font-size:8px;text-transform:uppercase;letter-spacing:.7px;font-weight:850}
+.fbi-payroll-field input,.fbi-payroll-field select,.fbi-payroll-field textarea{width:100%;box-sizing:border-box;border:1px solid #303744;background:#0d1016;color:#eef1f5;border-radius:8px;padding:9px 10px;font-size:10px;outline:none}
+.fbi-payroll-field textarea{min-height:76px;resize:vertical}
+.fbi-payroll-field input:focus,.fbi-payroll-field select:focus,.fbi-payroll-field textarea:focus{border-color:#b48b2f;box-shadow:0 0 0 3px rgba(180,139,47,.08)}
+.fbi-payroll-info{padding:10px 12px;border:1px solid #303745;border-radius:9px;background:#0f1218;color:#8992a2;font-size:9px;line-height:1.5;margin-bottom:12px}
+.fbi-payroll-summary{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:13px 0}
+.fbi-payroll-summary-item{border:1px solid #2b303b;background:#0f1218;border-radius:9px;padding:10px}
+.fbi-payroll-summary-item span{display:block;color:#7f8897;font-size:7.5px;text-transform:uppercase;letter-spacing:.6px}
+.fbi-payroll-summary-item b{display:block;color:#f4f6fa;font-size:12px;margin-top:5px}
+.fbi-payroll-table-wrap{overflow:auto;border:1px solid #2b303c;border-radius:10px}
+.fbi-payroll-table{width:100%;border-collapse:collapse;min-width:980px}
+.fbi-payroll-table th{padding:9px 10px;background:#10131a;color:#858e9f;text-transform:uppercase;letter-spacing:.65px;font-size:7.5px;text-align:left}
+.fbi-payroll-table td{padding:10px;border-top:1px solid #252b35;color:#dce1e9;font-size:9px;vertical-align:top}
+.fbi-payroll-table .num{text-align:right}
+.fbi-payroll-table .sub{display:block;color:#737d8d;font-size:8px;margin-top:3px}
+.fbi-payroll-badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:7.5px;font-weight:900;white-space:nowrap;background:#252b34;color:#c0c7d1}
+.fbi-payroll-badge.paid{background:#163126;color:#66e7a6}.fbi-payroll-badge.partial{background:#382b13;color:#f2c15d}.fbi-payroll-badge.pending{background:#17283b;color:#72b8ff}
+.fbi-payroll-badge.active{background:#172f28;color:#71dfab}.fbi-payroll-badge.inactive{background:#2a2e35;color:#959daa}
+.fbi-payroll-empty{padding:30px;text-align:center;color:#778191;border:1px dashed #303745;border-radius:10px;font-size:10px}
+.fbi-payroll-actions-cell{display:flex;gap:6px;flex-wrap:wrap}
+.fbi-payroll-mini-btn{border:1px solid #353b49;background:#151921;color:#e7eaf0;border-radius:7px;padding:6px 8px;font-size:8px;font-weight:850;cursor:pointer}
+.fbi-payroll-mini-btn.primary{background:#82103f;border-color:#ae1b5b}.fbi-payroll-mini-btn.danger{color:#ff9eaa;border-color:#512a35;background:#29161d}
+.fbi-payroll-worker-layout{display:grid;grid-template-columns:minmax(300px,.85fr) minmax(0,1.5fr);gap:12px}
+.fbi-payroll-profile{border:1px solid #2b303c;background:#0f1218;border-radius:10px;padding:14px}
+.fbi-payroll-profile h4{margin:0 0 10px;font-size:11px}
+.fbi-payroll-profile-row{display:grid;grid-template-columns:110px 1fr;gap:8px;padding:7px 0;border-bottom:1px solid #252b34;font-size:9px}
+.fbi-payroll-profile-row span{color:#7f8897}.fbi-payroll-profile-row b{color:#e6eaf0;font-weight:750}
+.fbi-payroll-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.72);backdrop-filter:blur(5px);z-index:250}
+.fbi-payroll-modal.show{display:flex}
+.fbi-payroll-dialog{width:min(760px,96vw);max-height:92vh;overflow:auto;background:#11141b;border:1px solid #343a48;border-radius:14px;box-shadow:0 30px 90px #000b}
+.fbi-payroll-dialog-head{position:sticky;top:0;z-index:2;padding:15px 17px;background:#11141bf7;border-bottom:1px solid #2b303c;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.fbi-payroll-dialog-head h3{margin:0;font-size:13px;color:#fff}.fbi-payroll-dialog-head small{display:block;color:#7f8897;font-size:8px;margin-top:4px}
+.fbi-payroll-dialog-body{padding:17px}
+.fbi-payroll-pay-balance{padding:13px;background:#0e1218;border:1px solid #313846;border-radius:9px;margin-bottom:13px}
+.fbi-payroll-pay-balance span{color:#7f8897;font-size:8px;text-transform:uppercase;letter-spacing:.7px}.fbi-payroll-pay-balance b{display:block;font-size:18px;margin-top:5px}
+.fbi-payroll-report-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:12px 0}
+.fbi-payroll-report-summary div{border:1px solid #2b303b;background:#0f1218;border-radius:9px;padding:10px}.fbi-payroll-report-summary span{display:block;color:#7f8897;font-size:7.5px;text-transform:uppercase}.fbi-payroll-report-summary b{display:block;font-size:12px;margin-top:4px}
+.fbi-payroll-payslip-list{display:grid;gap:8px}
+.fbi-payroll-payslip-row{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid #2b303b;background:#0f1218;border-radius:9px}
+.fbi-payroll-payslip-row .grow{flex:1;min-width:0}.fbi-payroll-payslip-row b{font-size:10px}.fbi-payroll-payslip-row small{display:block;color:#798291;font-size:8px;margin-top:3px}
+@media(max-width:1180px){.fbi-payroll-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.fbi-payroll-worker-layout{grid-template-columns:1fr}.fbi-payroll-form{grid-template-columns:repeat(2,minmax(0,1fr))}.fbi-payroll-summary{grid-template-columns:repeat(3,minmax(0,1fr))}.fbi-payroll-report-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.fbi-payroll-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.fbi-payroll-hero{padding-top:16px}.fbi-payroll-hero h2{font-size:19px}.fbi-payroll-form{grid-template-columns:1fr}.fbi-payroll-field.half{grid-column:1}.fbi-payroll-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.fbi-payroll-report-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.fbi-payroll-grid,.fbi-payroll-summary,.fbi-payroll-report-summary{grid-template-columns:1fr}.fbi-payroll-card{padding:12px}.fbi-payroll-actions{width:100%}.fbi-payroll-actions .btn{flex:1}.fbi-payroll-dialog-body{padding:13px}}
+@media print{
+  body.fbi-payroll-printing{background:#fff!important;display:block!important;color:#111!important}
+  body.fbi-payroll-printing .side,body.fbi-payroll-printing .top,body.fbi-payroll-printing .view:not(#fbiPayrollView){display:none!important}
+  body.fbi-payroll-printing #fbiPayrollView{display:block!important;padding:0!important}
+  body.fbi-payroll-printing .fbi-payroll-hero,body.fbi-payroll-printing .fbi-payroll-tabs,body.fbi-payroll-printing .fbi-payroll-actions{display:none!important}
+  body.fbi-payroll-printing .fbi-payroll-card{background:#fff!important;border:0!important;padding:0!important}
+  body.fbi-payroll-printing .fbi-payroll-table-wrap{border:0}.fbi-payroll-table{min-width:0}.fbi-payroll-table th,.fbi-payroll-table td{font-size:8px;padding:6px}
+}
 </style>
 
-<div class="view" id="fbiPayrollView">
-  <div class="fbi-payroll-grid">
-    <div class="fbi-payroll-stat"><span>Workers</span><b id="fbiPayrollWorkerCount">0</b></div>
-    <div class="fbi-payroll-stat"><span>Payroll Records</span><b id="fbiPayrollRecordCount">0</b></div>
-    <div class="fbi-payroll-stat"><span>Net Payroll</span><b id="fbiPayrollNetTotal">GHS₵0.00</b></div>
-    <div class="fbi-payroll-stat"><span>Outstanding</span><b id="fbiPayrollBalanceTotal">GHS₵0.00</b></div>
-  </div>
-
-  <div class="card">
-    <div class="fbi-payroll-toolbar">
-      <div class="fbi-payroll-tabs" id="fbiPayrollTabs">
-        <button type="button" class="fbi-payroll-tab active" data-payroll-tab="dashboard">Dashboard</button>
-        <button type="button" class="fbi-payroll-tab" data-payroll-tab="workers">Staff / Workers</button>
-        <button type="button" class="fbi-payroll-tab" data-payroll-tab="records">Payroll Records</button>
-        <button type="button" class="fbi-payroll-tab" data-payroll-tab="reports">Reports</button>
+<section class="view" id="fbiPayrollView" aria-label="Payroll">
+  <div class="fbi-payroll-shell">
+    <div class="fbi-payroll-hero">
+      <div>
+        <div class="fbi-payroll-kicker">FBI People & Payments</div>
+        <h2>Payroll</h2>
+        <p>Staff, project earnings, payments, payslips and payroll reporting.</p>
       </div>
       <div class="fbi-payroll-actions">
-        <button class="btn" type="button" id="fbiPayrollAddWorkerBtn">＋ Add Worker</button>
-        <button class="btn primary" type="button" id="fbiPayrollAddRecordBtn">＋ New Payroll</button>
+        <button class="btn" type="button" id="fbiPayrollQuickWorker">＋ Add Worker</button>
+        <button class="btn primary" type="button" id="fbiPayrollQuickRecord">＋ New Payroll</button>
       </div>
     </div>
 
-    <div class="fbi-payroll-panel active" data-payroll-panel="dashboard">
-      <div class="fbi-payroll-notice">Payroll is isolated from Invoice Studio records. It does not modify invoices, clients, payments, settings, or the invoice database state.</div>
-      <div class="fbi-payroll-section-head">
-        <div><h3>Payroll Overview</h3><p>Recent payroll activity and worker payment status.</p></div>
-        <button class="btn" type="button" id="fbiPayrollDashPrint">🖨 Print</button>
-      </div>
-      <div id="fbiPayrollDashboardBody"></div>
+    <div class="fbi-payroll-grid">
+      <div class="fbi-payroll-stat"><span>Workers</span><b id="fbiPayrollWorkerCount">0</b><small id="fbiPayrollWorkerMeta">Active 0</small></div>
+      <div class="fbi-payroll-stat"><span>Payroll Records</span><b id="fbiPayrollRecordCount">0</b><small id="fbiPayrollRecordMeta">All work records</small></div>
+      <div class="fbi-payroll-stat"><span>Net Payroll</span><b id="fbiPayrollNetTotal">GHS₵0.00</b><small id="fbiPayrollNetMeta">All records</small></div>
+      <div class="fbi-payroll-stat"><span>Paid</span><b id="fbiPayrollPaidTotal">GHS₵0.00</b><small id="fbiPayrollPaidMeta">Recorded payments</small></div>
+      <div class="fbi-payroll-stat"><span>Outstanding</span><b id="fbiPayrollBalanceTotal">GHS₵0.00</b><small id="fbiPayrollBalanceMeta">Amount still due</small></div>
     </div>
 
-    <div class="fbi-payroll-panel" data-payroll-panel="workers">
-      <div class="fbi-payroll-section-head">
-        <div><h3>Staff / Worker Directory</h3><p>Worker profiles and payment details are stored separately from invoice data.</p></div>
+    <div class="fbi-payroll-card">
+      <div class="fbi-payroll-tabs">
+        <button class="fbi-payroll-tab active" type="button" data-payroll-tab="overview">Overview</button>
+        <button class="fbi-payroll-tab" type="button" data-payroll-tab="workers">Staff / Workers</button>
+        <button class="fbi-payroll-tab" type="button" data-payroll-tab="records">Payroll Records</button>
+        <button class="fbi-payroll-tab" type="button" data-payroll-tab="payslips">Payslips</button>
+        <button class="fbi-payroll-tab" type="button" data-payroll-tab="reports">Reports</button>
       </div>
-      <div id="fbiPayrollWorkerFormWrap"></div>
-      <div id="fbiPayrollWorkersTable"></div>
-    </div>
 
-    <div class="fbi-payroll-panel" data-payroll-panel="records">
-      <div class="fbi-payroll-section-head">
-        <div><h3>Payroll Records</h3><p>Track work, earnings, deductions, advances, partial payments, and balances.</p></div>
+      <div class="fbi-payroll-panel active" data-payroll-panel="overview">
+        <div class="fbi-payroll-section-head">
+          <div><h3>Payroll Overview</h3><p>Current payroll position and recent worker payments.</p></div>
+          <div class="fbi-payroll-actions"><button class="btn" type="button" id="fbiPayrollOverviewPrint">🖨 Print</button></div>
+        </div>
+        <div class="fbi-payroll-info">Payroll is isolated from the Invoice Studio engine. Existing invoices, clients, invoice payments, receipts, jobs and database state remain untouched. Invoice/job information shown in Payroll is read-only.</div>
+        <div class="fbi-payroll-summary" id="fbiPayrollOverviewSummary"></div>
+        <div id="fbiPayrollOverviewTable"></div>
       </div>
-      <div id="fbiPayrollRecordFormWrap"></div>
-      <div id="fbiPayrollRecordsTable"></div>
-    </div>
 
-    <div class="fbi-payroll-panel" data-payroll-panel="reports">
-      <div class="fbi-payroll-section-head">
-        <div><h3>Payroll Reports</h3><p>Filter by date, worker, department, and payment status.</p></div>
-        <div class="fbi-payroll-actions">
-          <button class="btn" type="button" id="fbiPayrollCsvBtn">⬇ CSV</button>
-          <button class="btn primary" type="button" id="fbiPayrollPrintBtn">🖨 Print / Save PDF</button>
+      <div class="fbi-payroll-panel" data-payroll-panel="workers">
+        <div class="fbi-payroll-section-head">
+          <div><h3>Staff / Worker Directory</h3><p>Profiles, worker categories and payment details.</p></div>
+          <button class="btn primary" type="button" id="fbiPayrollWorkersAdd">＋ Add Worker</button>
+        </div>
+        <div id="fbiPayrollWorkerFormWrap"></div>
+        <div class="fbi-payroll-worker-layout">
+          <div id="fbiPayrollWorkerProfile"></div>
+          <div id="fbiPayrollWorkersTable"></div>
         </div>
       </div>
-      <div class="fbi-payroll-form" id="fbiPayrollReportFilters">
-        <div class="fbi-payroll-field"><label>From Date</label><input id="fbiPayrollFilterFrom" type="date"></div>
-        <div class="fbi-payroll-field"><label>To Date</label><input id="fbiPayrollFilterTo" type="date"></div>
-        <div class="fbi-payroll-field"><label>Worker</label><select id="fbiPayrollFilterWorker"></select></div>
-        <div class="fbi-payroll-field"><label>Department</label><select id="fbiPayrollFilterDept"><option value="">All Departments</option><option>Media Production</option><option>IT / Networking</option><option>CCTV / Security</option><option>Smart Home</option><option>Administration</option><option>Other</option></select></div>
-        <div class="fbi-payroll-field"><label>Payment Status</label><select id="fbiPayrollFilterStatus"><option value="">All Statuses</option><option>Pending</option><option>Partially Paid</option><option>Paid</option></select></div>
-        <div class="fbi-payroll-field"><label>&nbsp;</label><button type="button" class="btn" id="fbiPayrollResetFilters">Reset Filters</button></div>
+
+      <div class="fbi-payroll-panel" data-payroll-panel="records">
+        <div class="fbi-payroll-section-head">
+          <div><h3>Payroll Records</h3><p>Pay people according to events, days, installations or another basis.</p></div>
+          <button class="btn primary" type="button" id="fbiPayrollRecordsAdd">＋ New Payroll</button>
+        </div>
+        <div id="fbiPayrollRecordFormWrap"></div>
+        <div id="fbiPayrollRecordsTable"></div>
       </div>
-      <div class="fbi-payroll-summary" id="fbiPayrollReportSummary"></div>
-      <div id="fbiPayrollReportTable"></div>
+
+      <div class="fbi-payroll-panel" data-payroll-panel="payslips">
+        <div class="fbi-payroll-section-head">
+          <div><h3>Payslips</h3><p>Generated payslips and printable payment documents.</p></div>
+        </div>
+        <div id="fbiPayrollPayslipList"></div>
+      </div>
+
+      <div class="fbi-payroll-panel" data-payroll-panel="reports">
+        <div class="fbi-payroll-section-head">
+          <div><h3>Payroll Reports</h3><p>Filter by date, worker, department, project/job and payment status.</p></div>
+          <div class="fbi-payroll-actions">
+            <button class="btn" type="button" id="fbiPayrollReportCsv">⬇ CSV</button>
+            <button class="btn primary" type="button" id="fbiPayrollReportPrint">🖨 Print / Save PDF</button>
+          </div>
+        </div>
+        <div class="fbi-payroll-form" style="margin-bottom:12px">
+          <div class="fbi-payroll-field"><label>From Date</label><input type="date" id="fbiPayrollReportFrom"></div>
+          <div class="fbi-payroll-field"><label>To Date</label><input type="date" id="fbiPayrollReportTo"></div>
+          <div class="fbi-payroll-field"><label>Worker</label><select id="fbiPayrollReportWorker"></select></div>
+          <div class="fbi-payroll-field"><label>Department</label><select id="fbiPayrollReportDepartment"><option value="">All Departments</option><option>Media Production</option><option>IT / Networking</option><option>CCTV / Security</option><option>Smart Home</option><option>Administration</option><option>Other</option></select></div>
+          <div class="fbi-payroll-field"><label>Project / Job</label><input type="text" id="fbiPayrollReportProject" placeholder="Search project or event"></div>
+          <div class="fbi-payroll-field"><label>Payment Status</label><select id="fbiPayrollReportStatus"><option value="">All Statuses</option><option>Pending</option><option>Partially Paid</option><option>Paid</option></select></div>
+          <div class="fbi-payroll-field"><label>&nbsp;</label><button class="btn" type="button" id="fbiPayrollReportReset">Reset Filters</button></div>
+        </div>
+        <div class="fbi-payroll-report-summary" id="fbiPayrollReportSummary"></div>
+        <div id="fbiPayrollReportTable"></div>
+      </div>
     </div>
   </div>
-</div>
+
+  <div class="fbi-payroll-modal" id="fbiPayrollPaymentModal" aria-hidden="true">
+    <div class="fbi-payroll-dialog">
+      <div class="fbi-payroll-dialog-head">
+        <div><h3>Record Payroll Payment</h3><small>Partial payments are supported and stored in the Payroll module.</small></div>
+        <button class="btn" type="button" id="fbiPayrollPaymentClose">Close</button>
+      </div>
+      <div class="fbi-payroll-dialog-body">
+        <div class="fbi-payroll-pay-balance"><span>Outstanding Balance</span><b id="fbiPayrollPaymentBalance">GHS₵0.00</b></div>
+        <div class="fbi-payroll-form">
+          <div class="fbi-payroll-field"><label>Amount</label><input type="number" min="0" step="0.01" id="fbiPayrollPaymentAmount"></div>
+          <div class="fbi-payroll-field"><label>Payment Date</label><input type="date" id="fbiPayrollPaymentDate"></div>
+          <div class="fbi-payroll-field"><label>Payment Method</label><select id="fbiPayrollPaymentMethod"><option>Mobile Money</option><option>Bank</option><option>Cash</option></select></div>
+          <div class="fbi-payroll-field"><label>Transaction / Reference</label><input type="text" id="fbiPayrollPaymentRef" placeholder="Reference number"></div>
+          <div class="fbi-payroll-field"><label>Paid By</label><input type="text" id="fbiPayrollPaymentBy" placeholder="Person who made payment"></div>
+          <div class="fbi-payroll-field"><label>Notes</label><input type="text" id="fbiPayrollPaymentNotes" placeholder="Optional payment notes"></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:13px">
+          <button class="btn" type="button" id="fbiPayrollPaymentCancel">Cancel</button>
+          <button class="btn primary" type="button" id="fbiPayrollPaymentSave">Save Payment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <script>
 (function(){
   'use strict';
 
-  var STORAGE_KEY = 'fbi-payroll-isolated-v1';
-  var STATE = {workers:[], records:[]};
+  var KEY='fbi-payroll-v2-isolated';
+  var OLD_KEY='fbi-payroll-isolated-v1';
+  var STATE={workers:[],records:[],payslips:[]};
+  var selectedWorkerId='';
+  var editingWorkerId='';
+  var editingRecordId='';
+  var paymentRecordId='';
 
-  function q(id){ return document.getElementById(id); }
-  function esc(v){
-    return String(v == null ? '' : v).replace(/[&<>"']/g,function(m){
-      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
-    });
-  }
-  function money(v){
-    return 'GHS₵' + Number(v || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
-  }
-  function num(v){ var n=Number(v); return Number.isFinite(n)?n:0; }
-  function id(prefix){
-    if(window.crypto && crypto.randomUUID) return prefix + '-' + crypto.randomUUID();
-    return prefix + '-' + Date.now() + '-' + Math.random().toString(36).slice(2,10);
-  }
-  function today(){
-    var d=new Date();
-    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  }
-  function load(){
+  function q(id){return document.getElementById(id);}
+  function num(v){var n=Number(v);return Number.isFinite(n)?n:0;}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
+  function money(v){return 'GHS₵'+num(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function uid(prefix){if(window.crypto&&crypto.randomUUID)return prefix+'-'+crypto.randomUUID();return prefix+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,9);}
+  function toastLocal(msg){try{if(typeof window.toast==='function'){window.toast(msg);return}}catch(e){}}
+
+  /* Payroll-only persistence. This never calls the invoice persist() function. */
+  function saveState(){
     try{
-      var raw=localStorage.getItem(STORAGE_KEY);
-      if(!raw){ STATE={workers:[],records:[]}; return; }
-      var parsed=JSON.parse(raw);
-      STATE={
-        workers:Array.isArray(parsed.workers)?parsed.workers:[],
-        records:Array.isArray(parsed.records)?parsed.records:[]
-      };
-    }catch(e){
-      console.warn('Payroll isolated storage read failed',e);
-      STATE={workers:[],records:[]};
-    }
-  }
-  function save(){
-    try{
-      localStorage.setItem(STORAGE_KEY,JSON.stringify(STATE));
+      localStorage.setItem(KEY,JSON.stringify(STATE));
       return true;
     }catch(e){
-      console.error('Payroll isolated storage save failed',e);
+      console.error('Payroll storage failed',e);
       alert('Payroll could not be saved on this device.');
       return false;
     }
   }
-  function worker(idv){ return STATE.workers.find(function(w){return w.id===idv;}) || null; }
-  function gross(r){ return Math.max(0,num(r.rate)*Math.max(1,num(r.qty)||1)+num(r.allowance)+num(r.bonus)); }
-  function net(r){ return Math.max(0,gross(r)-num(r.deduction)-num(r.advance)); }
-  function paid(r){ return Math.min(net(r),Math.max(0,num(r.paidAmount))); }
-  function balance(r){ return Math.max(0,net(r)-paid(r)); }
-  function status(r){
-    var n=net(r),p=paid(r);
-    if(p>=n-0.005 && n>0) return 'Paid';
-    if(p>0.005) return 'Partially Paid';
-    return 'Pending';
+  function normalizeRecord(r){
+    r=r||{};
+    var payments=Array.isArray(r.payments)?r.payments.slice():[];
+    if(!payments.length&&num(r.paidAmount)>0){
+      payments.push({id:uid('payment'),date:r.paymentDate||today(),amount:num(r.paidAmount),method:r.paymentMethod||'',reference:r.transactionRef||'',paidBy:r.paidBy||'',notes:r.paymentNotes||''});
+    }
+    r.payments=payments;
+    r.allowance=num(r.allowance);
+    r.transport=num(r.transport);
+    r.feeding=num(r.feeding);
+    r.accommodation=num(r.accommodation);
+    r.overtime=num(r.overtime);
+    r.otherAllowance=num(r.otherAllowance);
+    r.bonus=num(r.bonus);
+    r.deduction=num(r.deduction);
+    r.advance=num(r.advance);
+    r.previousBalance=num(r.previousBalance);
+    r.rate=num(r.rate);
+    r.qty=Math.max(1,num(r.qty)||1);
+    return r;
   }
-  function badge(s){
-    var cls=s==='Paid'?'paid':s==='Partially Paid'?'partial':'pending';
-    return '<span class="fbi-payroll-badge '+cls+'">'+esc(s)+'</span>';
+  function loadState(){
+    var parsed=null;
+    try{parsed=JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){}
+    if(parsed&&typeof parsed==='object'){
+      STATE={
+        workers:Array.isArray(parsed.workers)?parsed.workers:[],
+        records:Array.isArray(parsed.records)?parsed.records.map(normalizeRecord):[],
+        payslips:Array.isArray(parsed.payslips)?parsed.payslips:[]
+      };
+      return;
+    }
+    /* One-time migration of the previous Payroll-only browser store, if it exists. */
+    try{
+      var old=JSON.parse(localStorage.getItem(OLD_KEY)||'null');
+      if(old&&typeof old==='object'){
+        STATE={
+          workers:Array.isArray(old.workers)?old.workers:[],
+          records:Array.isArray(old.records)?old.records.map(normalizeRecord):[],
+          payslips:[]
+        };
+        saveState();
+        return;
+      }
+    }catch(e){}
+    STATE={workers:[],records:[],payslips:[]};
   }
-  function workerOptions(selected){
+
+  function getWorker(idv){return STATE.workers.find(function(w){return w.id===idv;})||null;}
+  function basePay(r){return Math.max(0,num(r.rate)*Math.max(1,num(r.qty)||1));}
+  function allowances(r){return num(r.allowance)+num(r.transport)+num(r.feeding)+num(r.accommodation)+num(r.overtime)+num(r.otherAllowance)+num(r.bonus);}
+  function gross(r){return Math.max(0,basePay(r)+allowances(r));}
+  function net(r){return Math.max(0,gross(r)-num(r.deduction)-num(r.advance)+num(r.previousBalance));}
+  function paid(r){return Math.min(net(r),Math.max(0,(r.payments||[]).reduce(function(s,p){return s+num(p.amount);},0)));}
+  function balance(r){return Math.max(0,net(r)-paid(r));}
+  function status(r){var n=net(r),p=paid(r);if(n<=0)return 'Pending';if(p>=n-0.005)return 'Paid';if(p>0.005)return 'Partially Paid';return 'Pending';}
+  function badge(s){var c=s==='Paid'?'paid':s==='Partially Paid'?'partial':'pending';return '<span class="fbi-payroll-badge '+c+'">'+esc(s)+'</span>';}
+
+  /* Read-only bridge to existing invoice/job data. Nothing is written back. */
+  function getInvoiceRecords(){
+    try{
+      if(typeof data!=='undefined'&&Array.isArray(data))return data.slice();
+    }catch(e){}
+    return [];
+  }
+  function invoiceOptions(selected){
+    var invoices=getInvoiceRecords().slice().sort(function(a,b){return String(b.eventDate||b.date||'').localeCompare(String(a.eventDate||a.date||''));});
+    var html='<option value="">No invoice / independent work</option>';
+    invoices.forEach(function(x){
+      var label=(x.no||'Invoice')+' · '+(x.client||'No client');
+      if(x.eventDate)label+=' · '+x.eventDate;
+      html+='<option value="'+esc(x.id||'')+'"'+((x.id||'')===selected?' selected':'')+'>'+esc(label)+'</option>';
+    });
+    return html;
+  }
+  function selectedInvoice(idv){
+    return getInvoiceRecords().find(function(x){return x.id===idv;})||null;
+  }
+
+  function tabs(tab){
+    document.querySelectorAll('[data-payroll-tab]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-payroll-tab')===tab);});
+    document.querySelectorAll('[data-payroll-panel]').forEach(function(p){p.classList.toggle('active',p.getAttribute('data-payroll-panel')===tab);});
+    renderAll();
+  }
+
+  function workerSelectOptions(selected){
     var html='<option value="">Select worker</option>';
     STATE.workers.slice().sort(function(a,b){return String(a.name||'').localeCompare(String(b.name||''));}).forEach(function(w){
       html+='<option value="'+esc(w.id)+'"'+(w.id===selected?' selected':'')+'>'+esc(w.name)+(w.role?' · '+esc(w.role):'')+'</option>';
     });
     return html;
   }
-  function updateWorkerFilter(){
-    var sel=q('fbiPayrollFilterWorker'); if(!sel)return;
-    var val=sel.value;
-    sel.innerHTML='<option value="">All Workers</option>'+STATE.workers.slice().sort(function(a,b){return String(a.name||'').localeCompare(String(b.name||''));}).map(function(w){
-      return '<option value="'+esc(w.id)+'">'+esc(w.name)+'</option>';
-    }).join('');
-    if(STATE.workers.some(function(w){return w.id===val}))sel.value=val;
-  }
-  function reportRows(){
-    var from=q('fbiPayrollFilterFrom')?.value||'';
-    var to=q('fbiPayrollFilterTo')?.value||'';
-    var wid=q('fbiPayrollFilterWorker')?.value||'';
-    var dept=q('fbiPayrollFilterDept')?.value||'';
-    var st=q('fbiPayrollFilterStatus')?.value||'';
-    return STATE.records.filter(function(r){
-      var w=worker(r.workerId);
-      var d=String(r.workDate||'').slice(0,10);
-      if(from&&(!d||d<from))return false;
-      if(to&&(!d||d>to))return false;
-      if(wid&&r.workerId!==wid)return false;
-      if(dept&&String(w?.department||'')!==dept)return false;
-      if(st&&status(r)!==st)return false;
-      return true;
-    }).sort(function(a,b){return String(b.workDate||'').localeCompare(String(a.workDate||''));});
-  }
-  function renderStats(){
-    q('fbiPayrollWorkerCount').textContent=String(STATE.workers.length);
-    q('fbiPayrollRecordCount').textContent=String(STATE.records.length);
-    q('fbiPayrollNetTotal').textContent=money(STATE.records.reduce(function(s,r){return s+net(r);},0));
-    q('fbiPayrollBalanceTotal').textContent=money(STATE.records.reduce(function(s,r){return s+balance(r);},0));
-  }
-  function switchTab(tab){
-    document.querySelectorAll('[data-payroll-tab]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-payroll-tab')===tab);});
-    document.querySelectorAll('[data-payroll-panel]').forEach(function(p){p.classList.toggle('active',p.getAttribute('data-payroll-panel')===tab);});
-    renderAll();
-  }
-  function showForm(kind,existing){
-    if(kind==='worker'){
-      switchTab('workers');
-      var w=existing||{};
-      q('fbiPayrollWorkerFormWrap').innerHTML=
-        '<div class="card" style="margin-bottom:14px"><div class="fbi-payroll-section-head"><div><h3>'+(existing?'Edit Worker':'Add Worker')+'</h3><p>Worker profile and payment details.</p></div></div>'+
-        '<div class="fbi-payroll-form">'+
-        field('Worker ID','pwId',w.workerCode||'',false,'text','Optional internal ID')+
-        field('Full Name','pwName',w.name||'',false,'text','Full name')+
-        field('Phone','pwPhone',w.phone||'',false,'tel','Phone number')+
-        field('Email','pwEmail',w.email||'',false,'email','Email address')+
-        field('Address','pwAddress',w.address||'',true,'text','Address')+
-        field('Role / Job Title','pwRole',w.role||'',false,'text','Role or job title')+
-        selectField('Department','pwDept',['Media Production','IT / Networking','CCTV / Security','Smart Home','Administration','Other'],w.department||'Media Production')+
-        selectField('Worker Type','pwType',['Employee','Freelancer','Casual','Contractor','Other'],w.workerType||'Freelancer')+
-        selectField('Preferred Payment Method','pwPayMethod',['Mobile Money','Bank','Cash'],w.paymentMethod||'Mobile Money')+
-        field('MoMo Number','pwMomo',w.momo||'',false,'text','')+
-        field('Bank Name','pwBank',w.bank||'',false,'text','')+
-        field('Account Name','pwAccountName',w.accountName||'',false,'text','')+
-        field('Account Number','pwAccountNumber',w.accountNumber||'',false,'text','')+
-        field('Ghana Card / ID Reference','pwIdRef',w.idRef||'',false,'text','')+
-        field('Emergency / Contact Person','pwEmergency',w.emergency||'',false,'text','')+
-        field('Emergency Phone','pwEmergencyPhone',w.emergencyPhone||'',false,'text','')+
-        selectField('Status','pwStatus',['Active','Inactive'],w.status||'Active')+
-        field('Notes','pwNotes',w.notes||'',true,'text','Additional worker notes')+
-        '</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
-        '<button type="button" class="btn primary" id="pwSaveBtn">Save Worker</button><button type="button" class="btn" id="pwCancelBtn">Cancel</button></div></div>';
-      q('pwSaveBtn').onclick=function(){saveWorker(existing&&existing.id);};
-      q('pwCancelBtn').onclick=function(){q('fbiPayrollWorkerFormWrap').innerHTML='';renderAll();};
-      return;
-    }
-    switchTab('records');
-    if(!STATE.workers.length){
-      q('fbiPayrollRecordFormWrap').innerHTML='<div class="fbi-payroll-notice">Add at least one worker before creating a payroll record.</div>';
-      return;
-    }
-    var r=existing||{};
-    q('fbiPayrollRecordFormWrap').innerHTML=
-      '<div class="card" style="margin-bottom:14px"><div class="fbi-payroll-section-head"><div><h3>'+(existing?'Edit Payroll Record':'New Payroll Record')+'</h3><p>Work, earnings, deductions, advances and payment details.</p></div></div>'+
+
+  function showWorkerForm(existing){
+    tabs('workers');
+    editingWorkerId=existing?existing.id:'';
+    var w=existing||{};
+    q('fbiPayrollWorkerFormWrap').innerHTML=
+      '<div class="fbi-payroll-card" style="margin-bottom:12px">'+
+      '<div class="fbi-payroll-section-head"><div><h3>'+(existing?'Edit Worker':'Add Worker')+'</h3><p>Complete worker profile and payment details.</p></div></div>'+
       '<div class="fbi-payroll-form">'+
-      selectField('Worker','prWorkerId',STATE.workers.slice().sort(function(a,b){return String(a.name||'').localeCompare(String(b.name||''));}).map(function(x){return {v:x.id,t:x.name+(x.role?' · '+x.role:'')};}),r.workerId||'',true)+
-      field('Project / Event','prProject',r.project||'',false,'text','Project or event')+
-      field('Work Date','prDate',r.workDate||today(),false,'date','')+
-      selectField('Pay Basis','prBasis',['Per Event','Per Day','Per Installation','Other'],r.basis||'Per Event')+
-      field('Role / Work Description','prRole',r.role||'',true,'text','Work performed')+
-      field('Rate','prRate',r.rate||0,false,'number','0.00')+
-      field('Quantity','prQty',r.qty||1,false,'number','')+
-      field('Allowance','prAllowance',r.allowance||0,false,'number','0.00')+
-      field('Bonus','prBonus',r.bonus||0,false,'number','0.00')+
-      field('Deductions','prDeduction',r.deduction||0,false,'number','0.00')+
-      field('Advance / Previous Payment','prAdvance',r.advance||0,false,'number','0.00')+
-      field('Notes','prNotes',r.notes||'',true,'text','')+
+        field('Staff / Worker ID','pwCode',w.workerCode||'','text','e.g. FBI-WK-004')+
+        field('Full Name','pwName',w.name||'','text','Full name')+
+        field('Phone Number','pwPhone',w.phone||'','tel','Phone number')+
+        field('Email','pwEmail',w.email||'','email','Email')+
+        field('Address','pwAddress',w.address||'','text','Address',true)+
+        field('Role / Job Title','pwRole',w.role||'','text','Role or job title')+
+        selectField('Department','pwDepartment',['Media Production','IT / Networking','CCTV / Security','Smart Home','Administration','Other'],w.department||'Media Production')+
+        selectField('Worker Type','pwType',['Staff','Media Worker','IT Technician','Network Technician','CCTV Installer','Other'],w.workerType||'Media Worker')+
+        selectField('Preferred Payment Method','pwPaymentMethod',['Mobile Money','Bank','Cash'],w.paymentMethod||'Mobile Money')+
+        field('MoMo Number','pwMomo',w.momo||'','text','')+
+        field('Bank Name','pwBank',w.bank||'','text','')+
+        field('Account Name','pwAccountName',w.accountName||'','text','')+
+        field('Account Number','pwAccountNumber',w.accountNumber||'','text','')+
+        field('Ghana Card / ID Reference','pwIdRef',w.idRef||'','text','')+
+        field('Emergency / Contact Person','pwEmergency',w.emergency||'','text','')+
+        field('Emergency Phone','pwEmergencyPhone',w.emergencyPhone||'','text','')+
+        selectField('Status','pwStatus',['Active','Inactive'],w.status||'Active')+
+        field('Notes','pwNotes',w.notes||'','text','Additional notes',true)+
       '</div>'+
-      '<div class="fbi-payroll-summary">'+
-        '<div><span>Gross Pay</span><b id="prGrossPreview">GHS₵0.00</b></div>'+
-        '<div><span>Net Pay</span><b id="prNetPreview">GHS₵0.00</b></div>'+
-        '<div><span>Paid</span><b id="prPaidPreview">GHS₵0.00</b></div>'+
-        '<div><span>Balance</span><b id="prBalancePreview">GHS₵0.00</b></div>'+
-        '<div><span>Status</span><b id="prStatusPreview">Pending</b></div>'+
-      '</div>'+
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
-      '<button type="button" class="btn primary" id="prSaveBtn">Save Payroll Record</button><button type="button" class="btn" id="prCancelBtn">Cancel</button></div></div>';
-      ['prRate','prQty','prAllowance','prBonus','prDeduction','prAdvance'].forEach(function(idv){q(idv).addEventListener('input',previewRecord);});
-      q('prSaveBtn').onclick=function(){saveRecord(existing&&existing.id);};
-      q('prCancelBtn').onclick=function(){q('fbiPayrollRecordFormWrap').innerHTML='';renderAll();};
-      previewRecord();
+      '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="btn" type="button" id="pwCancel">Cancel</button><button class="btn primary" type="button" id="pwSave">Save Worker</button></div>'+
+      '</div>';
+    q('pwSave').onclick=saveWorker;
+    q('pwCancel').onclick=function(){editingWorkerId='';q('fbiPayrollWorkerFormWrap').innerHTML='';renderAll();};
   }
-  function field(label,idv,value,full,type,placeholder){
-    return '<div class="fbi-payroll-field'+(full?' full':'')+'"><label>'+esc(label)+'</label><input id="'+idv+'" type="'+(type||'text')+'" value="'+esc(value)+'" placeholder="'+esc(placeholder||'')+'"></div>';
+  function field(label,idv,value,type,ph,full){
+    return '<div class="fbi-payroll-field'+(full?' full':'')+'"><label>'+esc(label)+'</label><input id="'+idv+'" type="'+(type||'text')+'" value="'+esc(value)+'" placeholder="'+esc(ph||'')+'"></div>';
   }
   function selectField(label,idv,options,selected,full){
-    var arr=options||[];
-    var html='<div class="fbi-payroll-field'+(full===true?' full':'')+'"><label>'+esc(label)+'</label><select id="'+idv+'">';
-    html+=arr.map(function(o){
-      var value,labelText;
-      if(typeof o==='string'){value=o;labelText=o;}else{value=o.v;labelText=o.t;}
-      return '<option value="'+esc(value)+'"'+(String(value)===String(selected)?' selected':'')+'>'+esc(labelText)+'</option>';
-    }).join('');
-    return html+'</select></div>';
+    return '<div class="fbi-payroll-field'+(full?' full':'')+'"><label>'+esc(label)+'</label><select id="'+idv+'">'+options.map(function(v){return '<option value="'+esc(v)+'"'+(String(v)===String(selected)?' selected':'')+'>'+esc(v)+'</option>';}).join('')+'</select></div>';
   }
-  function previewRecord(){
-    var r={
-      rate:num(q('prRate')?.value),
-      qty:num(q('prQty')?.value)||1,
-      allowance:num(q('prAllowance')?.value),
-      bonus:num(q('prBonus')?.value),
-      deduction:num(q('prDeduction')?.value),
-      advance:num(q('prAdvance')?.value),
-      paidAmount:0
-    };
-    if(q('prGrossPreview'))q('prGrossPreview').textContent=money(gross(r));
-    if(q('prNetPreview'))q('prNetPreview').textContent=money(net(r));
-    if(q('prPaidPreview'))q('prPaidPreview').textContent=money(0);
-    if(q('prBalancePreview'))q('prBalancePreview').textContent=money(net(r));
-    if(q('prStatusPreview'))q('prStatusPreview').textContent='Pending';
-  }
-  function saveWorker(existingId){
+  function saveWorker(){
     var name=(q('pwName')?.value||'').trim();
-    if(!name){alert('Worker name is required.');return;}
-    var w=existingId?worker(existingId):{id:id('worker'),createdAt:new Date().toISOString()};
-    w.workerCode=(q('pwId')?.value||'').trim();
+    if(!name){alert('Full name is required.');return;}
+    var w=editingWorkerId?getWorker(editingWorkerId):{id:uid('worker'),createdAt:new Date().toISOString()};
+    if(!w)return;
+    w.workerCode=(q('pwCode')?.value||'').trim();
     w.name=name;
     w.phone=(q('pwPhone')?.value||'').trim();
     w.email=(q('pwEmail')?.value||'').trim();
     w.address=(q('pwAddress')?.value||'').trim();
     w.role=(q('pwRole')?.value||'').trim();
-    w.department=q('pwDept')?.value||'Other';
-    w.workerType=q('pwType')?.value||'Freelancer';
-    w.paymentMethod=q('pwPayMethod')?.value||'Mobile Money';
+    w.department=q('pwDepartment')?.value||'Other';
+    w.workerType=q('pwType')?.value||'Other';
+    w.paymentMethod=q('pwPaymentMethod')?.value||'Mobile Money';
     w.momo=(q('pwMomo')?.value||'').trim();
     w.bank=(q('pwBank')?.value||'').trim();
     w.accountName=(q('pwAccountName')?.value||'').trim();
@@ -349,248 +378,382 @@ body.fbi-payroll-mode #fbiPayrollView{position:relative;z-index:1}
     w.emergencyPhone=(q('pwEmergencyPhone')?.value||'').trim();
     w.status=q('pwStatus')?.value||'Active';
     w.notes=(q('pwNotes')?.value||'').trim();
-    if(existingId){
-      var idx=STATE.workers.findIndex(function(x){return x.id===existingId;});
-      if(idx>=0)STATE.workers[idx]=w;
-    }else STATE.workers.push(w);
-    if(save()){q('fbiPayrollWorkerFormWrap').innerHTML='';renderAll();toastLocal(existingId?'Worker updated':'Worker saved');}
+    var idx=STATE.workers.findIndex(function(x){return x.id===w.id;});
+    if(idx>=0)STATE.workers[idx]=w;else STATE.workers.push(w);
+    if(saveState()){editingWorkerId='';q('fbiPayrollWorkerFormWrap').innerHTML='';selectedWorkerId=w.id;renderAll();toastLocal('Worker saved');}
   }
-  function saveRecord(existingId){
-    var wid=q('prWorkerId')?.value||'';
-    if(!wid){alert('Please select a worker.');return;}
-    var r=existingId?(STATE.records.find(function(x){return x.id===existingId;})||null):{id:id('payroll'),createdAt:new Date().toISOString(),paidAmount:0};
-    if(!r){alert('Payroll record not found.');return;}
+
+  function renderWorkerProfile(){
+    var el=q('fbiPayrollWorkerProfile');if(!el)return;
+    var w=getWorker(selectedWorkerId);
+    if(!w){el.innerHTML='<div class="fbi-payroll-profile"><h4>Worker Profile</h4><div class="fbi-payroll-empty">Select a worker from the directory to view the profile.</div></div>';return;}
+    var pay=w.paymentMethod==='Mobile Money'?(w.momo||'Not provided'):(w.paymentMethod==='Bank'?((w.bank||'')+' · '+(w.accountNumber||'Not provided')):'Cash');
+    el.innerHTML='<div class="fbi-payroll-profile"><h4>'+esc(w.name)+'</h4>'+
+      profileRow('Worker ID',w.workerCode||'Not set')+
+      profileRow('Role',w.role||'Not set')+
+      profileRow('Department',w.department||'Not set')+
+      profileRow('Worker Type',w.workerType||'Not set')+
+      profileRow('Phone',w.phone||'Not set')+
+      profileRow('Email',w.email||'Not set')+
+      profileRow('Address',w.address||'Not set')+
+      profileRow('Payment',w.paymentMethod||'Not set')+
+      profileRow('Payment Details',pay)+
+      profileRow('ID Reference',w.idRef||'Not set')+
+      profileRow('Emergency Contact',w.emergency||'Not set')+
+      profileRow('Emergency Phone',w.emergencyPhone||'Not set')+
+      profileRow('Status',w.status||'Active')+
+      (w.notes?profileRow('Notes',w.notes):'')+
+      '<div style="display:flex;gap:7px;margin-top:12px"><button class="fbi-payroll-mini-btn" type="button" id="fbiPayrollProfileEdit">Edit</button></div></div>';
+    q('fbiPayrollProfileEdit').onclick=function(){showWorkerForm(w);};
+  }
+  function profileRow(k,v){return '<div class="fbi-payroll-profile-row"><span>'+esc(k)+'</span><b>'+esc(v)+'</b></div>';}
+
+  function renderWorkers(){
+    var el=q('fbiPayrollWorkersTable');if(!el)return;
+    if(!STATE.workers.length){el.innerHTML='<div class="fbi-payroll-empty">No workers yet. Add your first worker to start Payroll.</div>';return;}
+    el.innerHTML='<div class="fbi-payroll-table-wrap"><table class="fbi-payroll-table"><thead><tr><th>Name</th><th>Worker Type</th><th>Department</th><th>Role</th><th>Payment</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+
+      STATE.workers.slice().sort(function(a,b){return String(a.name||'').localeCompare(String(b.name||''));}).map(function(w){
+        var count=STATE.records.filter(function(r){return r.workerId===w.id;}).length;
+        var pay=w.paymentMethod==='Mobile Money'?(w.momo||''):(w.paymentMethod==='Bank'?((w.bank||'')+' '+(w.accountNumber||'')):'Cash');
+        return '<tr'+(selectedWorkerId===w.id?' style="background:rgba(189,27,99,.06)"':'')+'><td><b>'+esc(w.name)+'</b><span class="sub">'+esc(w.workerCode||'')+'</span></td>'+
+          '<td>'+esc(w.workerType||'')+'</td><td>'+esc(w.department||'')+'</td><td>'+esc(w.role||'')+'<span class="sub">'+count+' payroll record'+(count===1?'':'s')+'</span></td>'+
+          '<td>'+esc(w.paymentMethod||'')+'<span class="sub">'+esc(pay)+'</span></td><td>'+activeBadge(w.status||'Active')+'</td>'+
+          '<td><div class="fbi-payroll-actions-cell"><button class="fbi-payroll-mini-btn" type="button" data-w-view="'+esc(w.id)+'">View</button><button class="fbi-payroll-mini-btn" type="button" data-w-edit="'+esc(w.id)+'">Edit</button><button class="fbi-payroll-mini-btn danger" type="button" data-w-delete="'+esc(w.id)+'">Delete</button></div></td></tr>';
+      }).join('')+'</tbody></table></div>';
+    el.querySelectorAll('[data-w-view]').forEach(function(b){b.onclick=function(){selectedWorkerId=b.dataset.wView;renderAll();};});
+    el.querySelectorAll('[data-w-edit]').forEach(function(b){b.onclick=function(){showWorkerForm(getWorker(b.dataset.wEdit));};});
+    el.querySelectorAll('[data-w-delete]').forEach(function(b){b.onclick=function(){deleteWorker(b.dataset.wDelete);};});
+  }
+  function activeBadge(s){return '<span class="fbi-payroll-badge '+(s==='Active'?'active':'inactive')+'">'+esc(s)+'</span>';}
+  function deleteWorker(idv){
+    if(STATE.records.some(function(r){return r.workerId===idv;})){alert('This worker has payroll records. Set the worker to Inactive instead of deleting the profile.');return;}
+    if(!confirm('Delete this worker profile?'))return;
+    STATE.workers=STATE.workers.filter(function(w){return w.id!==idv;});
+    if(selectedWorkerId===idv)selectedWorkerId='';
+    saveState();renderAll();
+  }
+
+  function showRecordForm(existing){
+    tabs('records');
+    editingRecordId=existing?existing.id:'';
+    var r=normalizeRecord(existing||{});
+    var inv=selectedInvoice(r.invoiceId);
+    var defaultProject=r.project|| (inv?((inv.no||'')+' · '+(inv.client||'')):'');
+    var defaultDate=r.workDate|| (inv?(inv.eventDate||inv.date||today()):today());
+    q('fbiPayrollRecordFormWrap').innerHTML=
+      '<div class="fbi-payroll-card" style="margin-bottom:12px">'+
+      '<div class="fbi-payroll-section-head"><div><h3>'+(existing?'Edit Payroll Record':'New Payroll Record')+'</h3><p>Individual worker earnings for an event, day, installation or other work.</p></div></div>'+
+      '<div class="fbi-payroll-info">The Invoice / Job link below is read-only. Selecting an invoice only references it; Payroll never edits or saves anything into the invoice record.</div>'+
+      '<div class="fbi-payroll-form">'+
+        '<div class="fbi-payroll-field full"><label>Linked Invoice / Job</label><select id="prInvoice">'+invoiceOptions(r.invoiceId)+'</select></div>'+
+        '<div class="fbi-payroll-field"><label>Worker</label><select id="prWorker">'+workerSelectOptions(r.workerId)+'</select></div>'+
+        field('Project / Event','prProject',defaultProject,'text','Project or event')+
+        field('Work Date','prDate',defaultDate,'date','')+
+        selectField('Pay Basis','prBasis',['Per Event','Per Day','Per Installation','Other'],r.basis||'Per Event')+
+        field('Role / Work Description','prRole',r.role||'','text','Work performed',true)+
+        field('Rate','prRate',r.rate||0,'number','0.00')+
+        field('Quantity','prQty',r.qty||1,'number','1')+
+        field('Transport Allowance','prTransport',r.transport||0,'number','0.00')+
+        field('Feeding Allowance','prFeeding',r.feeding||0,'number','0.00')+
+        field('Accommodation','prAccommodation',r.accommodation||0,'number','0.00')+
+        field('Overtime','prOvertime',r.overtime||0,'number','0.00')+
+        field('Other Allowance','prOtherAllowance',r.otherAllowance||0,'number','0.00')+
+        field('General Allowance','prAllowance',r.allowance||0,'number','0.00')+
+        field('Bonus','prBonus',r.bonus||0,'number','0.00')+
+        field('Deductions','prDeduction',r.deduction||0,'number','0.00')+
+        field('Advance','prAdvance',r.advance||0,'number','0.00')+
+        field('Previous Balance Owed','prPreviousBalance',r.previousBalance||0,'number','0.00')+
+        field('Notes','prNotes',r.notes||'','text','Additional notes',true)+
+      '</div>'+
+      '<div class="fbi-payroll-summary">'+
+        '<div class="fbi-payroll-summary-item"><span>Base Pay</span><b id="prBase">GHS₵0.00</b></div>'+
+        '<div class="fbi-payroll-summary-item"><span>Allowances + Bonus</span><b id="prAllowances">GHS₵0.00</b></div>'+
+        '<div class="fbi-payroll-summary-item"><span>Gross Pay</span><b id="prGross">GHS₵0.00</b></div>'+
+        '<div class="fbi-payroll-summary-item"><span>Deductions</span><b id="prDeductions">GHS₵0.00</b></div>'+
+        '<div class="fbi-payroll-summary-item"><span>Net Pay</span><b id="prNet">GHS₵0.00</b></div>'+
+        '<div class="fbi-payroll-summary-item"><span>Status</span><b id="prStatus">Pending</b></div>'+
+      '</div>'+
+      '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn" type="button" id="prCancel">Cancel</button><button class="btn primary" type="button" id="prSave">Save Payroll Record</button></div>'+
+      '</div>';
+    ['prRate','prQty','prTransport','prFeeding','prAccommodation','prOvertime','prOtherAllowance','prAllowance','prBonus','prDeduction','prAdvance','prPreviousBalance'].forEach(function(idv){q(idv).addEventListener('input',previewRecord);});
+    q('prInvoice').addEventListener('change',function(){
+      var ix=selectedInvoice(this.value);
+      if(ix){
+        if(!q('prProject').value)q('prProject').value=(ix.no||'Invoice')+' · '+(ix.client||'');
+        if(q('prDate').value===today()&&ix.eventDate)q('prDate').value=ix.eventDate;
+        if(!q('prRole').value&&ix.serviceCategory)q('prRole').value=ix.serviceCategory;
+      }
+    });
+    q('prSave').onclick=saveRecord;
+    q('prCancel').onclick=function(){editingRecordId='';q('fbiPayrollRecordFormWrap').innerHTML='';renderAll();};
+    previewRecord();
+  }
+  function previewRecord(){
+    var r=formRecord();
+    q('prBase').textContent=money(basePay(r));
+    q('prAllowances').textContent=money(allowances(r));
+    q('prGross').textContent=money(gross(r));
+    q('prDeductions').textContent=money(num(r.deduction)+num(r.advance)-num(r.previousBalance));
+    q('prNet').textContent=money(net(r));
+    q('prStatus').textContent='Pending';
+  }
+  function formRecord(){
+    return normalizeRecord({
+      rate:num(q('prRate')?.value),qty:num(q('prQty')?.value)||1,
+      transport:num(q('prTransport')?.value),feeding:num(q('prFeeding')?.value),accommodation:num(q('prAccommodation')?.value),
+      overtime:num(q('prOvertime')?.value),otherAllowance:num(q('prOtherAllowance')?.value),allowance:num(q('prAllowance')?.value),bonus:num(q('prBonus')?.value),
+      deduction:num(q('prDeduction')?.value),advance:num(q('prAdvance')?.value),previousBalance:num(q('prPreviousBalance')?.value)
+    });
+  }
+  function saveRecord(){
+    var wid=q('prWorker')?.value||'';
+    if(!wid){alert('Select a worker.');return;}
+    var existing=editingRecordId?STATE.records.find(function(x){return x.id===editingRecordId;}):null;
+    var r=existing||{id:uid('payroll'),createdAt:new Date().toISOString(),payments:[]};
     r.workerId=wid;
+    r.invoiceId=q('prInvoice')?.value||'';
     r.project=(q('prProject')?.value||'').trim();
     r.workDate=q('prDate')?.value||today();
     r.basis=q('prBasis')?.value||'Per Event';
     r.role=(q('prRole')?.value||'').trim();
     r.rate=num(q('prRate')?.value);
     r.qty=Math.max(1,num(q('prQty')?.value)||1);
+    r.transport=num(q('prTransport')?.value);
+    r.feeding=num(q('prFeeding')?.value);
+    r.accommodation=num(q('prAccommodation')?.value);
+    r.overtime=num(q('prOvertime')?.value);
+    r.otherAllowance=num(q('prOtherAllowance')?.value);
     r.allowance=num(q('prAllowance')?.value);
     r.bonus=num(q('prBonus')?.value);
     r.deduction=num(q('prDeduction')?.value);
     r.advance=num(q('prAdvance')?.value);
+    r.previousBalance=num(q('prPreviousBalance')?.value);
     r.notes=(q('prNotes')?.value||'').trim();
-    if(existingId){
-      var idx=STATE.records.findIndex(function(x){return x.id===existingId;});
-      if(idx>=0)STATE.records[idx]=r;
-    }else STATE.records.push(r);
-    if(save()){q('fbiPayrollRecordFormWrap').innerHTML='';renderAll();toastLocal(existingId?'Payroll record updated':'Payroll record saved');}
-  }
-  function deleteWorker(idv){
-    if(STATE.records.some(function(r){return r.workerId===idv;})){alert('This worker has payroll records and cannot be deleted. Set the worker to Inactive instead.');return;}
-    if(!confirm('Delete this worker profile?'))return;
-    STATE.workers=STATE.workers.filter(function(w){return w.id!==idv;});
-    save();renderAll();
-  }
-  function deleteRecord(idv){
-    if(!confirm('Delete this payroll record?'))return;
-    STATE.records=STATE.records.filter(function(r){return r.id!==idv;});
-    save();renderAll();
-  }
-  function recordPayment(idv){
-    var r=STATE.records.find(function(x){return x.id===idv;}); if(!r)return;
-    var bal=balance(r);
-    if(bal<=0.005){alert('This payroll record is already fully paid.');return;}
-    var amount=prompt('Payment amount (maximum '+money(bal)+')',String(bal.toFixed(2)));
-    if(amount===null)return;
-    var p=num(amount);
-    if(p<=0||p>bal+0.005){alert('Enter a valid payment amount.');return;}
-    var method=prompt('Payment method: Mobile Money / Bank / Cash',r.paymentMethod||worker(r.workerId)?.paymentMethod||'Mobile Money');
-    if(method===null)return;
-    var ref=prompt('Transaction / Payment reference',r.transactionRef||'');
-    if(ref===null)return;
-    var paidBy=prompt('Paid by',r.paidBy||'');
-    if(paidBy===null)return;
-    r.paidAmount=Math.min(net(r),paid(r)+p);
-    r.paymentDate=today();
-    r.paymentMethod=method;
-    r.transactionRef=ref;
-    r.paidBy=paidBy;
-    save();renderAll();toastLocal('Payment recorded');
-  }
-  function renderWorkers(){
-    updateWorkerFilter();
-    var el=q('fbiPayrollWorkersTable'); if(!el)return;
-    if(!STATE.workers.length){el.innerHTML='<div class="fbi-payroll-empty">No workers added yet.</div>';return;}
-    el.innerHTML='<div class="fbi-payroll-table-wrap"><table class="fbi-payroll-table"><thead><tr><th>Name</th><th>Role / Department</th><th>Type</th><th>Payment Details</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+
-      STATE.workers.slice().sort(function(a,b){return String(a.name||'').localeCompare(String(b.name||''));}).map(function(w){
-        var pay=w.paymentMethod==='Mobile Money'?(w.momo||''):(w.paymentMethod==='Bank'?((w.bank||'')+' '+(w.accountNumber||'')):'Cash');
-        return '<tr><td><b>'+esc(w.name)+'</b><div style="color:#7f8897;margin-top:3px">'+esc(w.phone||w.email||w.workerCode||'')+'</div></td>'+
-        '<td>'+esc(w.role||'')+'<div style="color:#7f8897;margin-top:3px">'+esc(w.department||'')+'</div></td>'+
-        '<td>'+esc(w.workerType||'')+'</td><td>'+esc(w.paymentMethod||'')+'<div style="color:#7f8897;margin-top:3px">'+esc(pay)+'</div></td>'+
-        '<td>'+badge(w.status||'Active')+'</td><td><div style="display:flex;gap:6px;flex-wrap:wrap">'+
-        '<button class="btn" type="button" data-payroll-edit-worker="'+esc(w.id)+'">Edit</button><button class="btn" type="button" data-payroll-delete-worker="'+esc(w.id)+'">Delete</button></div></td></tr>';
-      }).join('')+'</tbody></table></div>';
-    el.querySelectorAll('[data-payroll-edit-worker]').forEach(function(b){b.onclick=function(){showForm('worker',worker(b.dataset.payrollEditWorker));};});
-    el.querySelectorAll('[data-payroll-delete-worker]').forEach(function(b){b.onclick=function(){deleteWorker(b.dataset.payrollDeleteWorker);};});
-  }
-  function renderRecords(){
-    var el=q('fbiPayrollRecordsTable'); if(!el)return;
-    if(!STATE.records.length){el.innerHTML='<div class="fbi-payroll-empty">No payroll records added yet.</div>';return;}
-    el.innerHTML='<div class="fbi-payroll-table-wrap"><table class="fbi-payroll-table"><thead><tr><th>Worker / Project</th><th>Work Date</th><th>Basis</th><th class="num">Gross</th><th class="num">Net</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+
-      STATE.records.slice().sort(function(a,b){return String(b.workDate||'').localeCompare(String(a.workDate||''));}).map(function(r){
-        var w=worker(r.workerId),s=status(r);
-        return '<tr><td><b>'+esc(w?.name||'Unknown worker')+'</b><div style="color:#7f8897;margin-top:3px">'+esc(r.project||r.role||'')+'</div></td>'+
-        '<td>'+esc(r.workDate||'')+'</td><td>'+esc(r.basis||'')+'</td>'+
-        '<td class="num">'+esc(money(gross(r)))+'</td><td class="num">'+esc(money(net(r)))+'</td><td class="num">'+esc(money(paid(r)))+'</td><td class="num">'+esc(money(balance(r)))+'</td><td>'+badge(s)+'</td>'+
-        '<td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn" type="button" data-payroll-pay="'+esc(r.id)+'">Pay</button><button class="btn" type="button" data-payroll-slip="'+esc(r.id)+'">Payslip</button><button class="btn" type="button" data-payroll-edit-record="'+esc(r.id)+'">Edit</button><button class="btn" type="button" data-payroll-delete-record="'+esc(r.id)+'">Delete</button></div></td></tr>';
-      }).join('')+'</tbody></table></div>';
-    el.querySelectorAll('[data-payroll-pay]').forEach(function(b){b.onclick=function(){recordPayment(b.dataset.payrollPay);};});
-    el.querySelectorAll('[data-payroll-slip]').forEach(function(b){b.onclick=function(){printPayslip(b.dataset.payrollSlip);};});
-    el.querySelectorAll('[data-payroll-edit-record]').forEach(function(b){b.onclick=function(){showForm('record',STATE.records.find(function(r){return r.id===b.dataset.payrollEditRecord;}));};});
-    el.querySelectorAll('[data-payroll-delete-record]').forEach(function(b){b.onclick=function(){deleteRecord(b.dataset.payrollDeleteRecord);};});
-  }
-  function renderDashboard(){
-    var el=q('fbiPayrollDashboardBody'); if(!el)return;
-    var recent=STATE.records.slice().sort(function(a,b){return String(b.workDate||'').localeCompare(String(a.workDate||''));}).slice(0,10);
-    var total=STATE.records.reduce(function(s,r){return s+net(r);},0);
-    var paidTotal=STATE.records.reduce(function(s,r){return s+paid(r);},0);
-    var balTotal=STATE.records.reduce(function(s,r){return s+balance(r);},0);
-    var html='<div class="fbi-payroll-summary"><div><span>Gross</span><b>'+esc(money(STATE.records.reduce(function(s,r){return s+gross(r);},0)))+'</b></div><div><span>Net</span><b>'+esc(money(total))+'</b></div><div><span>Paid</span><b>'+esc(money(paidTotal))+'</b></div><div><span>Balance</span><b>'+esc(money(balTotal))+'</b></div><div><span>Active Workers</span><b>'+esc(String(STATE.workers.filter(function(w){return (w.status||'Active')==='Active';}).length))+'</b></div></div>';
-    if(!recent.length){el.innerHTML=html+'<div class="fbi-payroll-empty">No payroll activity yet.</div>';return;}
-    html+='<div class="fbi-payroll-table-wrap"><table class="fbi-payroll-table"><thead><tr><th>Worker</th><th>Project / Event</th><th>Date</th><th class="num">Net</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>';
-    html+=recent.map(function(r){var w=worker(r.workerId);return '<tr><td>'+esc(w?.name||'Unknown')+'</td><td>'+esc(r.project||r.role||'')+'</td><td>'+esc(r.workDate||'')+'</td><td class="num">'+esc(money(net(r)))+'</td><td class="num">'+esc(money(paid(r)))+'</td><td class="num">'+esc(money(balance(r)))+'</td><td>'+badge(status(r))+'</td></tr>';}).join('');
-    el.innerHTML=html+'</tbody></table></div>';
-  }
-  function renderReports(){
-    var rows=reportRows();
-    var totalNet=rows.reduce(function(s,r){return s+net(r);},0);
-    var totalPaid=rows.reduce(function(s,r){return s+paid(r);},0);
-    var totalBal=rows.reduce(function(s,r){return s+balance(r);},0);
-    var totalGross=rows.reduce(function(s,r){return s+gross(r);},0);
-    q('fbiPayrollReportSummary').innerHTML=
-      '<div><span>Records</span><b>'+rows.length+'</b></div>'+
-      '<div><span>Gross</span><b>'+esc(money(totalGross))+'</b></div>'+
-      '<div><span>Net</span><b>'+esc(money(totalNet))+'</b></div>'+
-      '<div><span>Paid</span><b>'+esc(money(totalPaid))+'</b></div>'+
-      '<div><span>Balance</span><b>'+esc(money(totalBal))+'</b></div>';
-    var el=q('fbiPayrollReportTable');
-    if(!rows.length){el.innerHTML='<div class="fbi-payroll-empty">No payroll records match the selected filters.</div>';return;}
-    el.innerHTML='<div class="fbi-payroll-table-wrap"><table class="fbi-payroll-table"><thead><tr><th>Worker</th><th>Department</th><th>Project / Event</th><th>Date</th><th>Basis</th><th class="num">Rate</th><th class="num">Qty</th><th class="num">Net</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th><th>Payment Date</th><th>Method</th><th>Reference</th></tr></thead><tbody>'+
-      rows.map(function(r){var w=worker(r.workerId);return '<tr><td>'+esc(w?.name||'Unknown')+'</td><td>'+esc(w?.department||'')+'</td><td>'+esc(r.project||r.role||'')+'</td><td>'+esc(r.workDate||'')+'</td><td>'+esc(r.basis||'')+'</td><td class="num">'+esc(money(r.rate))+'</td><td class="num">'+esc(r.qty)+'</td><td class="num">'+esc(money(net(r)))+'</td><td class="num">'+esc(money(paid(r)))+'</td><td class="num">'+esc(money(balance(r)))+'</td><td>'+badge(status(r))+'</td><td>'+esc(r.paymentDate||'')+'</td><td>'+esc(r.paymentMethod||'')+'</td><td>'+esc(r.transactionRef||'')+'</td></tr>';}).join('')+'</tbody></table></div>';
-  }
-  function renderAll(){
-    renderStats();renderDashboard();renderWorkers();renderRecords();renderReports();
-  }
-  function csvCell(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}
-  function exportCsv(){
-    var rows=reportRows();
-    var headers=['Worker','Department','Project/Event','Date','Basis','Rate','Quantity','Net Pay','Paid','Balance','Status','Payment Date','Payment Method','Transaction Reference'];
-    var lines=[headers].concat(rows.map(function(r){var w=worker(r.workerId);return [w?.name||'',w?.department||'',r.project||r.role||'',r.workDate||'',r.basis||'',r.rate||0,r.qty||1,net(r),paid(r),balance(r),status(r),r.paymentDate||'',r.paymentMethod||'',r.transactionRef||''];}));
-    var csv=lines.map(function(row){return row.map(csvCell).join(',');}).join('\\n');
-    var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='FBI-Payroll-'+today()+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1000);
-  }
-  function printHtml(title,body){
-    var w=window.open('','_blank');
-    if(!w){alert('Please allow pop-ups to print Payroll documents.');return;}
-    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+esc(title)+'</title><style>body{font-family:Arial,sans-serif;color:#1b1f27;padding:28px}h1{font-size:22px;margin:0 0 6px}p{color:#6d7580;font-size:11px;margin:0 0 18px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}.card{border:1px solid #ddd;border-radius:8px;padding:10px}.card span{display:block;color:#777;font-size:9px;text-transform:uppercase}.card b{display:block;font-size:15px;margin-top:5px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:7px;font-size:9px;text-align:left}th{background:#111;color:#fff}td.num,th.num{text-align:right}.brand{margin-bottom:18px}@media print{body{padding:0}}<\/style></head><body>'+body+'<script>window.onload=function(){window.print()}<\\/script></body></html>');
-    w.document.close();
-  }
-  function printReport(){
-    var rows=reportRows();
-    var grossTotal=rows.reduce(function(s,r){return s+gross(r);},0),netTotal=rows.reduce(function(s,r){return s+net(r);},0),paidTotal=rows.reduce(function(s,r){return s+paid(r);},0),balTotal=rows.reduce(function(s,r){return s+balance(r);},0);
-    var html='<h1>FBI Payroll Report</h1><p>Generated '+esc(new Date().toLocaleString())+' · '+rows.length+' records</p><div class="cards"><div class="card"><span>Gross</span><b>'+esc(money(grossTotal))+'</b></div><div class="card"><span>Net</span><b>'+esc(money(netTotal))+'</b></div><div class="card"><span>Paid</span><b>'+esc(money(paidTotal))+'</b></div><div class="card"><span>Balance</span><b>'+esc(money(balTotal))+'</b></div></div><table><thead><tr><th>Worker</th><th>Department</th><th>Project/Event</th><th>Date</th><th>Basis</th><th class="num">Net</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>';
-    html+=rows.map(function(r){var w=worker(r.workerId);return '<tr><td>'+esc(w?.name||'Unknown')+'</td><td>'+esc(w?.department||'')+'</td><td>'+esc(r.project||r.role||'')+'</td><td>'+esc(r.workDate||'')+'</td><td>'+esc(r.basis||'')+'</td><td class="num">'+esc(money(net(r)))+'</td><td class="num">'+esc(money(paid(r)))+'</td><td class="num">'+esc(money(balance(r)))+'</td><td>'+esc(status(r))+'</td></tr>';}).join('');
-    printHtml('FBI Payroll Report',html+'</tbody></table>');
-  }
-  function printPayslip(idv){
-    var r=STATE.records.find(function(x){return x.id===idv;});if(!r)return;
-    var w=worker(r.workerId)||{};
-    var html='<h1>PAYSLIP</h1><p>Issued '+esc(new Date().toLocaleString())+'</p>'+
-      '<div class="cards">'+
-      '<div class="card"><span>Worker</span><b>'+esc(w.name||'')+'</b></div>'+
-      '<div class="card"><span>Department</span><b>'+esc(w.department||'')+'</b></div>'+
-      '<div class="card"><span>Work Date</span><b>'+esc(r.workDate||'')+'</b></div>'+
-      '<div class="card"><span>Status</span><b>'+esc(status(r))+'</b></div></div>'+
-      '<p><b>Project / Event:</b> '+esc(r.project||'')+' &nbsp; <b>Pay Basis:</b> '+esc(r.basis||'')+'</p>'+
-      '<table><tbody>'+
-      '<tr><th>Earnings</th><th class="num">Amount</th></tr>'+
-      '<tr><td>Rate × Quantity</td><td class="num">'+esc(money(num(r.rate)*Math.max(1,num(r.qty)||1)))+'</td></tr>'+
-      '<tr><td>Allowance</td><td class="num">'+esc(money(r.allowance))+'</td></tr>'+
-      '<tr><td>Bonus</td><td class="num">'+esc(money(r.bonus))+'</td></tr>'+
-      '<tr><td><b>Gross Pay</b></td><td class="num"><b>'+esc(money(gross(r)))+'</b></td></tr>'+
-      '<tr><td>Deductions</td><td class="num">'+esc(money(r.deduction))+'</td></tr>'+
-      '<tr><td>Advance / Previous Payment</td><td class="num">'+esc(money(r.advance))+'</td></tr>'+
-      '<tr><td><b>Net Pay</b></td><td class="num"><b>'+esc(money(net(r)))+'</b></td></tr>'+
-      '<tr><td>Amount Paid</td><td class="num">'+esc(money(paid(r)))+'</td></tr>'+
-      '<tr><td><b>Balance</b></td><td class="num"><b>'+esc(money(balance(r)))+'</b></td></tr>'+
-      '</tbody></table>'+
-      '<p style="margin-top:18px"><b>Payment Method:</b> '+esc(r.paymentMethod||w.paymentMethod||'')+' &nbsp; <b>Payment Date:</b> '+esc(r.paymentDate||'')+' &nbsp; <b>Reference:</b> '+esc(r.transactionRef||'')+'</p>'+
-      '<p><b>Worker Phone:</b> '+esc(w.phone||'')+' &nbsp; <b>Worker ID:</b> '+esc(w.workerCode||'')+'</p>'+
-      (r.notes?'<p><b>Notes:</b> '+esc(r.notes)+'</p>':'');
-    printHtml('Payslip - '+(w.name||'Worker'),html);
-  }
-  function printDashboard(){
-    var rows=STATE.records.slice().sort(function(a,b){return String(b.workDate||'').localeCompare(String(a.workDate||''));});
-    var html='<h1>FBI Payroll Overview</h1><p>Generated '+esc(new Date().toLocaleString())+'</p><div class="cards"><div class="card"><span>Workers</span><b>'+STATE.workers.length+'</b></div><div class="card"><span>Records</span><b>'+STATE.records.length+'</b></div><div class="card"><span>Net Payroll</span><b>'+esc(money(rows.reduce(function(s,r){return s+net(r);},0)))+'</b></div><div class="card"><span>Outstanding</span><b>'+esc(money(rows.reduce(function(s,r){return s+balance(r);},0)))+'</b></div></div>';
-    printHtml('FBI Payroll Overview',html);
-  }
-  function toastLocal(msg){
-    try{
-      if(typeof window.toast==='function'){window.toast(msg);return;}
-    }catch(e){}
+    normalizeRecord(r);
+    var idx=STATE.records.findIndex(function(x){return x.id===r.id;});
+    if(idx>=0)STATE.records[idx]=r;else STATE.records.push(r);
+    if(saveState()){editingRecordId='';q('fbiPayrollRecordFormWrap').innerHTML='';renderAll();toastLocal(existing?'Payroll record updated':'Payroll record saved');}
   }
 
-  function activatePayroll(){
+  function renderRecords(){
+    var el=q('fbiPayrollRecordsTable');if(!el)return;
+    if(!STATE.records.length){el.innerHTML='<div class="fbi-payroll-empty">No payroll records yet. Create a payroll record for a worker or project.</div>';return;}
+    el.innerHTML='<div class="fbi-payroll-table-wrap"><table class="fbi-payroll-table"><thead><tr><th>Worker / Job</th><th>Work Date</th><th>Basis</th><th class="num">Gross</th><th class="num">Net</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+
+      STATE.records.slice().sort(function(a,b){return String(b.workDate||'').localeCompare(String(a.workDate||''));}).map(function(r){
+        var w=getWorker(r.workerId),s=status(r),ix=selectedInvoice(r.invoiceId);
+        return '<tr><td><b>'+esc(w?.name||'Unknown worker')+'</b><span class="sub">'+esc(ix?(ix.no||'Invoice')+' · '+(ix.client||''):r.project||'Independent work')+'</span></td>'+
+          '<td>'+esc(r.workDate||'')+'</td><td>'+esc(r.basis||'')+'<span class="sub">'+esc(r.role||'')+'</span></td>'+
+          '<td class="num">'+esc(money(gross(r)))+'</td><td class="num">'+esc(money(net(r)))+'</td><td class="num">'+esc(money(paid(r)))+'</td><td class="num">'+esc(money(balance(r)))+'</td>'+
+          '<td>'+badge(s)+'</td><td><div class="fbi-payroll-actions-cell">'+
+            (balance(r)>0.005?'<button class="fbi-payroll-mini-btn primary" type="button" data-pay="'+esc(r.id)+'">Pay</button>':'')+
+            '<button class="fbi-payroll-mini-btn" type="button" data-slip="'+esc(r.id)+'">Payslip</button>'+
+            '<button class="fbi-payroll-mini-btn" type="button" data-edit-r="'+esc(r.id)+'">Edit</button>'+
+            '<button class="fbi-payroll-mini-btn danger" type="button" data-delete-r="'+esc(r.id)+'">Delete</button>'+
+          '</div></td></tr>';
+      }).join('')+'</tbody></table></div>';
+    el.querySelectorAll('[data-pay]').forEach(function(b){b.onclick=function(){openPayment(b.dataset.pay);};});
+    el.querySelectorAll('[data-slip]').forEach(function(b){b.onclick=function(){generatePayslip(b.dataset.slip,true);};});
+    el.querySelectorAll('[data-edit-r]').forEach(function(b){b.onclick=function(){showRecordForm(STATE.records.find(function(r){return r.id===b.dataset.editR;}));};});
+    el.querySelectorAll('[data-delete-r]').forEach(function(b){b.onclick=function(){deleteRecord(b.dataset.deleteR);};});
+  }
+  function deleteRecord(idv){
+    if(!confirm('Delete this Payroll record?'))return;
+    STATE.records=STATE.records.filter(function(r){return r.id!==idv;});
+    STATE.payslips=STATE.payslips.filter(function(p){return p.recordId!==idv;});
+    saveState();renderAll();toastLocal('Payroll record deleted');
+  }
+
+  function openPayment(idv){
+    var r=STATE.records.find(function(x){return x.id===idv;});if(!r)return;
+    paymentRecordId=idv;
+    q('fbiPayrollPaymentBalance').textContent=money(balance(r));
+    q('fbiPayrollPaymentAmount').value=balance(r).toFixed(2);
+    q('fbiPayrollPaymentDate').value=today();
+    var w=getWorker(r.workerId);
+    q('fbiPayrollPaymentMethod').value=r.paymentMethod||w?.paymentMethod||'Mobile Money';
+    q('fbiPayrollPaymentRef').value='';
+    q('fbiPayrollPaymentBy').value='';
+    q('fbiPayrollPaymentNotes').value='';
+    q('fbiPayrollPaymentModal').classList.add('show');
+    q('fbiPayrollPaymentModal').setAttribute('aria-hidden','false');
+  }
+  function closePayment(){paymentRecordId='';q('fbiPayrollPaymentModal').classList.remove('show');q('fbiPayrollPaymentModal').setAttribute('aria-hidden','true');}
+  function savePayment(){
+    var r=STATE.records.find(function(x){return x.id===paymentRecordId;});if(!r)return;
+    var amount=num(q('fbiPayrollPaymentAmount').value),bal=balance(r);
+    if(amount<=0||amount>bal+0.005){alert('Enter a payment amount up to '+money(bal)+'.');return;}
+    var method=q('fbiPayrollPaymentMethod').value||'';
+    var ref=(q('fbiPayrollPaymentRef').value||'').trim();
+    var by=(q('fbiPayrollPaymentBy').value||'').trim();
+    var note=(q('fbiPayrollPaymentNotes').value||'').trim();
+    if(!ref){alert('Enter the transaction / payment reference.');return;}
+    if(!by){alert('Enter who made the payment.');return;}
+    r.payments=r.payments||[];
+    r.payments.push({id:uid('payment'),date:q('fbiPayrollPaymentDate').value||today(),amount:amount,method:method,reference:ref,paidBy:by,notes:note});
+    r.lastPaymentDate=q('fbiPayrollPaymentDate').value||today();
+    r.lastPaymentMethod=method;
+    r.lastPaymentReference=ref;
+    r.lastPaidBy=by;
+    saveState();closePayment();renderAll();toastLocal(status(r)==='Paid'?'Payroll fully paid':'Partial payroll payment recorded');
+  }
+
+  function renderOverview(){
+    var rows=STATE.records.slice().sort(function(a,b){return String(b.workDate||'').localeCompare(String(a.workDate||''));});
+    var totalNet=rows.reduce(function(s,r){return s+net(r);},0),totalPaid=rows.reduce(function(s,r){return s+paid(r);},0),totalBal=rows.reduce(function(s,r){return s+balance(r);},0);
+    q('fbiPayrollOverviewSummary').innerHTML=
+      summary('Gross',money(rows.reduce(function(s,r){return s+gross(r);},0)))+
+      summary('Net Pay',money(totalNet))+
+      summary('Paid',money(totalPaid))+
+      summary('Outstanding',money(totalBal))+
+      summary('Pending / Partial',rows.filter(function(r){return status(r)!=='Paid';}).length);
+    var recent=rows.slice(0,10);
+    if(!recent.length){q('fbiPayrollOverviewTable').innerHTML='<div class="fbi-payroll-empty">No payroll activity yet.</div>';return;}
+    q('fbiPayrollOverviewTable').innerHTML='<div class="fbi-payroll-table-wrap"><table class="fbi-payroll-table"><thead><tr><th>Worker</th><th>Project / Event</th><th>Date</th><th class="num">Net</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>'+
+      recent.map(function(r){var w=getWorker(r.workerId);return '<tr><td>'+esc(w?.name||'Unknown')+'</td><td>'+esc(r.project||r.role||'')+'</td><td>'+esc(r.workDate||'')+'</td><td class="num">'+esc(money(net(r)))+'</td><td class="num">'+esc(money(paid(r)))+'</td><td class="num">'+esc(money(balance(r)))+'</td><td>'+badge(status(r))+'</td></tr>';}).join('')+
+      '</tbody></table></div>';
+  }
+  function summary(k,v){return '<div class="fbi-payroll-summary-item"><span>'+esc(k)+'</span><b>'+esc(v)+'</b></div>';}
+
+  function renderPayslips(){
+    var el=q('fbiPayrollPayslipList');if(!el)return;
+    if(!STATE.payslips.length){el.innerHTML='<div class="fbi-payroll-empty">No payslips generated yet. Generate a payslip from a Payroll Record after recording work or payment.</div>';return;}
+    el.innerHTML='<div class="fbi-payroll-payslip-list">'+STATE.payslips.slice().sort(function(a,b){return String(b.generatedAt||'').localeCompare(String(a.generatedAt||''));}).map(function(p){
+      var r=STATE.records.find(function(x){return x.id===p.recordId;}),w=r?getWorker(r.workerId):null;
+      return '<div class="fbi-payroll-payslip-row"><div class="grow"><b>'+esc(p.payslipNo||'Payslip')+' · '+esc(w?.name||'Worker')+'</b><small>'+esc(r?.project||r?.role||'')+' · '+esc(r?.workDate||'')+' · '+esc(r?status(r):'')+'</small></div><strong>'+esc(money(r?net(r):0))+'</strong><button class="fbi-payroll-mini-btn" type="button" data-ps="'+esc(p.recordId)+'">Print</button></div>';
+    }).join('')+'</div>';
+    el.querySelectorAll('[data-ps]').forEach(function(b){b.onclick=function(){generatePayslip(b.dataset.ps,true);};});
+  }
+  function generatePayslip(recordId,printNow){
+    var r=STATE.records.find(function(x){return x.id===recordId;});if(!r)return;
+    var w=getWorker(r.workerId)||{},ix=selectedInvoice(r.invoiceId);
+    var p=STATE.payslips.find(function(x){return x.recordId===recordId;});
+    if(!p){p={id:uid('payslip'),recordId:recordId,payslipNo:'PAY'+String(STATE.payslips.length+1).padStart(4,'0'),generatedAt:new Date().toISOString()};STATE.payslips.push(p);saveState();}
+    var last=r.payments&&r.payments.length?r.payments[r.payments.length-1]:null;
+    var doc='<div class="paydoc"><div class="paydoc-head"><div><div class="kicker">FILM BEYOND IMAGINATION (FBI)</div><h1>PAYSLIP</h1><p>Professional Payroll Statement</p></div><div class="meta"><b>'+esc(p.payslipNo)+'</b><span>'+esc(r.workDate||'')+'</span></div></div>'+
+      '<div class="grid">'+cell('Employee',w.name||'')+cell('Worker ID',w.workerCode||'')+cell('Role',w.role||'')+cell('Department',w.department||'')+cell('Worker Type',w.workerType||'')+cell('Payment Basis',r.basis||'')+cell('Project / Event',r.project||'')+cell('Linked Invoice',ix?(ix.no||''):'Independent work')+'</div>'+
+      '<table><thead><tr><th>Description</th><th class="r">Amount</th></tr></thead><tbody>'+
+      row('Rate × Quantity',basePay(r))+row('Transport Allowance',r.transport)+row('Feeding Allowance',r.feeding)+row('Accommodation',r.accommodation)+row('Overtime',r.overtime)+row('Other Allowance',r.otherAllowance)+row('General Allowance',r.allowance)+row('Bonus',r.bonus)+
+      '<tr class="strong"><td>Gross Pay</td><td class="r">'+money(gross(r))+'</td></tr>'+
+      row('Deductions',-num(r.deduction))+row('Advance',-num(r.advance))+row('Previous Balance Owed',num(r.previousBalance))+
+      '<tr class="net"><td>NET PAY</td><td class="r">'+money(net(r))+'</td></tr>'+
+      '</tbody></table>'+
+      '<div class="payment-box"><div><span>Amount Paid</span><b>'+money(paid(r))+'</b></div><div><span>Balance</span><b>'+money(balance(r))+'</b></div><div><span>Status</span><b>'+esc(status(r))+'</b></div></div>'+
+      (last?'<div class="payment-detail"><b>Latest Payment</b><p>'+esc(last.date||'')+' · '+esc(last.method||'')+' · Ref '+esc(last.reference||'')+' · Paid by '+esc(last.paidBy||'')+'</p></div>':'')+
+      '<div class="footer">Worker payment method: '+esc(w.paymentMethod||'')+(w.momo?' · MoMo '+esc(w.momo):'')+(w.bank?' · Bank '+esc(w.bank):'')+'<br>Generated '+esc(new Date().toLocaleString())+'</div></div>';
+    var win=window.open('','_blank');
+    if(!win){alert('Please allow pop-ups to print the payslip.');return;}
+    win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+esc(p.payslipNo)+' - Payslip</title><style>'+
+      'body{font-family:Arial,sans-serif;background:#f4f5f7;color:#1c222b;padding:24px}.paydoc{width:min(760px,100%);margin:auto;background:#fff;padding:30px;border:1px solid #dde2e8;border-radius:12px}.paydoc-head{display:flex;justify-content:space-between;border-bottom:2px solid #222;padding-bottom:16px}.kicker{font-size:9px;letter-spacing:1.5px;font-weight:800;color:#8b6b2b}.paydoc h1{font-size:28px;margin:6px 0 2px}.paydoc p{margin:0;color:#6d7682;font-size:10px}.meta{text-align:right}.meta b{display:block;font-size:18px}.meta span{display:block;font-size:10px;color:#6d7682;margin-top:5px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0}.cell{border:1px solid #e0e4e9;background:#fafbfc;border-radius:8px;padding:9px}.cell span{display:block;font-size:7.5px;text-transform:uppercase;letter-spacing:.6px;color:#7f8792}.cell b{display:block;font-size:10px;margin-top:4px}.paydoc table{width:100%;border-collapse:collapse;margin-top:12px}.paydoc th{background:#151a21;color:#fff;padding:9px;text-align:left;font-size:8px;text-transform:uppercase}.paydoc td{border-bottom:1px solid #e6e9ed;padding:8px;font-size:9px}.r{text-align:right}.strong td{font-weight:800}.net td{background:#151a21;color:#fff;font-weight:900;font-size:12px}.payment-box{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}.payment-box div{border:1px solid #e0e4e9;border-radius:8px;padding:10px}.payment-box span{display:block;font-size:7.5px;text-transform:uppercase;color:#7f8792}.payment-box b{display:block;font-size:13px;margin-top:4px}.payment-detail{margin-top:13px;padding:10px;border-left:3px solid #b48b2f;background:#fff9e7;font-size:9px}.footer{margin-top:22px;padding-top:11px;border-top:1px solid #e0e4e9;color:#707985;font-size:8px;line-height:1.5}@media print{body{background:#fff;padding:0}.paydoc{border:0;border-radius:0;width:100%;padding:0}}\n    </style></head><body>'+doc+'<script>window.onload=function(){window.print()}<\\/script></body></html>');
+    win.document.close();
+    tabs('payslips');
+    toastLocal('Payslip '+p.payslipNo+' generated');
+  }
+  function cell(k,v){return '<div class="cell"><span>'+esc(k)+'</span><b>'+esc(v)+'</b></div>';}
+  function row(k,v){return '<tr><td>'+esc(k)+'</td><td class="r">'+money(v)+'</td></tr>';}
+
+  function reportRows(){
+    var from=q('fbiPayrollReportFrom')?.value||'',to=q('fbiPayrollReportTo')?.value||'',wid=q('fbiPayrollReportWorker')?.value||'',dept=q('fbiPayrollReportDepartment')?.value||'',project=(q('fbiPayrollReportProject')?.value||'').trim().toLowerCase(),st=q('fbiPayrollReportStatus')?.value||'';
+    return STATE.records.filter(function(r){
+      var w=getWorker(r.workerId)||{},d=String(r.workDate||'').slice(0,10);
+      if(from&&(!d||d<from))return false;if(to&&(!d||d>to))return false;if(wid&&r.workerId!==wid)return false;if(dept&&String(w.department||'')!==dept)return false;
+      if(project&&!String(r.project||'').toLowerCase().includes(project))return false;if(st&&status(r)!==st)return false;return true;
+    }).sort(function(a,b){return String(b.workDate||'').localeCompare(String(a.workDate||''));});
+  }
+  function fillReportWorker(){
+    var s=q('fbiPayrollReportWorker');if(!s)return;var current=s.value;
+    s.innerHTML='<option value="">All Workers</option>'+STATE.workers.slice().sort(function(a,b){return String(a.name||'').localeCompare(String(b.name||''));}).map(function(w){return '<option value="'+esc(w.id)+'">'+esc(w.name)+'</option>';}).join('');
+    if(STATE.workers.some(function(w){return w.id===current}))s.value=current;
+  }
+  function renderReports(){
+    fillReportWorker();
+    var rows=reportRows(),netTotal=rows.reduce(function(s,r){return s+net(r);},0),paidTotal=rows.reduce(function(s,r){return s+paid(r);},0),balTotal=rows.reduce(function(s,r){return s+balance(r);},0),grossTotal=rows.reduce(function(s,r){return s+gross(r);},0);
+    q('fbiPayrollReportSummary').innerHTML=summary('Records',rows.length)+summary('Gross',money(grossTotal))+summary('Net Pay',money(netTotal))+summary('Paid',money(paidTotal))+summary('Outstanding',money(balTotal));
+    var el=q('fbiPayrollReportTable');if(!rows.length){el.innerHTML='<div class="fbi-payroll-empty">No payroll records match these filters.</div>';return;}
+    el.innerHTML='<div class="fbi-payroll-table-wrap"><table class="fbi-payroll-table"><thead><tr><th>Worker</th><th>Department</th><th>Project / Event</th><th>Date</th><th>Basis</th><th class="num">Rate</th><th class="num">Qty</th><th class="num">Net</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th><th>Payment Ref</th></tr></thead><tbody>'+
+      rows.map(function(r){var w=getWorker(r.workerId),last=r.payments&&r.payments.length?r.payments[r.payments.length-1]:null;return '<tr><td>'+esc(w?.name||'Unknown')+'</td><td>'+esc(w?.department||'')+'</td><td>'+esc(r.project||r.role||'')+'</td><td>'+esc(r.workDate||'')+'</td><td>'+esc(r.basis||'')+'</td><td class="num">'+esc(money(r.rate))+'</td><td class="num">'+esc(r.qty)+'</td><td class="num">'+esc(money(net(r)))+'</td><td class="num">'+esc(money(paid(r)))+'</td><td class="num">'+esc(money(balance(r)))+'</td><td>'+badge(status(r))+'</td><td>'+esc(last?.reference||'')+'</td></tr>';}).join('')+
+      '</tbody></table></div>';
+  }
+  function exportCsv(){
+    var rows=reportRows(),headers=['Worker','Worker ID','Department','Worker Type','Project/Event','Linked Invoice','Work Date','Pay Basis','Role','Rate','Quantity','Gross Pay','Net Pay','Paid','Balance','Status','Last Payment Date','Payment Method','Payment Reference','Paid By'];
+    var lines=[headers].concat(rows.map(function(r){var w=getWorker(r.workerId)||{},ix=selectedInvoice(r.invoiceId),last=r.payments&&r.payments.length?r.payments[r.payments.length-1]:null;return [w.name||'',w.workerCode||'',w.department||'',w.workerType||'',r.project||'',ix?.no||'',r.workDate||'',r.basis||'',r.role||'',r.rate||0,r.qty||1,gross(r),net(r),paid(r),balance(r),status(r),last?.date||'',last?.method||'',last?.reference||'',last?.paidBy||''];}));
+    var csv=lines.map(function(row){return row.map(function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(',');}).join('\\n');
+    var blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='FBI-Payroll-'+today()+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1000);
+  }
+  function printReport(){
+    var rows=reportRows(),grossTotal=rows.reduce(function(s,r){return s+gross(r);},0),netTotal=rows.reduce(function(s,r){return s+net(r);},0),paidTotal=rows.reduce(function(s,r){return s+paid(r);},0),balTotal=rows.reduce(function(s,r){return s+balance(r);},0);
+    var table=rows.map(function(r){var w=getWorker(r.workerId);return '<tr><td>'+esc(w?.name||'')+'</td><td>'+esc(w?.department||'')+'</td><td>'+esc(r.project||'')+'</td><td>'+esc(r.workDate||'')+'</td><td>'+esc(r.basis||'')+'</td><td class="r">'+esc(money(net(r)))+'</td><td class="r">'+esc(money(paid(r)))+'</td><td class="r">'+esc(money(balance(r)))+'</td><td>'+esc(status(r))+'</td></tr>';}).join('');
+    var html='<h1>FBI Payroll Report</h1><p>Generated '+esc(new Date().toLocaleString())+' · '+rows.length+' records</p><div class="cards"><div><span>Gross</span><b>'+esc(money(grossTotal))+'</b></div><div><span>Net</span><b>'+esc(money(netTotal))+'</b></div><div><span>Paid</span><b>'+esc(money(paidTotal))+'</b></div><div><span>Outstanding</span><b>'+esc(money(balTotal))+'</b></div></div><table><thead><tr><th>Worker</th><th>Department</th><th>Project/Event</th><th>Date</th><th>Basis</th><th>Net</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead><tbody>'+table+'</tbody></table>';
+    var win=window.open('','_blank');if(!win){alert('Please allow pop-ups to print the Payroll report.');return;}
+    win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>FBI Payroll Report</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#1b1f27}h1{margin:0 0 5px}p{color:#69717d;font-size:10px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}.cards div{border:1px solid #ddd;border-radius:8px;padding:10px}.cards span{display:block;color:#777;font-size:8px;text-transform:uppercase}.cards b{display:block;font-size:15px;margin-top:5px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:7px;font-size:8px;text-align:left}th{background:#151a21;color:#fff}.r{text-align:right}@media print{body{padding:0}}</style></head><body>'+html+'<script>window.onload=function(){window.print()}<\\/script></body></html>');
+    win.document.close();
+  }
+
+  function renderStats(){
+    var active=STATE.workers.filter(function(w){return (w.status||'Active')==='Active';}).length;
+    q('fbiPayrollWorkerCount').textContent=String(STATE.workers.length);q('fbiPayrollWorkerMeta').textContent='Active '+active;
+    q('fbiPayrollRecordCount').textContent=String(STATE.records.length);q('fbiPayrollRecordMeta').textContent='All work records';
+    var netTotal=STATE.records.reduce(function(s,r){return s+net(r);},0),paidTotal=STATE.records.reduce(function(s,r){return s+paid(r);},0),balTotal=STATE.records.reduce(function(s,r){return s+balance(r);},0);
+    q('fbiPayrollNetTotal').textContent=money(netTotal);q('fbiPayrollPaidTotal').textContent=money(paidTotal);q('fbiPayrollBalanceTotal').textContent=money(balTotal);
+    q('fbiPayrollNetMeta').textContent=STATE.records.filter(function(r){return status(r)==='Paid';}).length+' fully paid records';
+    q('fbiPayrollPaidMeta').textContent=STATE.records.filter(function(r){return paid(r)>0;}).length+' records with payments';
+    q('fbiPayrollBalanceMeta').textContent=STATE.records.filter(function(r){return balance(r)>0.005;}).length+' records still due';
+  }
+
+  function renderAll(){
+    renderStats();
+    renderOverview();
+    renderWorkerProfile();
+    renderWorkers();
+    renderRecords();
+    renderPayslips();
+    renderReports();
+  }
+
+  function printOverview(){
+    document.body.classList.add('fbi-payroll-printing');
+    window.print();
+    setTimeout(function(){document.body.classList.remove('fbi-payroll-printing');},500);
+  }
+
+  function activate(){
     var root=q('fbiPayrollView');if(!root)return;
     document.body.classList.add('fbi-payroll-mode');
     var top=q('top');
-    if(top && top.parentNode && root.parentNode!==top.parentNode){
-      top.parentNode.insertBefore(root,top.nextSibling);
-    }
+    if(top&&top.parentNode&&root.parentNode!==top.parentNode)top.parentNode.insertBefore(root,top.nextSibling);
     document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active','print-view');});
     root.classList.add('active','fbi-payroll-active');
     document.querySelectorAll('.nav button').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-v')==='payroll');});
-    var t=q('title');if(t)t.textContent='Payroll';
-    var s=q('subtitle');if(s)s.textContent='Staff, payroll records, payments and payslips';
-    var side=q('side');if(side)side.classList.remove('open');
+    q('title').textContent='Payroll';q('subtitle').textContent='Staff, earnings, payments and payslips';
+    if(q('side'))q('side').classList.remove('open');
     renderAll();
   }
-
-  function installNavigation(){
+  function installNav(){
     var nav=document.querySelector('.nav');
-    if(nav && !nav.querySelector('[data-v="payroll"]')){
-      var b=document.createElement('button');
-      b.type='button';b.className='nav-link';b.setAttribute('data-v','payroll');b.textContent='💰 Payroll';
-      b.onclick=function(e){e.preventDefault();activatePayroll();};
-      nav.insertBefore(b,nav.querySelector('[data-v="settings"]')||null);
+    if(nav&&!nav.querySelector('[data-v="payroll"]')){
+      var b=document.createElement('button');b.type='button';b.className='nav-link';b.dataset.v='payroll';b.textContent='💰 Payroll';b.onclick=function(e){e.preventDefault();activate();};nav.insertBefore(b,nav.querySelector('[data-v="settings"]')||null);
     }
-    var original=window.__FBI_NAV__;
-    window.__FBI_PAYROLL_ORIGINAL_NAV__=original;
-    window.__FBI_NAV__=function(v){
-      if(v==='payroll'){activatePayroll();return false;}
-      document.body.classList.remove('fbi-payroll-mode');
-      return typeof original==='function'?original(v):false;
-    };
-    window.__FBI_PAYROLL_OPEN__=activatePayroll;
-    window.addEventListener('pagehide',function(){document.body.classList.remove('fbi-payroll-mode');});
-    window.addEventListener('hashchange',function(){
-      if(String(location.hash||'')==='#payroll')activatePayroll();
-      else document.body.classList.remove('fbi-payroll-mode');
-    });
+    var oldNav=window.__FBI_NAV__;
+    window.__FBI_NAV__=function(v){if(v==='payroll'){activate();return false;}document.body.classList.remove('fbi-payroll-mode');return typeof oldNav==='function'?oldNav(v):false;};
+    window.__FBI_PAYROLL_OPEN__=activate;
+    window.addEventListener('hashchange',function(){if(location.hash==='#payroll')activate();else document.body.classList.remove('fbi-payroll-mode');});
   }
-
   function init(){
-    load();
-    installNavigation();
-    document.querySelectorAll('[data-payroll-tab]').forEach(function(b){b.onclick=function(){switchTab(b.getAttribute('data-payroll-tab'));};});
-    q('fbiPayrollAddWorkerBtn').onclick=function(){showForm('worker');};
-    q('fbiPayrollAddRecordBtn').onclick=function(){showForm('record');};
-    q('fbiPayrollCsvBtn').onclick=exportCsv;
-    q('fbiPayrollPrintBtn').onclick=printReport;
-    q('fbiPayrollDashPrint').onclick=printDashboard;
-    q('fbiPayrollResetFilters').onclick=function(){
-      q('fbiPayrollFilterFrom').value='';q('fbiPayrollFilterTo').value='';q('fbiPayrollFilterWorker').value='';q('fbiPayrollFilterDept').value='';q('fbiPayrollFilterStatus').value='';renderReports();
-    };
-    ['fbiPayrollFilterFrom','fbiPayrollFilterTo','fbiPayrollFilterWorker','fbiPayrollFilterDept','fbiPayrollFilterStatus'].forEach(function(idv){
-      q(idv).addEventListener('change',renderReports);
-    });
+    loadState();installNav();
+    document.querySelectorAll('[data-payroll-tab]').forEach(function(b){b.onclick=function(){tabs(b.getAttribute('data-payroll-tab'));};});
+    q('fbiPayrollQuickWorker').onclick=function(){showWorkerForm();};
+    q('fbiPayrollWorkersAdd').onclick=function(){showWorkerForm();};
+    q('fbiPayrollQuickRecord').onclick=function(){showRecordForm();};
+    q('fbiPayrollRecordsAdd').onclick=function(){showRecordForm();};
+    q('fbiPayrollOverviewPrint').onclick=printOverview;
+    q('fbiPayrollReportCsv').onclick=exportCsv;
+    q('fbiPayrollReportPrint').onclick=printReport;
+    q('fbiPayrollReportReset').onclick=function(){q('fbiPayrollReportFrom').value='';q('fbiPayrollReportTo').value='';q('fbiPayrollReportWorker').value='';q('fbiPayrollReportDepartment').value='';q('fbiPayrollReportProject').value='';q('fbiPayrollReportStatus').value='';renderReports();};
+    ['fbiPayrollReportFrom','fbiPayrollReportTo','fbiPayrollReportWorker','fbiPayrollReportDepartment','fbiPayrollReportProject','fbiPayrollReportStatus'].forEach(function(idv){q(idv).addEventListener('input',renderReports);q(idv).addEventListener('change',renderReports);});
+    q('fbiPayrollPaymentClose').onclick=closePayment;q('fbiPayrollPaymentCancel').onclick=closePayment;q('fbiPayrollPaymentSave').onclick=savePayment;
+    q('fbiPayrollPaymentModal').addEventListener('click',function(e){if(e.target===this)closePayment();});
     renderAll();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-  window.FBIPayrollModule={reload:function(){load();renderAll();},open:activatePayroll};
+  window.FBIPayrollModule={open:activate,reload:function(){loadState();renderAll();}};
 })();
 </script>
