@@ -570,6 +570,18 @@ function mergeInvoiceStates(existingState, incomingState) {
     }
   }
 
+  const deletedClientIds = new Set(
+    Array.isArray(incomingState.deletedClientIds)
+      ? incomingState.deletedClientIds.map(v => String(v || '').trim()).filter(Boolean)
+      : []
+  );
+  if (deletedClientIds.size) {
+    for (const [key, item] of clientMap) {
+      const id = String(item.id || '').trim();
+      if (deletedClientIds.has(id)) clientMap.delete(key);
+    }
+  }
+
   const existingSettings = existingState && existingState.data && existingState.data.settings
     ? existingState.data.settings : {};
 
