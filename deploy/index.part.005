@@ -44,14 +44,19 @@ function closeReportModal(){
 }
 function reportDateRangeLabel(){const f=$("reportFrom")?.value||"",t=$("reportTo")?.value||"";if(f&&t)return f+" to "+t;if(f)return "From "+f;if(t)return "Up to "+t;return "All saved invoice records"}
 function updateReportPreview(){
-  const rows=reportFilteredData();const total=rows.reduce((s,x)=>s+Number(x.total||0),0);const paid=rows.reduce((s,x)=>s+Math.min(Number(x.amountPaid||0),Number(x.total||0)),0);const balance=rows.reduce((s,x)=>s+invoiceBalance(x),0);const overdue=rows.filter(x=>reportStatusFor(x)==="Overdue").length;
-  const body=rows.map(x=>{const st=reportStatusFor(x),p=Math.min(Number(x.amountPaid||0),Number(x.total||0));return `<tr><td><b>${esc(x.no||"—")}</b></td><td>${esc(x.client||"No client")}</td><td>${esc(x.date||"—")}</td><td>${esc(x.due||"On Receipt")}</td><td>${esc(st)}</td><td>${esc(x.category||"—")}</td><td class="num">${esc(fmtMoney(x.total,x.cur))}</td><td class="num">${esc(fmtMoney(p,x.cur))}</td><td class="num">${esc(fmtMoney(invoiceBalance(x),x.cur))}</td></tr>`}).join("");
-  $("reportPreview").innerHTML=`<div class="report-preview-head"><h2>${esc(settings.biz||"FBI Invoice Studio")} — Invoice Report</h2><p>${esc(reportDateRangeLabel())} · Generated ${esc(new Date().toLocaleString())}</p></div><div class="report-summary-cards"><div class="report-summary-card"><span>Invoices</span><b>${rows.length}</b></div><div class="report-summary-card"><span>Total Invoiced</span><b>${esc(fmtMoney(total,"GHS"))}</b></div><div class="report-summary-card"><span>Collected</span><b>${esc(fmtMoney(paid,"GHS"))}</b></div><div class="report-summary-card"><span>Outstanding</span><b>${esc(fmtMoney(balance,"GHS"))}</b></div></div>${rows.length?`<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Invoice</th><th>Client</th><th>Date</th><th>Due</th><th>Status</th><th>Category</th><th class="num">Amount</th><th class="num">Paid</th><th class="num">Balance</th></tr></thead><tbody>${body}</tbody></table></div>`:`<div class="report-empty">No invoices match the selected report filters.</div>`}`;
+  const rows=reportFilteredData();
+  const total=rows.reduce((s,x)=>s+Number(x.total||0),0);
+  const paid=rows.reduce((s,x)=>s+Math.min(paymentsReceivedTotal(x),Math.max(0,Number(x.total||0))),0);
+  const fullPaid=rows.filter(x=>paymentsReceivedTotal(x)>=Number(x.total||0)-0.005).reduce((s,x)=>s+Math.max(0,Number(x.total||0)),0);
+  const partialPaid=rows.filter(x=>{const r=paymentsReceivedTotal(x),t=Number(x.total||0);return r>0.005&&r<t-0.005}).reduce((s,x)=>s+Math.min(paymentsReceivedTotal(x),Math.max(0,Number(x.total||0))),0);
+  const balance=rows.reduce((s,x)=>s+invoiceBalance(x),0);
+  const body=rows.map(x=>{const st=reportStatusFor(x),p=Math.min(paymentsReceivedTotal(x),Math.max(0,Number(x.total||0)));return '<tr><td><b>'+esc(x.no||"—")+'</b></td><td>'+esc(x.client||"No client")+'</td><td>'+esc(x.date||"—")+'</td><td>'+esc(x.due||"On Receipt")+'</td><td>'+esc(st)+'</td><td>'+esc(x.category||"—")+'</td><td class="num">'+esc(fmtMoney(x.total,x.cur))+'</td><td class="num">'+esc(fmtMoney(p,x.cur))+'</td><td class="num">'+esc(fmtMoney(invoiceBalance(x),x.cur))+'</td></tr>'}).join("");
+  $("reportPreview").innerHTML='<div class="report-preview-head"><h2>'+esc(settings.biz||"FBI Invoice Studio")+' — Invoice Report</h2><p>'+esc(reportDateRangeLabel())+' · Generated '+esc(new Date().toLocaleString())+'</p></div><div class="report-summary-cards"><div class="report-summary-card"><span>Invoices</span><b>'+rows.length+'</b></div><div class="report-summary-card"><span>Total Invoiced</span><b>'+esc(fmtMoney(total,"GHS"))+'</b></div><div class="report-summary-card"><span>Total Collected</span><b>'+esc(fmtMoney(paid,"GHS"))+'</b></div><div class="report-summary-card"><span>Full Invoice Collections</span><b>'+esc(fmtMoney(fullPaid,"GHS"))+'</b></div><div class="report-summary-card"><span>Partial Collections</span><b>'+esc(fmtMoney(partialPaid,"GHS"))+'</b></div><div class="report-summary-card"><span>Outstanding</span><b>'+esc(fmtMoney(balance,"GHS"))+'</b></div></div>'+ (rows.length?'<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Invoice</th><th>Client</th><th>Date</th><th>Due</th><th>Status</th><th>Category</th><th class="num">Amount</th><th class="num">Paid</th><th class="num">Balance</th></tr></thead><tbody>'+body+'</tbody></table></div>':'<div class="report-empty">No invoices match the selected report filters.</div>');
 }
 function csvCell(v){const x=String(v??"");return '"'+x.replace(/"/g,'""')+'"'}
 function exportReportCsv(){
   const rows=reportFilteredData();if(!rows.length){toast("No records match the report filters.");return}
-  const lines=[["Invoice","Client","Date","Due","Status","Category","Currency","Amount","Paid","Balance"],...rows.map(x=>[x.no,x.client||"No client",x.date||"",x.due||"On Receipt",reportStatusFor(x),x.category||"",x.cur||"GHS",Number(x.total||0).toFixed(2),Number(Math.min(Number(x.amountPaid||0),Number(x.total||0))).toFixed(2),Number(invoiceBalance(x)).toFixed(2)])].map(r=>r.map(csvCell).join(",")).join("\r\n");
+  const lines=[["Invoice","Client","Date","Due","Status","Category","Currency","Amount","Paid","Balance"],...rows.map(x=>[x.no,x.client||"No client",x.date||"",x.due||"On Receipt",reportStatusFor(x),x.category||"",x.cur||"GHS",Number(x.total||0).toFixed(2),Math.min(paymentsReceivedTotal(x),Math.max(0,Number(x.total||0))).toFixed(2),Number(invoiceBalance(x)).toFixed(2)])].map(r=>r.map(csvCell).join(",")).join("\r\n");
   const blob=new Blob([lines],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="FBI-Invoice-Studio-Report-"+new Date().toISOString().slice(0,10)+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast("Report CSV exported");
 }
 function printOverviewReport(){
@@ -404,28 +409,132 @@ function syncEventEndDate(){
 }
 function toggleRentalDetails(){const isRental=$("serviceCategory")?.value==="Equipment Rentals";const el=$("rentalDetailsCard");if(el)el.style.display=isRental?"block":"none";}
 function clearRentalDetails(){["rentalStart","rentalEnd","jobLocation","rentalRef"].forEach(id=>{if($(id))$(id).value=""});if($("rentalUnit"))$("rentalUnit").value="Per Day";if($("deposit"))$("deposit").value=0;}
-function nextReceiptNumber(){let max=0;data.forEach(x=>{let m=String(x.receiptNo||"").match(/(\d+)$/);if(m)max=Math.max(max,parseInt(m[1],10)||0)});return "REC"+String(max+1).padStart(4,"0")}
+function paymentHistory(x){
+  if(!x)return [];
+  if(Array.isArray(x.payments)&&x.payments.length){
+    return x.payments.map((p,i)=>({
+      id:String(p?.id||("pay-"+String(x.id||x.no||"invoice")+"-"+i)),
+      amount:Math.max(0,Number(p?.amount||0)),
+      date:String(p?.date||p?.paymentDate||""),
+      method:String(p?.method||p?.paymentMethod||"Payment"),
+      reference:String(p?.reference||p?.transactionRef||""),
+      receivedBy:String(p?.receivedBy||""),
+      receiptNo:String(p?.receiptNo||""),
+      recordedAt:String(p?.recordedAt||"")
+    })).filter(p=>p.amount>0);
+  }
+  const legacy=Math.max(0,Number(x.amountPaid||0));
+  if(legacy<=0)return [];
+  return [{id:"legacy-"+String(x.id||x.no||"invoice"),amount:legacy,date:String(x.paymentDate||x.date||""),method:String(x.paymentMethod||"Payment"),reference:String(x.transactionRef||""),receivedBy:String(x.receivedBy||""),receiptNo:String(x.receiptNo||""),recordedAt:""}];
+}
+function paymentsReceivedTotal(x){return paymentHistory(x).reduce((s,p)=>s+Math.max(0,Number(p.amount)||0),0)}
+function paymentTotals(x){
+  const total=Math.max(0,Number(x?.total||0));
+  const paid=Math.min(paymentsReceivedTotal(x),total);
+  return{total,paid,balance:Math.max(0,total-paid),payments:paymentHistory(x)};
+}
+function invoiceBalance(x){
+  const total=Math.max(0,Number(x?.total||0));
+  return Math.max(0,total-Math.min(paymentsReceivedTotal(x),total));
+}
+function syncPaymentSummaryFields(x){
+  if(!x)return x;
+  const list=paymentHistory(x);
+  const paid=list.reduce((s,p)=>s+Math.max(0,Number(p.amount)||0),0);
+  x.payments=list;x.amountPaid=paid;
+  const last=list[list.length-1];
+  if(last){
+    x.paymentDate=last.date||"";x.paymentMethod=last.method||"";x.transactionRef=last.reference||"";x.receivedBy=last.receivedBy||"";x.receiptNo=last.receiptNo||"";
+  }
+  return x;
+}
+function nextReceiptNumber(){
+  let max=0;
+  data.forEach(x=>{
+    paymentHistory(x).forEach(p=>{const m=String(p.receiptNo||"").match(/(\d+)$/);if(m)max=Math.max(max,parseInt(m[1],10)||0)});
+    const m=String(x.receiptNo||"").match(/(\d+)$/);if(m)max=Math.max(max,parseInt(m[1],10)||0);
+  });
+  return "REC"+String(max+1).padStart(4,"0");
+}
 $("eventDate")?.addEventListener("change",syncEventEndDate);
 $("eventEndDate")?.addEventListener("change",toggleEventDate);
-function paymentTotals(x){const total=Number(x.total||0),paid=Math.max(0,Number(x.amountPaid||0));return{total,paid,balance:Math.max(0,total-paid)}}
-function updatePaymentBalancePreview(totalOverride){const el=$("paymentBalancePreview");if(!el)return;let total=Number(totalOverride);if(!Number.isFinite(total)){let sub=0;document.querySelectorAll(".item").forEach(r=>{let q=+r.querySelector(".qty").value||0,p=+r.querySelector(".rate").value||0;sub+=q*p});let dis=+$("discount").value||0,tax=Math.max(0,sub-dis)*(+$("tax").value||0)/100;total=Math.max(0,sub-dis)+tax}const paid=Math.max(0,Number($("amountPaid")?.value||0));el.textContent=fmtMoney(Math.max(0,total-paid),$("cur")?.value||"GHS")}
-function renderReceipts(){const el=$("receiptList");if(!el)return;const list=data.filter(x=>Number(x.amountPaid||0)>0).sort((a,b)=>String(b.paymentDate||b.date||"").localeCompare(String(a.paymentDate||a.date||"")));if(!list.length){el.innerHTML='<div class="receipt-empty">No payment receipts have been recorded yet. Record a payment on an invoice to generate the first receipt.</div>';return}el.innerHTML=list.map(x=>{const p=paymentTotals(x),full=p.balance<=0.005;return `<div class="receipt-row"><div class="grow"><div class="main">${esc(x.receiptNo||"—")} · ${esc(x.no||"")}</div><div class="meta">${esc(x.client||"No client")} · ${esc(x.paymentDate||x.date||"—")} · ${esc(x.paymentMethod||"Payment")}</div></div><div class="amount">${fmtMoney(p.paid,x.cur)}</div><span class="status-pill ${full?"status-paid":"status-partial"}">${full?"Paid in Full":"Partial Payment"}</span><button class="btn" onclick="showReceipt('${x.id}')">View</button><button class="btn primary" onclick="showReceipt('${x.id}');setTimeout(printReceipt,30)">Print</button></div>`}).join("")}
-async function recordPayment(){
-  const total=Number(calc().total||0),paid=Math.max(0,Number($("amountPaid")?.value||0));
-  if(paid<=0){alert("Enter the amount received before generating a receipt.");return}
-  if(paid>total+0.005){alert("Amount paid cannot be greater than the invoice total.");return}
-  if(!$("paymentDate").value)$("paymentDate").value=new Date().toISOString().slice(0,10);
-  if(!$("receiptNo").value){
-    try{$("receiptNo").value=await gsRun_("getNextReceiptNumber")}catch(e){$("receiptNo").value=nextReceiptNumber()}
-  }
-  $("status").value=paid>=total-0.005?"Paid":"Partially Paid";
-  const savedInvoice=await save();
-  if(!savedInvoice)return;
-  await showReceipt(current?.id);
+function updatePaymentBalancePreview(totalOverride){
+  const total=Number.isFinite(Number(totalOverride))?Number(totalOverride):Number(calc().total||0);
+  const existing=current?paymentsReceivedTotal(current):0;
+  const entered=Math.max(0,Number($("amountPaid")?.value||0));
+  const after=Math.min(total,Math.max(0,existing+entered));
+  if($("paymentTotalReceived"))$("paymentTotalReceived").textContent=fmtMoney(existing,$("cur")?.value||"GHS");
+  if($("paymentThisReceived"))$("paymentThisReceived").textContent=fmtMoney(entered,$("cur")?.value||"GHS");
+  if($("paymentTotalAfter"))$("paymentTotalAfter").textContent=fmtMoney(after,$("cur")?.value||"GHS");
+  if($("paymentBalancePreview"))$("paymentBalancePreview").textContent=fmtMoney(Math.max(0,total-after),$("cur")?.value||"GHS");
 }
-function showReceipt(id){const x=data.find(a=>a.id===id)||current;if(!x||Number(x.amountPaid||0)<=0){toast("Record a payment before generating a receipt");return}current=x;if(!x.receiptNo){x.receiptNo=nextReceiptNumber();persist()}renderReceipt(x);document.querySelectorAll(".view").forEach(v=>v.classList.remove("active","print-view"));$("view-receipt-preview").classList.add("active");$("side").classList.remove("open")}
-function renderReceipt(x){const s=settings,p=paymentTotals(x),full=p.balance<=0.005,logo=s.logo?`<div class="receipt-logo" style="background-image:url('${s.logo}')"></div>`:`<div class="receipt-logo"></div>`;const rows=(x.items||[]).map(i=>`<tr><td>${esc(i.desc)}</td><td>${i.qty}</td><td>${esc(money(i.qty*i.rate))}</td></tr>`).join("");const statusLabel=full?"PAID IN FULL":"PARTIAL PAYMENT";$("receiptPaper").innerHTML=`<div class="receipt-header"><div class="receipt-brand">${logo}<div class="receipt-biz"><h2>${esc(s.biz||"FILM BEYOND IMAGINATION (FBI)")}</h2><div>${s.owner?esc(s.owner)+"<br>":""}${esc(s.baddr||"")}<br>${esc(s.bphone||"")} · ${esc(s.bemail||"")}</div></div></div><div class="receipt-meta"><div class="label">Receipt Number</div><div class="receipt-no">${esc(x.receiptNo||nextReceiptNumber())}</div><div class="label">Payment Date</div><div class="date">${esc(x.paymentDate||new Date().toISOString().slice(0,10))}</div></div></div><div class="receipt-title">OFFICIAL PAYMENT RECEIPT</div><span class="receipt-paid-badge ${full?"":"partial"}">${statusLabel}</span><div class="receipt-grid"><div class="receipt-info"><div class="k">Received From</div><div class="v">${esc(x.client||"Client")}<br>${esc(x.clientAddress||"")}<br>${esc(x.clientPhone||"")}${x.clientEmail?" · "+esc(x.clientEmail):""}</div></div><div class="receipt-info"><div class="k">Reference</div><div class="v">Invoice: ${esc(x.no||"—")}<br>Payment Method: ${esc(x.paymentMethod||"—")}<br>Transaction Ref: ${esc(x.transactionRef||"—")}</div></div></div><table class="receipt-items"><thead><tr><th>Description</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${rows||`<tr><td>Invoice payment</td><td>1</td><td>${esc(fmtMoney(p.paid,x.cur))}</td></tr>`}</tbody></table><div class="receipt-total"><div class="receipt-total-box"><div class="receipt-total-line"><span>Invoice Total</span><b>${esc(fmtMoney(p.total,x.cur))}</b></div><div class="receipt-total-line"><span>Amount Received</span><b>${esc(fmtMoney(p.paid,x.cur))}</b></div><div class="receipt-total-line total"><span>RECEIVED</span><b>${esc(fmtMoney(p.paid,x.cur))}</b></div><div class="receipt-total-line balance"><span>Balance Remaining</span><b>${esc(fmtMoney(p.balance,x.cur))}</b></div></div></div><div class="receipt-note">Received with thanks. This receipt acknowledges payment made against the referenced invoice. ${x.notes?esc(x.notes):"Thank you for your business."}</div><div class="receipt-sign"><div class="line">Customer / Payer</div><div class="line">Received By${x.receivedBy?": "+esc(x.receivedBy):""}</div></div><div class="receipt-footer"><b>Receipt Record</b><br>Receipt ${esc(x.receiptNo||"")} · Invoice ${esc(x.no||"")} · ${esc(statusLabel)}<br>This document is a payment receipt. It is not a GRA E-VAT receipt unless issued through a GRA-certified invoicing system.</div>`}
-function openDocumentPrint(element, title, pageCss){
+function renderPaymentHistory(x){
+  const el=$("paymentHistoryList");if(!el)return;
+  const list=paymentHistory(x);
+  if(!list.length){el.innerHTML="<div style='color:#6f7888;font-size:9px;padding:8px 0'>No payments recorded yet.</div>";return}
+  const total=Number(x?.total||0);
+  el.innerHTML=list.map((p,i)=>{
+    const running=list.slice(0,i+1).reduce((s,a)=>s+Number(a.amount||0),0);
+    const meta=[p.date||"No date",p.method||"Payment",p.reference||"No reference"].join(" · ");
+    return "<div class='payment-history-row'><div><div class='main'>Payment "+(i+1)+(p.receiptNo?" · "+esc(p.receiptNo):"")+"</div><div class='meta'>"+esc(meta)+"</div></div><div class='amount'>"+fmtMoney(p.amount,x?.cur||"GHS")+"</div><div style='font-size:9px;color:#858e9f;text-align:right'>Total received: "+fmtMoney(running,x?.cur||"GHS")+"<br>Balance: "+fmtMoney(Math.max(0,total-running),x?.cur||"GHS")+"</div></div>";
+  }).join("");
+}
+function renderReceipts(){
+  const el=$("receiptList");if(!el)return;
+  const entries=[];data.forEach(x=>paymentHistory(x).forEach((p,i)=>entries.push({x,p,i})));
+  entries.sort((a,b)=>String(b.p.date||b.x.date||"").localeCompare(String(a.p.date||a.x.date||""))||String(b.x.no||"").localeCompare(String(a.x.no||""))||b.i-a.i);
+  if(!entries.length){el.innerHTML="<div class='receipt-empty'>No payment receipts have been recorded yet. Record a payment on an invoice to generate the first receipt.</div>";return}
+  el.innerHTML=entries.map(e=>{
+    const full=paymentsReceivedTotal(e.x)>=Number(e.x.total||0)-0.005;
+    return "<div class='receipt-row'><div class='grow'><div class='main'>"+esc(e.p.receiptNo||"—")+" · "+esc(e.x.no||"")+"</div><div class='meta'>"+esc(e.x.client||"No client")+" · "+esc(e.p.date||e.x.date||"—")+" · "+esc(e.p.method||"Payment")+(e.p.reference?" · "+esc(e.p.reference):"")+"</div></div><div class='amount'>"+fmtMoney(e.p.amount,e.x.cur)+"</div><span class='status-pill "+(full?"status-paid":"status-partial")+"'>"+(full?"Paid in Full":"Partial Payment")+"</span><button class='btn' onclick="showReceipt('"+e.x.id+"',"+e.i+")">View</button><button class='btn primary' onclick="showReceipt('"+e.x.id+"',"+e.i+");setTimeout(printReceipt,30)">Print</button></div>";
+  }).join("");
+}
+async function recordPayment(){
+  const total=Number(calc().total||0),newPaid=Math.max(0,Number($("amountPaid")?.value||0));
+  const existingPaid=current?paymentsReceivedTotal(current):0;
+  if(newPaid<=0){alert("Enter the amount received before generating a receipt.");return}
+  if(existingPaid+newPaid>total+0.005){alert("Amount received would exceed the invoice total.");return}
+  if(!$("paymentDate").value)$("paymentDate").value=new Date().toISOString().slice(0,10);
+  const x=get();
+  const history=current?paymentHistory(current):[];
+  const payment={id:"pay-"+Date.now()+"-"+Math.random().toString(36).slice(2,8),amount:newPaid,date:$("paymentDate").value,method:$("paymentMethod").value||"Payment",reference:$("transactionRef").value||"",receivedBy:$("receivedBy").value||"",receiptNo:nextReceiptNumber(),recordedAt:new Date().toISOString()};
+  x.payments=[...history,payment];x.amountPaid=existingPaid+newPaid;x.paymentDate=payment.date;x.paymentMethod=payment.method;x.transactionRef=payment.reference;x.receivedBy=payment.receivedBy;x.receiptNo=payment.receiptNo;
+  x.status=x.amountPaid>=total-0.005?"Paid":"Partially Paid";
+  const savedInvoice=await saveInvoiceObject(x);if(!savedInvoice)return;
+  const paymentIndex=x.payments.length-1;
+  $("amountPaid").value=0;$("paymentDate").value="";$("transactionRef").value="";$("receivedBy").value="";$("receiptNo").value="";
+  renderPaymentHistory(x);updatePaymentBalancePreview();await showReceipt(x.id,paymentIndex);
+}
+let currentReceiptPaymentIndex=-1;
+function showReceipt(id,paymentIndex=-1){
+  const x=data.find(a=>a.id===id)||current;if(!x){toast("Record a payment before generating a receipt");return}
+  const list=paymentHistory(x);if(!list.length){toast("Record a payment before generating a receipt");return}
+  current=x;currentReceiptPaymentIndex=(Number.isInteger(paymentIndex)&&paymentIndex>=0)?Math.min(paymentIndex,list.length-1):list.length-1;
+  const payment=list[currentReceiptPaymentIndex];
+  if(!payment.receiptNo){
+    const generated=nextReceiptNumber();
+    if(Array.isArray(x.payments)&&x.payments[currentReceiptPaymentIndex])x.payments[currentReceiptPaymentIndex].receiptNo=generated;
+    x.receiptNo=generated;syncPaymentSummaryFields(x);persist();
+  }
+  renderReceipt(x,currentReceiptPaymentIndex);
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active","print-view"));$("view-receipt-preview").classList.add("active");$("side").classList.remove("open");
+}
+function renderReceipt(x,paymentIndex=-1){
+  const s=settings,list=paymentHistory(x);if(!list.length){$("receiptPaper").innerHTML="";return}
+  const idx=Number.isInteger(paymentIndex)&&paymentIndex>=0?Math.min(paymentIndex,list.length-1):list.length-1;currentReceiptPaymentIndex=idx;
+  const payment=list[idx],total=Math.max(0,Number(x.total||0));
+  const cumulative=Math.min(total,list.slice(0,idx+1).reduce((s,p)=>s+Number(p.amount||0),0));
+  const balance=Math.max(0,total-cumulative),full=balance<=0.005;
+  const logo=s.logo?"<div class='receipt-logo' style='background-image:url(\'"+s.logo+"\')'></div>":"<div class='receipt-logo'></div>";
+  const rows=(x.items||[]).map(i=>"<tr><td>"+esc(i.desc)+"</td><td>"+i.qty+"</td><td>"+esc(money(i.qty*i.rate))+"</td></tr>").join("");
+  const statusLabel=full?"PAID IN FULL":"PARTIAL PAYMENT";
+  const receiptNo=payment.receiptNo||x.receiptNo||nextReceiptNumber();
+  const paymentDate=payment.date||x.paymentDate||new Date().toISOString().slice(0,10);
+  const method=payment.method||x.paymentMethod||"Payment";
+  const reference=payment.reference||x.transactionRef||"—";
+  const receivedBy=payment.receivedBy||x.receivedBy||"";
+  $("receiptPaper").innerHTML="<div class='receipt-header'><div class='receipt-brand'>"+logo+"<div class='receipt-biz'><h2>"+esc(s.biz||"FILM BEYOND IMAGINATION (FBI)")+"</h2><div>"+(s.owner?esc(s.owner)+"<br>":"")+esc(s.baddr||"")+"<br>"+esc(s.bphone||"")+" · "+esc(s.bemail||"")+"</div></div></div><div class='receipt-meta'><div class='label'>Receipt Number</div><div class='receipt-no'>"+esc(receiptNo)+"</div><div class='label'>Payment Date</div><div class='date'>"+esc(paymentDate)+"</div></div></div><div class='receipt-title'>OFFICIAL PAYMENT RECEIPT</div><span class='receipt-paid-badge "+(full?"":"partial")+"'>"+statusLabel+"</span><div class='receipt-grid'><div class='receipt-info'><div class='k'>Received From</div><div class='v'>"+esc(x.client||"Client")+"<br>"+esc(x.clientAddress||"")+"<br>"+esc(x.clientPhone||"")+(x.clientEmail?" · "+esc(x.clientEmail):"")+"</div></div><div class='receipt-info'><div class='k'>Reference</div><div class='v'>Invoice: "+esc(x.no||"—")+"<br>Payment Method: "+esc(method)+"<br>Transaction Ref: "+esc(reference)+"</div></div></div><table class='receipt-items'><thead><tr><th>Description</th><th>Qty</th><th>Amount</th></tr></thead><tbody>"+(rows||"<tr><td>Invoice payment</td><td>1</td><td>"+esc(fmtMoney(payment.amount,x.cur))+"</td></tr>")+"</tbody></table><div class='receipt-total'><div class='receipt-total-box'><div class='receipt-total-line'><span>Invoice Total</span><b>"+esc(fmtMoney(total,x.cur))+"</b></div><div class='receipt-total-line'><span>This Payment</span><b>"+esc(fmtMoney(payment.amount,x.cur))+"</b></div><div class='receipt-total-line'><span>Total Received To Date</span><b>"+esc(fmtMoney(cumulative,x.cur))+"</b></div><div class='receipt-total-line total'><span>RECEIVED</span><b>"+esc(fmtMoney(payment.amount,x.cur))+"</b></div><div class='receipt-total-line balance'><span>Balance Remaining</span><b>"+esc(fmtMoney(balance,x.cur))+"</b></div></div></div><div class='receipt-note'>Received with thanks. This receipt acknowledges payment made against the referenced invoice. "+(x.notes?esc(x.notes):"Thank you for your business.")+"</div><div class='receipt-sign'><div class='line'>Customer / Payer</div><div class='line'>Received By"+(receivedBy?": "+esc(receivedBy):"")+"</div></div><div class='receipt-footer'><b>Receipt Record</b><br>Receipt "+esc(receiptNo)+" · Invoice "+esc(x.no||"")+" · "+esc(statusLabel)+"<br>This document is a payment receipt. It is not a GRA E-VAT receipt unless issued through a GRA-certified invoicing system.</div>";
+}function openDocumentPrint(element, title, pageCss){
   if(!element){throw new Error("Document preview is empty")};
   const popup=window.open("about:blank","_blank","width=1100,height=900");
   if(!popup){toast("Please allow pop-ups for this app so the invoice can be printed.");return false;}
@@ -467,34 +576,53 @@ function newInvoice(){
 }
 function addItem(desc="",qty=1,rate=0,days=1){let d=document.createElement("div");d.className="item";d.innerHTML=`<div><input class="desc" list="itemOptions" placeholder="Description" value="${esc(desc)}"></div><div><input class="rate" type="number" min="0" step=".01" value="${rate}"></div><div><input class="days" type="number" min="1" step="1" value="${days||1}"></div><div><input class="qty" type="number" min="0" step=".01" value="${qty}"></div><div><input class="amt" readonly value="${money((Number(qty)||0)*(Number(rate)||0)*(Number(days)||1))}"></div><button class="rm" onclick="this.parentElement.remove();calc()">✕</button>`;$("items").appendChild(d);d.querySelectorAll("input").forEach(i=>i.oninput=calc);calc()}
 function calc(){let sub=0;document.querySelectorAll(".item").forEach(r=>{let q=+r.querySelector(".qty").value||0,p=+r.querySelector(".rate").value||0,d=Math.max(1,+r.querySelector(".days")?.value||1),a=q*p*d;sub+=a;r.querySelector(".amt").value=money(a)});let dis=+$("discount").value||0,tax=Math.max(0,sub-dis)*(+$("tax").value||0)/100,total=Math.max(0,sub-dis)+tax;$("total").textContent=money(total);updatePaymentBalancePreview(total);return{sub,dis,tax,total}}
-function get(){let c=calc();let paid=Math.max(0,Number($("amountPaid")?.value||0));if($("status")?.value==="Paid")paid=c.total;if(paid>0.005&&paid<c.total-0.005)$("status").value="Partially Paid";if(paid>=c.total-0.005&&c.total>0)$("status").value="Paid";let receiptNo=$("receiptNo")?.value||current?.receiptNo||"";if(paid>0.005&&!receiptNo)receiptNo=nextReceiptNumber();return{id:current?.id||("av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10)),no:$("no").value,date:$("date").value,due:$("due").value,status:$("status").value,cur:$("cur").value,template:$("template").value||settings.template||"classic",client:$("client").value,clientAddress:$("clientAddress").value,clientPhone:$("clientPhone").value,clientEmail:$("clientEmail").value,items:[...document.querySelectorAll(".item")].map(r=>({desc:r.querySelector(".desc").value,qty:+r.querySelector(".qty").value||0,rate:+r.querySelector(".rate").value||0,days:Math.max(1,+r.querySelector(".days")?.value||1)})).filter(x=>x.desc),taxRate:+$("tax").value||0,discount:+$("discount").value||0,vatInclusive:$("vatInclusive").checked,...c,payment:$("payment").value,notes:$("notes").value,template:selectedTemplate(),category:$("serviceCategory")?.value||"Media Works",serviceBrand:$("brandModelFilter")?.value||"",serviceItem:$("catalogItemSelect")?.value||$("itemSearch")?.value||"",eventDate:$("eventDate")?.value||"",eventEndDate:$("eventEndDate")?.value||$("eventDate")?.value||"",rentalStart:$("rentalStart")?.value||"",rentalEnd:$("rentalEnd")?.value||"",jobLocation:$("jobLocation")?.value||"",rentalRef:$("rentalRef")?.value||"",rentalUnit:$("rentalUnit")?.value||"Per Day",deposit:+($("deposit")?.value||0),amountPaid:paid,paymentDate:$("paymentDate")?.value||"",paymentMethod:$("paymentMethod")?.value||"",transactionRef:$("transactionRef")?.value||"",receivedBy:$("receivedBy")?.value||"",receiptNo}}
-async function save(){
+function get(){
+  const c=calc();
+  const formPaid=Math.max(0,Number($("amountPaid")?.value||0));
+  const existingPayments=current?paymentHistory(current):[];
+  let paid=current?paymentsReceivedTotal(current):formPaid;
+  if(!current&&$("status")?.value==="Paid"&&formPaid<=0.005)paid=c.total;
+  if(!current&&formPaid>0.005)paid=Math.min(formPaid,c.total);
+  const receiptNo=current?.receiptNo||"";
+  if(paid>0.005&&paid<c.total-0.005)$("status").value="Partially Paid";
+  if(paid>=c.total-0.005&&c.total>0)$("status").value="Paid";
+  return {
+    id:current?.id||("av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10)),
+    no:$("no").value,date:$("date").value,due:$("due").value,status:$("status").value,cur:$("cur").value,
+    template:$("template").value||settings.template||"classic",client:$("client").value,clientAddress:$("clientAddress").value,clientPhone:$("clientPhone").value,clientEmail:$("clientEmail").value,
+    items:[...document.querySelectorAll(".item")].map(r=>({desc:r.querySelector(".desc").value,qty:+r.querySelector(".qty").value||0,rate:+r.querySelector(".rate").value||0,days:Math.max(1,+r.querySelector(".days")?.value||1)})).filter(x=>x.desc),
+    taxRate:+$("tax").value||0,discount:+$("discount").value||0,vatInclusive:$("vatInclusive").checked,...c,
+    payment:$("payment").value,notes:$("notes").value,template:selectedTemplate(),category:$("serviceCategory")?.value||"Media Works",
+    serviceBrand:$("brandModelFilter")?.value||"",serviceItem:$("catalogItemSelect")?.value||$("itemSearch")?.value||"",
+    eventDate:$("eventDate")?.value||"",eventEndDate:$("eventEndDate")?.value||$("eventDate")?.value||"",rentalStart:$("rentalStart")?.value||"",rentalEnd:$("rentalEnd")?.value||"",
+    jobLocation:$("jobLocation")?.value||"",rentalRef:$("rentalRef")?.value||"",rentalUnit:$("rentalUnit")?.value||"Per Day",deposit:+($("deposit")?.value||0),
+    amountPaid:paid,paymentDate:current?.paymentDate||$("paymentDate")?.value||"",paymentMethod:current?.paymentMethod||$("paymentMethod")?.value||"",
+    transactionRef:current?.transactionRef||$("transactionRef")?.value||"",receivedBy:current?.receivedBy||$("receivedBy")?.value||"",receiptNo,payments:existingPayments
+  };
+}
+async function saveInvoiceObject(x){
   try{
-    let x=get();
     if(!validateMediaEventDate(x))return null;
     let i=data.findIndex(a=>a.id===x.id),isNew=i<0;
     if(isNew){
       let seq=nextInvoiceSequence();
       let candidate="INV"+String(seq).padStart(4,"0");
-      while(data.some(a=>String(a.no)===candidate)){
-        seq++;
-        settings.invoiceSequence=seq;
-        candidate="INV"+String(seq).padStart(4,"0");
-      }
-      x.no=candidate;
-      settings.invoiceSequence=seq+1;
+      while(data.some(a=>String(a.no)===candidate)){seq++;settings.invoiceSequence=seq;candidate="INV"+String(seq).padStart(4,"0")}
+      x.no=candidate;settings.invoiceSequence=seq+1;
     }
+    syncPaymentSummaryFields(x);
     $("no").value=x.no;invoiceNumberReserved=x.no;
     if(i>=0)data[i]=x;else data.unshift(x);
     current=x;
     const localOk=await persist();
     if(localOk)clearPersistentDraft();
-    dashboard();renderSaved();renderReceipts();
+    dashboard();renderSaved();renderReceipts();renderPaymentHistory(x);
     toast(localOk?"Invoice saved":"Invoice could not be saved");
-    if(isNew && settings.waEnabled==="yes"){try{await sendWhatsAppNotification(x)}catch(e){console.warn("WhatsApp notification failed",e)}}
+    if(isNew&&settings.waEnabled==="yes"){try{await sendWhatsAppNotification(x)}catch(e){console.warn("WhatsApp notification failed",e)}}
     return x;
   }catch(err){console.error(err);toast("Invoice could not be saved: "+err.message);throw err}
 }
+async function save(){return saveInvoiceObject(get())}
 function restoreServiceSelection(x){
   try{
     initServiceCatalog();
@@ -510,12 +638,14 @@ function loadInvoice(id){
   clearPersistentDraft();
   let x=data.find(a=>a.id===id);if(!x)return;current=x;invoiceNumberReserved=x.no||"";
   ["no","date","due","status","cur","client","clientAddress","clientPhone","clientEmail","tax","discount","payment","notes"].forEach(k=>$(k).value=x[{no:"no",date:"date",due:"due",status:"status",cur:"cur",client:"client",clientAddress:"clientAddress",clientPhone:"clientPhone",clientEmail:"clientEmail",tax:"taxRate",discount:"discount",payment:"payment",notes:"notes"}[k]]??"");
-  $("template").value=String(Number(x.template)||100);$("vatInclusive").checked=x.vatInclusive!==false;$("amountPaid").value=Number(x.amountPaid||0);$("paymentDate").value=x.paymentDate||"";$("paymentMethod").value=x.paymentMethod||"Mobile Money";$("transactionRef").value=x.transactionRef||"";$("receivedBy").value=x.receivedBy||"";$("receiptNo").value=x.receiptNo||"";
+  $("template").value=String(Number(x.template)||100);$("vatInclusive").checked=x.vatInclusive!==false;
+  $("amountPaid").value=0;$("paymentDate").value="";$("paymentMethod").value=x.paymentMethod||"Mobile Money";$("transactionRef").value="";$("receivedBy").value="";$("receiptNo").value="";
   $("eventDate").value=x.eventDate||"";$("eventEndDate").value=x.eventEndDate||x.eventDate||"";$("rentalStart").value=x.rentalStart||"";$("rentalEnd").value=x.rentalEnd||"";$("jobLocation").value=x.jobLocation||"";$("rentalRef").value=x.rentalRef||"";$("rentalUnit").value=x.rentalUnit||"Per Day";$("deposit").value=x.deposit||0;
-  if($("payment") && !String(x.payment||"").trim())$("payment").value=settings.defaultPay||"";
-  setTemplate($("template").value);$("items").innerHTML="";(x.items||[]).forEach(a=>addItem(a.desc,a.qty,a.rate));initTemplates();$("template").value=String(Number(x.template)||100);
-  restoreServiceSelection(x);show("create");populateClientSelect();if($("clientSelect"))$("clientSelect").value=(clients.find(c=>c.name===x.client)||{}).id||"";updatePaymentBalancePreview();
+  if($("payment")&&!String(x.payment||"").trim())$("payment").value=settings.defaultPay||"";
+  setTemplate($("template").value);$("items").innerHTML="";(x.items||[]).forEach(a=>addItem(a.desc,a.qty,a.rate,a.days||1));initTemplates();$("template").value=String(Number(x.template)||100);
+  restoreServiceSelection(x);show("create");populateClientSelect();if($("clientSelect"))$("clientSelect").value=(clients.find(c=>c.name===x.client)||{}).id||"";renderPaymentHistory(x);updatePaymentBalancePreview();
 }
+
 function populateClientSelect(){const sel=$("clientSelect");if(!sel)return;const current=sel.value;sel.innerHTML='<option value="">— New / Manual Client —</option>'+clients.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.phone?" · "+esc(c.phone):""}</option>`).join("");if(current)sel.value=current}
 function applySelectedClient(){const id=$("clientSelect")?.value;if(!id)return;const c=clients.find(x=>x.id===id);if(!c)return;$("client").value=c.name||"";$("clientAddress").value=c.address||"";$("clientPhone").value=c.phone||"";$("clientEmail").value=c.email||""}
 function saveCurrentClient(){const name=$("client").value.trim();if(!name){toast("Enter a client name first");return}let c=clients.find(x=>x.name.toLowerCase()===name.toLowerCase());if(c){c.phone=$("clientPhone").value.trim();c.email=$("clientEmail").value.trim();c.address=$("clientAddress").value.trim()}else{c={id:("av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10)),name,phone:$("clientPhone").value.trim(),email:$("clientEmail").value.trim(),address:$("clientAddress").value.trim(),notes:"",createdAt:new Date().toISOString()};clients.unshift(c)}persist();populateClientSelect();$("clientSelect").value=c.id;toast("Client saved to database")}
@@ -569,7 +699,20 @@ function renderClients(){
   };
 }
 
-function del(id){if(confirm("Delete this invoice?")){data=data.filter(x=>x.id!==id);persist();renderSaved();dashboard();toast("Invoice deleted")}}
+async function del(id){
+  const invoice=data.find(x=>x.id===id);
+  if(!invoice)return;
+  if(!confirm("Delete this invoice?"))return;
+  data=data.filter(x=>x.id!==id);
+  const tombstones=["id:"+String(id)];
+  if(invoice.no)tombstones.push("no:"+String(invoice.no));
+  deletedInvoiceIds=[...new Set([...deletedInvoiceIds,...tombstones])];
+  if(current?.id===id)current=null;
+  renderSaved();
+  dashboard();
+  const cloudSaved=await persist();
+  toast(cloudSaved?"Invoice deleted":"Invoice deleted locally; cloud save failed");
+}
 function renderSaved(){
   const el=$("saved");if(!el)return;
   el.innerHTML=data.length?data.map(x=>`<div class="saved" data-invoice-row="${esc(x.id)}"><span class="grow">${esc(x.no)} <span class="meta">${esc(x.client||"No client")} · ${esc(x.status)}</span></span><b>${x.cur}₵${Number(x.total||0).toLocaleString(undefined,{minimumFractionDigits:2})}</b><button type="button" class="btn" data-invoice-action="edit" data-invoice-id="${esc(x.id)}">Edit</button><button type="button" class="btn" data-invoice-action="view" data-invoice-id="${esc(x.id)}">View</button>${Number(x.amountPaid||0)>0?`<button type="button" class="btn primary" data-invoice-action="receipt" data-invoice-id="${esc(x.id)}">Receipt</button>`:""}<button type="button" class="btn danger" data-invoice-action="delete" data-invoice-id="${esc(x.id)}">Delete</button></div>`).join(""):'<div style="color:#777;text-align:center;padding:20px">No saved invoices.</div>';
@@ -692,13 +835,15 @@ window.renderCalendar=renderCalendar;
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&$("calendarModal")?.classList.contains("show"))closeCalendarModal()});
 function previewSaved(id){loadInvoice(id);setTimeout(preview,30)}
 function invoiceStatusInfo(x){const st=String(x.status||"Draft");const due=String(x.due||"");let dueDate=/^\d{4}-\d{2}-\d{2}$/.test(due)?new Date(due+"T23:59:59"):null;const today=new Date();today.setHours(23,59,59,999);let effective=st;if(st!=="Paid"&&dueDate&&dueDate<today)effective="Overdue";let cls=effective==="Paid"?"status-paid":effective==="Overdue"?"status-overdue":effective==="Partially Paid"?"status-partial":effective==="Sent"?"status-sent":"status-draft";return{status:effective,cls,dueDate}}
-function invoiceBalance(x){return x.status==="Paid"?0:Number(x.balanceDue!=null?x.balanceDue:x.total||0)}
+function invoiceBalance(x){const total=Number(x.total||0);if(x.status==="Paid")return 0;if(x.amountPaid!=null)return Math.max(0,total-Math.min(Math.max(Number(x.amountPaid)||0,total)));return Math.max(0,Number(x.balanceDue!=null?x.balanceDue:total));}
 function fmtMoney(v,c="GHS"){return String(c||"GHS")+"₵"+Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
 function daysFromToday(d){if(!d)return null;const a=new Date();a.setHours(0,0,0,0);const b=new Date(d);b.setHours(0,0,0,0);return Math.round((b-a)/86400000)}
 function dashboard(){
   const infos=data.map(x=>({x,...invoiceStatusInfo(x)}));
   const total=data.reduce((s,x)=>s+Number(x.total||0),0);
-  const paid=data.filter(x=>x.status==="Paid").reduce((s,x)=>s+Number(x.total||0),0);
+  const collected=data.reduce((s,x)=>s+Math.min(paymentsReceivedTotal(x),Math.max(0,Number(x.total||0))),0);
+  const partialCollected=infos.filter(o=>{const r=paymentsReceivedTotal(o.x),t=Number(o.x.total||0);return r>0.005&&r<t-0.005}).reduce((s,o)=>s+Math.min(paymentsReceivedTotal(o.x),Math.max(0,Number(o.x.total||0))),0);
+  const paid=infos.filter(o=>paymentsReceivedTotal(o.x)>=Number(o.x.total||0)-0.005&&Number(o.x.total||0)>0).reduce((s,o)=>s+Number(o.x.total||0),0);
   const outstanding=infos.filter(o=>o.status!=="Paid"&&o.status!=="Draft").reduce((s,o)=>s+invoiceBalance(o.x),0);
   const overdue=infos.filter(o=>o.status==="Overdue").reduce((s,o)=>s+invoiceBalance(o.x),0);
   const drafts=infos.filter(o=>o.status==="Draft").length;
