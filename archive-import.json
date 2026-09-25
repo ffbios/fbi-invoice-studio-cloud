@@ -1,11 +1,12 @@
 {
-  "version": 1,
-  "importedAt": "2026-09-23",
+  "version": 2,
+  "importedAt": "2026-09-25",
   "sourceDocuments": [
     "Adobea.pdf",
     "GII PHOTOS INVOICE.pdf",
     "SHOOT N KISS INVOICE.pdf",
-    "SHOOTNKISS RECEIPT.pdf"
+    "SHOOTNKISS RECEIPT.pdf",
+    "Bra kawme.pdf"
   ],
   "clients": [
     {
@@ -34,6 +35,15 @@
       "address": "NORTH LEGON",
       "notes": "",
       "createdAt": "2026-09-23T00:00:00.000Z"
+    },
+    {
+      "id": "archive-client-mr-okyere",
+      "name": "Mr. Okyere",
+      "phone": "233553076044",
+      "email": "",
+      "address": "Haasto 21",
+      "notes": "",
+      "createdAt": "2026-09-24T00:00:00.000Z"
     }
   ],
   "invoices": [
@@ -173,6 +183,76 @@
       "category": "Drone Works",
       "serviceBrand": "",
       "serviceItem": "DRONE WORKS",
+      "eventDate": "",
+      "rentalStart": "",
+      "rentalEnd": "",
+      "jobLocation": "",
+      "rentalRef": "",
+      "rentalUnit": "Per Day",
+      "deposit": 0,
+      "amountPaid": 0,
+      "paymentDate": "",
+      "paymentMethod": "",
+      "transactionRef": "",
+      "receivedBy": "",
+      "receiptNo": ""
+    },
+    {
+      "id": "archive-invoice-inv0007",
+      "no": "INV0007",
+      "date": "2026-09-24",
+      "due": "On Receipt",
+      "status": "Draft",
+      "cur": "GHS",
+      "template": 100,
+      "client": "Mr. Okyere",
+      "clientAddress": "Haasto 21",
+      "clientPhone": "233553076044",
+      "clientEmail": "",
+      "items": [
+        {
+          "desc": "Apc Easy Ups 3kva Online SRV 3000va 230v",
+          "qty": 1,
+          "rate": 10900
+        },
+        {
+          "desc": "Diamond Online Ups 3kva",
+          "qty": 1,
+          "rate": 4300
+        },
+        {
+          "desc": "NCTS Online Ups 6kva/4.8kw",
+          "qty": 1,
+          "rate": 10700
+        },
+        {
+          "desc": "Starnus 6kva Online Ups 6000va",
+          "qty": 1,
+          "rate": 9900
+        },
+        {
+          "desc": "Eldo 6kva Online Ups",
+          "qty": 1,
+          "rate": 10300
+        },
+        {
+          "desc": "APC Smart UPS Online 6kva/6kw, Tower, 230V",
+          "qty": 1,
+          "rate": 2400
+        }
+      ],
+      "taxRate": 0,
+      "discount": 0,
+      "vatInclusive": true,
+      "sub": 48500,
+      "dis": 0,
+      "tax": 0,
+      "total": 48500,
+      "payment": "Bank Name: Cal Bank\nAccount Name: FILM BEYOND IMAGINATION (FBI)\nAccount Number: 1400010238562\nBranch: Dansoman\n\nMOMO Service\n*203*0771134#\nName: (FBI) FILM BEYOND IMAGINATION",
+      "notes": "Thank you for your business.",
+      "category": "",
+      "serviceBrand": "",
+      "serviceItem": "",
       "eventDate": "",
       "rentalStart": "",
       "rentalEnd": "",
