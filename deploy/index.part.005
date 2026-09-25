@@ -641,6 +641,18 @@ function calendarPrevMonth(){calendarCursor.setMonth(calendarCursor.getMonth()-1
 function calendarNextMonth(){calendarCursor.setMonth(calendarCursor.getMonth()+1);renderCalendar()}
 function calendarToday(){const now=new Date();calendarCursor=new Date(now.getFullYear(),now.getMonth(),1);renderCalendar()}
 function calendarStatusPill(x){const info=invoiceStatusInfo(x);return '<span class="status-pill '+info.cls+'">'+esc(info.status)+'</span>'}
+function calendarJobStatus(x){const v=String(x&&x.jobStatus||"Not Started");return v==="Done"?"Completed":v}
+function calendarJobStatusPill(x){
+  const s=calendarJobStatus(x);
+  const styles={
+    "Completed":"background:#163a2c;color:#78e0ae;border-color:#2c6b51",
+    "In Progress":"background:#102e46;color:#72c6ff;border-color:#285b80",
+    "Scheduled":"background:#3b3218;color:#f0cf79;border-color:#75632f",
+    "Cancelled":"background:#421d22;color:#ff8993;border-color:#813740",
+    "Not Started":"background:#20252d;color:#aeb7c4;border-color:#3a424e"
+  };
+  return '<span class="calendar-job-status-pill" style="display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border:1px solid;border-radius:999px;font-size:8px;font-weight:900;line-height:1.1;'+(styles[s]||styles["Not Started"])+'">Job: '+esc(s)+'</span>';
+}
 function renderCalendar(){
   const grid=$("calendarGrid"),title=$("calendarMonthTitle"),list=$("calendarEventList");
   if(!grid||!title||!list)return;
@@ -671,7 +683,7 @@ function renderCalendar(){
     const isToday=key===calendarDateKey(today.getFullYear(),today.getMonth(),today.getDate());
     let html='<div class="calendar-day '+(other?'other-month ':'')+(isToday?'today':'')+'"><div class="calendar-day-number">'+day+'</div>';
     dayEvents.slice(0,3).forEach(x=>{
-      html+='<button type="button" class="calendar-event" onclick="openCalendarInvoice(\''+esc(x.id)+'\')"><span class="event-no">'+esc(x.no||"Invoice")+' · '+esc(fmtMoney(x.total,x.cur))+'</span><span class="event-client">'+esc(x.client||"No client")+'</span><span class="event-cat">'+esc(x.category||"Media")+'</span><span class="event-status">'+calendarStatusPill(x)+'</span></button>';
+      html+='<button type="button" class="calendar-event" onclick="openCalendarInvoice(\''+esc(x.id)+'\')"><span class="event-no">'+esc(x.no||"Invoice")+' · '+esc(fmtMoney(x.total,x.cur))+'</span><span class="event-client">'+esc(x.client||"No client")+'</span><span class="event-cat">'+esc(x.category||"Media")+'</span><span class="event-status">'+calendarStatusPill(x)+' '+calendarJobStatusPill(x)+'</span></button>';
     });
     if(dayEvents.length>3)html+='<div class="calendar-more">+'+(dayEvents.length-3)+' more</div>';
     cells.push(html+'</div>');
@@ -684,7 +696,7 @@ function renderCalendar(){
   });
   list.innerHTML=monthEvents.length?monthEvents.map(x=>{
     const d=calendarEventStart(x),p=paymentTotals(x);
-    return '<button type="button" class="calendar-list-row" style="width:100%;background:none;border:0;color:inherit;text-align:left;cursor:pointer" onclick="openCalendarInvoice(\''+esc(x.id)+'\')"><span class="calendar-list-date"><b>'+d.getDate()+'</b><small>'+d.toLocaleDateString(undefined,{month:"short"})+'</small></span><span class="calendar-list-main"><b>'+esc(x.no||"Invoice")+' · '+esc(x.client||"No client")+'</b><small>'+esc(x.category||"Media")+' · '+calendarStatusPill(x)+' · '+esc(calendarHumanRange(x))+'</small></span><span class="calendar-list-right"><b>'+esc(fmtMoney(x.total,x.cur))+'</b><small>Balance '+esc(fmtMoney(p.balance,x.cur))+'</small></span></button>';
+    return '<button type="button" class="calendar-list-row" style="width:100%;background:none;border:0;color:inherit;text-align:left;cursor:pointer" onclick="openCalendarInvoice(\''+esc(x.id)+'\')"><span class="calendar-list-date"><b>'+d.getDate()+'</b><small>'+d.toLocaleDateString(undefined,{month:"short"})+'</small></span><span class="calendar-list-main"><b>'+esc(x.no||"Invoice")+' · '+esc(x.client||"No client")+'</b><small>'+esc(x.category||"Media")+' · '+calendarStatusPill(x)+' · '+calendarJobStatusPill(x)+' · '+esc(calendarHumanRange(x))+'</small></span><span class="calendar-list-right"><b>'+esc(fmtMoney(x.total,x.cur))+'</b><small>Balance '+esc(fmtMoney(p.balance,x.cur))+'</small></span></button>';
   }).join(""):'<div style="color:#777;text-align:center;padding:20px">No media events scheduled for this month.</div>';
 }
 function closeCalendarModal(){const m=$("calendarModal");if(m){m.classList.remove("show");m.setAttribute("aria-hidden","true")}}
@@ -699,7 +711,8 @@ function openCalendarInvoice(id){
   $("calendarModalSubtitle").textContent=calendarHumanRange(x);
   body.innerHTML='<div class="calendar-detail-grid">'+
     '<div class="calendar-detail-card"><span>Invoice Number</span><b>'+esc(x.no||"—")+'</b></div>'+
-    '<div class="calendar-detail-card"><span>Status</span><b>'+calendarStatusPill(x)+'</b></div>'+
+    '<div class="calendar-detail-card"><span>Invoice Status</span><b>'+calendarStatusPill(x)+'</b></div>'+
+    '<div class="calendar-detail-card"><span>Job Status</span><b>'+calendarJobStatusPill(x)+'</b></div>'+
     '<div class="calendar-detail-card"><span>Event Date</span><b>'+esc(calendarHumanRange(x))+'</b></div>'+
     '<div class="calendar-detail-card"><span>Service Category</span><b>'+esc(x.category||"Media")+'</b></div>'+
     '<div class="calendar-detail-card"><span>Brand / Model Group</span><b>'+esc(x.serviceBrand||"—")+'</b></div>'+
