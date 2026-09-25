@@ -743,15 +743,18 @@ window.exportReportExcel=function(){
   function completedRows(){
     const from=$("completedFrom")?.value||"";
     const to=$("completedTo")?.value||"";
+    const status=$("completedJobStatus")?.value||"";
     const payment=$("completedPayment")?.value||"";
     const client=$("completedClient")?.value||"";
     return data.filter(x=>{
-      if(!jobDone(x))return false;
-      const d=String(x.jobCompletedDate||"").slice(0,10);
+      const d=String(x.eventDate||"").slice(0,10);
+      if(status&&jobStatus(x)!==status)return false;
       if(from&&(!d||d<from))return false;
       if(to&&(!d||d>to))return false;
       if(payment==="Paid"&&invoiceBalance(x)>0)return false;
-      if(payment==="Outstanding"&&invoiceBalance(x)<=0)return false;
+      if(payment==="Partial"&&!(amountCollected(x)>0&&invoiceBalance(x)>0))return false;
+      if(payment==="Outstanding"&&amountCollected(x)>0&&invoiceBalance(x)<=0)return false;
+      if(payment==="Outstanding"&&amountCollected(x)<=0&&invoiceBalance(x)<=0)return false;
       if(client&&String(x.client||"")!==client)return false;
       return true;
     }).sort((a,b)=>String(b.jobCompletedDate||"").localeCompare(String(a.jobCompletedDate||"")));
@@ -784,17 +787,17 @@ window.exportReportExcel=function(){
       if(clientsSorted.includes(selected))cs.value=selected;
     }
     const rows=completedRows();
-    const total=rows.reduce((s,x)=>s+Number(x.total||0),0);
-    const collected=rows.reduce((s,x)=>s+amountCollected(x),0);
+    const completed=rows.filter(jobDone).length;
+    const active=rows.filter(x=>jobStatus(x)==="Scheduled"||jobStatus(x)==="In Progress").length;
     const balance=rows.reduce((s,x)=>s+invoiceBalance(x),0);
     $("completedCount").textContent=rows.length;
-    $("completedCountMeta").textContent=rows.length===1?"Completed job":"Completed jobs";
-    $("completedValue").textContent=fmtMoney(total,"GHS");
-    $("completedCollected").textContent=fmtMoney(collected,"GHS");
+    $("completedCountMeta").textContent=rows.length===1?"Linked invoice":"Linked invoices";
+    $("completedValue").textContent=completed;
+    $("completedCollected").textContent=active;
     $("completedBalance").textContent=fmtMoney(balance,"GHS");
-    $("completedValueMeta").textContent="Invoice value";
-    $("completedCollectedMeta").textContent=rows.filter(x=>invoiceBalance(x)<=0).length+" fully paid";
-    $("completedBalanceMeta").textContent=balance>0?"Outstanding on completed work":"No outstanding balance";
+    $("completedValueMeta").textContent="Jobs completed";
+    $("completedCollectedMeta").textContent="Scheduled or in progress";
+    $("completedBalanceMeta").textContent=balance>0?"Outstanding balance":"No outstanding balance";
     if(!rows.length){
       table.innerHTML='<div class="report-empty">No completed jobs match the selected filters.</div>';
       return;
