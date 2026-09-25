@@ -1162,3 +1162,95 @@ body{font-size:13px}
   .overview-grid{grid-template-columns:1fr 1fr}
 }
 
+
+
+/* ===== FBI VISIBILITY PASS — LIGHT/DARK CONTRAST ===== */
+/* Explicit contrast rules: no functional/data changes. */
+.dashboard-hero,
+.dashboard-hero h2,
+.dashboard-hero p,
+.dashboard-hero .eyebrow{color:#17202d}
+.hero-metric{background:#fff!important;color:#17202d!important}
+.hero-metric span{color:#7b8797!important}
+.hero-metric b{color:#17202d!important}
+.quick-action{background:#fff!important;color:#253041!important}
+.quick-action b{color:#253041!important}
+.quick-action small{color:#7a8696!important}
+.stat{background:#fff!important;color:#182231!important}
+.stat span{color:#788394!important}
+.stat b{color:#182231!important}
+.stat small{color:#8792a1!important}
+.overview-item{background:#f8fafc!important;color:#253041!important}
+.overview-item span{color:#788394!important}
+.overview-item b{color:#253041!important}
+.dashboard-table{background:#fff!important;color:#3b4655!important}
+.dashboard-table th{background:#f8fafc!important;color:#5f6b7b!important}
+.dashboard-table td{background:#fff!important;color:#3b4655!important}
+.dashboard-table td:first-child b{color:#273244!important}
+.dashboard-table td a{color:#273244!important}
+.summary-lines span{color:#7a8696!important}
+.summary-lines b{color:#2d3949!important}
+.activity-row b{color:#263243!important}
+.activity-row small{color:#8792a1!important}
+.visual-meta{color:#8994a3!important}
+.dashboard-section-head h3{color:#273244!important}
+.dashboard-section-head small{color:#8792a1!important}
+.due-item b{color:#2f3a4b!important}
+.due-item small{color:#7a8696!important}
+.card h3{color:#273244!important}
+/* Dark mode: dark surfaces get light foregrounds, including the invoice table. */
+[data-theme="dark"] .dashboard-hero{
+  background:linear-gradient(135deg,#0c121a,#18212c)!important;
+  color:#eef2f7!important;
+}
+[data-theme="dark"] .dashboard-hero h2{color:#fff!important}
+[data-theme="dark"] .dashboard-hero p{color:#aab6c6!important}
+[data-theme="dark"] .dashboard-hero .eyebrow{color:#d7bc6e!important}
+[data-theme="dark"] .hero-metric{
+  background:rgba(255,255,255,.045)!important;
+  border-color:rgba(255,255,255,.10)!important;
+  color:#fff!important;
+}
+[data-theme="dark"] .hero-metric span{color:#95a2b4!important}
+[data-theme="dark"] .hero-metric b{color:#fff!important}
+[data-theme="dark"] .quick-action{
+  background:#151b24!important;color:#eef2f7!important;border-color:#2a3442!important;
+}
+[data-theme="dark"] .quick-action b{color:#eef2f7!important}
+[data-theme="dark"] .quick-action small{color:#8b98a9!important}
+[data-theme="dark"] .stat{
+  background:#151b24!important;color:#f5f7fa!important;border-color:#2a3442!important;
+}
+[data-theme="dark"] .stat span{color:#a2adbb!important}
+[data-theme="dark"] .stat b{color:#fff!important}
+[data-theme="dark"] .stat small{color:#8b98a9!important}
+[data-theme="dark"] .overview-item{
+  background:#111821!important;color:#eef2f7!important;border-color:#2a3442!important;
+}
+[data-theme="dark"] .overview-item span{color:#8b98a9!important}
+[data-theme="dark"] .overview-item b{color:#fff!important}
+[data-theme="dark"] .dashboard-table,
+[data-theme="dark"] .dashboard-table tbody,
+[data-theme="dark"] .dashboard-table tr{
+  background:#111821!important;color:#eef2f7!important;
+}
+[data-theme="dark"] .dashboard-table th{
+  background:#18212c!important;color:#aeb8c5!important;border-color:#2a3442!important;
+}
+[data-theme="dark"] .dashboard-table td{
+  background:#111821!important;color:#dbe2ea!important;border-color:#27303c!important;
+}
+[data-theme="dark"] .dashboard-table td:first-child b{color:#fff!important}
+[data-theme="dark"] .dashboard-table td a{color:#fff!important}
+[data-theme="dark"] .dashboard-section-head h3,
+[data-theme="dark"] .card h3{color:#eef2f7!important}
+[data-theme="dark"] .dashboard-section-head small,
+[data-theme="dark"] .visual-meta{color:#8b98a9!important}
+[data-theme="dark"] .summary-lines span,
+[data-theme="dark"] .due-item small{color:#8b98a9!important}
+[data-theme="dark"] .summary-lines b,
+[data-theme="dark"] .due-item b{color:#eef2f7!important}
+[data-theme="dark"] .activity-row b{color:#eef2f7!important}
+[data-theme="dark"] .activity-row small{color:#8b98a9!important}
+[data-theme="dark"] .invoice-table-wrap{background:#111821!important}
+
