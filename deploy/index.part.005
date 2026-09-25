@@ -707,7 +707,7 @@ window.renderCalendar=renderCalendar;
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&$("calendarModal")?.classList.contains("show"))closeCalendarModal()});
 function previewSaved(id){loadInvoice(id);setTimeout(preview,30)}
 function invoiceStatusInfo(x){const st=String(x.status||"Draft");const due=String(x.due||"");let dueDate=/^\d{4}-\d{2}-\d{2}$/.test(due)?new Date(due+"T23:59:59"):null;const today=new Date();today.setHours(23,59,59,999);let effective=st;if(st!=="Paid"&&dueDate&&dueDate<today)effective="Overdue";let cls=effective==="Paid"?"status-paid":effective==="Overdue"?"status-overdue":effective==="Partially Paid"?"status-partial":effective==="Sent"?"status-sent":"status-draft";return{status:effective,cls,dueDate}}
-function invoiceBalance(x){const total=Number(x.total||0);if(x.status==="Paid")return 0;if(x.amountPaid!=null)return Math.max(0,total-Math.min(Math.max(Number(x.amountPaid)||0,total));return Math.max(0,Number(x.balanceDue!=null?x.balanceDue:total));}
+function invoiceBalance(x){const total=Number(x.total||0);if(x.status==="Paid")return 0;if(x.amountPaid!=null)return Math.max(0,total-Math.min(Math.max(Number(x.amountPaid)||0,total)));return Math.max(0,Number(x.balanceDue!=null?x.balanceDue:total));}
 function fmtMoney(v,c="GHS"){return String(c||"GHS")+"₵"+Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
 function daysFromToday(d){if(!d)return null;const a=new Date();a.setHours(0,0,0,0);const b=new Date(d);b.setHours(0,0,0,0);return Math.round((b-a)/86400000)}
 function dashboard(){
