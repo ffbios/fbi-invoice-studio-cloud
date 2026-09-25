@@ -557,6 +557,19 @@ function mergeInvoiceStates(existingState, incomingState) {
   for (const item of existingClients) clientMap.set(clientKey(item), item);
   for (const item of incomingClients) clientMap.set(clientKey(item), item);
 
+  const deletedInvoiceIds = new Set(
+    Array.isArray(incomingState.deletedInvoiceIds)
+      ? incomingState.deletedInvoiceIds.map(v => String(v || '').trim()).filter(Boolean)
+      : []
+  );
+  if (deletedInvoiceIds.size) {
+    for (const [key, item] of invoiceMap) {
+      const id = String(item.id || '').trim();
+      const no = String(item.no || '').trim();
+      if (deletedInvoiceIds.has(id) || deletedInvoiceIds.has(no)) invoiceMap.delete(key);
+    }
+  }
+
   const existingSettings = existingState && existingState.data && existingState.data.settings
     ? existingState.data.settings : {};
 
