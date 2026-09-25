@@ -670,5 +670,85 @@ window.addEventListener("load",function(){
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",schedule);else schedule();
 })();
 </script>
+<script>
+/* FBI EMERGENCY RUNTIME RECOVERY v1
+   Guarantees the application boot/navigation path is restored even if an earlier
+   optional startup statement throws. It never writes to or replaces cloud data. */
+(function(){
+  let ran=false;
+  function bindNavigation(){
+    try{
+      if(typeof show==="function") window.show=show;
+      document.querySelectorAll(".nav .nav-link").forEach(function(btn){
+        if(btn.__fbiRecoveryBound)return;
+        btn.__fbiRecoveryBound=true;
+        btn.addEventListener("click",function(e){
+          e.preventDefault();
+          const v=btn.getAttribute("data-v");
+          try{
+            if(typeof window.__FBI_NAV__==="function") window.__FBI_NAV__(v);
+            else if(typeof window.show==="function") window.show(v);
+          }catch(err){console.error("FBI navigation recovery failed",err)}
+        });
+      });
+    }catch(err){console.error("FBI navigation binding failed",err)}
+  }
+  async function forceCloudState(){
+    try{
+      const res=await fetch("/api/state?recovery="+Date.now(),{cache:"no-store",credentials:"same-origin"});
+      if(!res.ok)throw new Error("HTTP "+res.status);
+      const body=await res.json();
+      const raw=body&&body.state;
+      const p=raw&&raw.data;
+      if(!p||!Array.isArray(p.data)||!Array.isArray(p.clients))throw new Error("Invalid cloud state");
+      try{data=p.data.slice()}catch(e){window.__FBI_RECOVERY_DATA__=p.data.slice()}
+      try{clients=p.clients.slice()}catch(e){window.__FBI_RECOVERY_CLIENTS__=p.clients.slice()}
+      try{settings={...(typeof settings==="object"&&settings?settings:{}),...(p.settings||{})}}catch(e){}
+      window.__FBI_CLOUD_RECOVERY_OK=true;
+      try{if(typeof normalizePaymentSettings==="function")normalizePaymentSettings()}catch(e){}
+      try{if(typeof initTemplates==="function")initTemplates()}catch(e){}
+      try{if(typeof initServiceCatalog==="function")initServiceCatalog()}catch(e){}
+      try{if(typeof populateClientSelect==="function")populateClientSelect()}catch(e){}
+      try{if(typeof renderClients==="function")renderClients()}catch(e){}
+      try{if(typeof dashboard==="function")dashboard()}catch(e){}
+      try{if(typeof renderSaved==="function")renderSaved()}catch(e){}
+      try{if(typeof renderReceipts==="function")renderReceipts()}catch(e){}
+      try{if(typeof show==="function")show("dashboard")}catch(e){try{if(typeof window.__FBI_NAV__==="function")window.__FBI_NAV__("dashboard")}catch(_){}}
+      const st=document.getElementById("storageStatus");
+      if(st)st.textContent="Cloud PostgreSQL connected — "+p.data.length+" invoices and "+p.clients.length+" clients restored.";
+      console.log("FBI RECOVERY: cloud state restored",p.data.length,p.clients.length);
+      return true;
+    }catch(err){
+      console.error("FBI cloud recovery failed",err);
+      return false;
+    }
+  }
+  async function boot(){
+    if(ran)return;
+    ran=true;
+    bindNavigation();
+    let started=false;
+    try{
+      if(typeof startApp==="function"){
+        await Promise.resolve(startApp());
+        started=true;
+      }
+    }catch(err){console.error("FBI startApp recovery caught",err)}
+    bindNavigation();
+    const count=document.getElementById("sCount");
+    const looksEmpty=!count||count.textContent.trim()==="0";
+    if(!started || looksEmpty || !window.__FBI_CLOUD_BOOTED){
+      await forceCloudState();
+      bindNavigation();
+    }
+  }
+  function schedule(){
+    setTimeout(boot,50);
+    setTimeout(function(){if(!window.__FBI_CLOUD_RECOVERY_OK)forceCloudState()},1200);
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",schedule,{once:true});
+  else schedule();
+})();
+</script>
 </body>
 </html>
