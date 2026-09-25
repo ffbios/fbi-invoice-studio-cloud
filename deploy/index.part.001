@@ -1093,3 +1093,72 @@ input:focus,textarea:focus,select:focus{
 [data-theme="dark"] .theme-switcher{background:#111821;border-color:#303a48}
 [data-theme="dark"] .theme-choice.active{background:#1b222d!important;color:#fff!important;border-color:#3a4656!important}
 
+
+
+/* ===== FBI ACCOUNTING DASHBOARD — CLEAN WORKSPACE PASS ===== */
+/* This pass is presentation-only. Existing IDs, handlers, storage and data flows remain untouched. */
+body{font-size:13px}
+.side{width:228px}
+.brand{min-height:72px;padding:18px 17px}
+.nav .nav-link{padding:10px 13px;font-size:11.5px}
+.top{min-height:68px;padding:10px 22px}
+.view{padding:22px 24px 34px;max-width:1480px}
+.dashboard-hero{
+  margin-bottom:12px;padding:18px 20px;border-radius:12px;
+  background:linear-gradient(135deg,#ffffff,#f7f9fc);
+  border:1px solid #dfe4eb;color:#17202d;
+  box-shadow:0 6px 20px rgba(15,23,42,.045);
+}
+.dashboard-hero .eyebrow{color:#9a7927;font-size:8px;letter-spacing:1.5px}
+.dashboard-hero h2{font-size:19px;margin:5px 0 3px;color:#17202d}
+.dashboard-hero p{color:#748093;font-size:10px}
+.hero-metrics{min-width:320px;gap:8px}
+.hero-metric{min-width:145px;padding:10px 12px;background:#fff;border:1px solid #e3e7ed}
+.hero-metric span{color:#7b8797}
+.hero-metric b{color:#17202d;font-size:15px}
+.dashboard-quickstrip{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:12px}
+.quick-action{min-height:50px;padding:9px 11px}
+.quick-action .qa-icon{width:28px;height:28px}
+.dashboard-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.dashboard-stats .stat:nth-child(-n+4){min-height:112px;padding:14px}
+.dashboard-stats .stat:nth-child(n+5){min-height:86px;padding:13px 14px}
+.dashboard-stats .stat b{font-size:20px}
+.dashboard-analytics{grid-template-columns:minmax(0,1.35fr) minmax(240px,.82fr) minmax(240px,.82fr);gap:10px;margin-top:12px}
+.visual-card{min-height:214px;padding:14px 15px}
+.visual-card h3{font-size:9.5px}
+.pulse-bars{height:140px;gap:7px;padding:13px 4px 20px}
+.pulse-bar{background:linear-gradient(180deg,#c8a94f 0%,#b89032 45%,#a80e4d 100%);border-radius:6px 6px 2px 2px;box-shadow:0 5px 12px rgba(168,14,77,.08)}
+.activity-row{padding:9px 0}
+.activity-dot{width:6px;height:6px}
+.dashboard-main-grid{margin-top:12px;gap:10px}
+.dashboard-main-grid .card,.recent,.grid2 .card{padding:14px}
+.overview-grid{grid-template-columns:repeat(4,1fr);gap:7px}
+.overview-item{padding:9px}
+.overview-item b{font-size:13px}
+.dashboard-table th{padding:9px 8px}
+.dashboard-table td{padding:9px 8px}
+.report-toolbar{margin:8px 0 10px}
+.report-toolbar .primary{min-height:34px}
+@media(max-width:1150px){
+  .dashboard-stats{grid-template-columns:repeat(2,1fr)}
+  .dashboard-analytics{grid-template-columns:1fr 1fr}
+  .dashboard-analytics .visual-revenue{grid-column:1/-1}
+}
+@media(max-width:900px){
+  .side{width:228px}
+  .dashboard-quickstrip{grid-template-columns:repeat(2,1fr)}
+  .dashboard-main-grid{grid-template-columns:1fr}
+  .overview-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:700px){
+  .view{padding:14px 12px 24px}
+  .dashboard-hero{padding:16px;gap:12px}
+  .hero-metrics{width:100%;display:grid;grid-template-columns:1fr 1fr;min-width:0}
+  .dashboard-analytics{grid-template-columns:1fr}
+  .dashboard-analytics .visual-revenue{grid-column:auto}
+}
+@media(max-width:480px){
+  .dashboard-quickstrip,.dashboard-stats,.hero-metrics{grid-template-columns:1fr}
+  .overview-grid{grid-template-columns:1fr 1fr}
+}
+
