@@ -626,5 +626,93 @@ window.addEventListener("load",function(){
   });
 })();
 </script>
+
+<script>
+/* ===== FBI PROFESSIONAL THEME CONTROLLER — UI ONLY ===== */
+(function(){
+  const KEY="fbi-invoice-theme-v1";
+  function read(){try{const v=localStorage.getItem(KEY);return v==="light"||v==="dark"||v==="system"?v:"system"}catch(e){return "system"}}
+  function resolved(pref){
+    if(pref==="system") return window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
+    return pref;
+  }
+  function apply(pref){
+    pref=pref||read();
+    const actual=resolved(pref);
+    document.documentElement.dataset.theme=actual;
+    document.documentElement.style.colorScheme=actual;
+    document.querySelectorAll("[data-theme-choice]").forEach(function(b){
+      const active=b.getAttribute("data-theme-choice")===pref;
+      b.classList.toggle("active",active);
+      b.setAttribute("aria-pressed",active?"true":"false");
+    });
+    const meta=document.querySelector('meta[name="theme-color"]');
+    if(meta)meta.setAttribute("content",actual==="dark"?"#0b0d12":"#f4f6f9");
+  }
+  window.setThemePreference=function(pref){
+    if(["light","dark","system"].indexOf(pref)<0)pref="system";
+    try{localStorage.setItem(KEY,pref)}catch(e){}
+    apply(pref);
+    try{toast(pref==="system"?"Using device theme":pref==="dark"?"Dark mode enabled":"Light mode enabled")}catch(e){}
+  };
+  window.getThemePreference=read;
+  if(window.matchMedia){
+    const mq=window.matchMedia("(prefers-color-scheme: dark)");
+    const sync=function(){if(read()==="system")apply("system")};
+    if(mq.addEventListener)mq.addEventListener("change",sync);else if(mq.addListener)mq.addListener(sync);
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){apply(read())});else apply(read());
+})();
+
+/* ===== FBI COMMAND-CENTER VISUALS — READ-ONLY FROM EXISTING APP STATE ===== */
+(function(){
+  function money(n,cur){return (cur||"GHS")+"₵"+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
+  function humanDate(v){if(!v)return "No date";const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}
+  function renderPulse(){
+    const el=document.getElementById("revenuePulse"); if(!el||!typeof data!=="undefined"&&Array.isArray(data))return;
+    const now=new Date(), months=[];
+    for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push(d)}
+    const vals=months.map(d=>data.filter(x=>{const v=new Date(x.date||x.createdAt||"");return !Number.isNaN(v.getTime())&&v.getFullYear()===d.getFullYear()&&v.getMonth()===d.getMonth()}).reduce((s,x)=>s+Number(x.total||0),0));
+    const max=Math.max(1,...vals),sum=vals.reduce((a,b)=>a+b,0);
+    el.innerHTML=vals.map((v,i)=>'<div class="pulse-bar" style="--h:'+Math.max(8,(v/max)*100)+'%" title="'+money(v,"GHS")+'"><span>'+months[i].toLocaleDateString(undefined,{month:"short"})+'</span></div>').join("");
+    const meta=document.getElementById("pulseMeta");if(meta)meta.textContent=sum?"6-month invoiced volume · "+money(sum,"GHS"):"No invoice activity yet";
+  }
+  function renderActivity(){
+    const el=document.getElementById("dashboardActivity");if(!el||!typeof data!=="undefined"&&Array.isArray(data))return;
+    const list=data.slice().sort((a,b)=>String(b.updatedAt||b.date||b.createdAt||"").localeCompare(String(a.updatedAt||a.date||a.createdAt||""))).slice(0,5);
+    el.innerHTML=list.length?list.map(x=>'<div class="activity-row"><span class="activity-dot"></span><div><b>'+esc(x.no||"Invoice")+' · '+esc(x.client||"No client")+'</b><small>'+esc(x.status||"Draft")+' · '+humanDate(x.updatedAt||x.date||x.createdAt)+'</small></div><strong style="margin-left:auto;font-size:9px">'+money(x.total,x.cur||"GHS")+'</strong></div>').join(""):'<div style="color:var(--muted);font-size:10px;padding:12px 0">No activity yet.</div>';
+  }
+  function renderAlerts(){
+    const el=document.getElementById("dashboardAlerts"),badge=document.getElementById("headerNotifyCount");if(!el||!typeof data!=="undefined"&&Array.isArray(data))return;
+    const alerts=[];
+    data.forEach(x=>{
+      let s="";try{s=invoiceStatusInfo(x).status}catch(e){s=x.status||""}
+      if(s==="Overdue")alerts.push({icon:"⚠️",title:x.no+" overdue",detail:(x.client||"No client")+" · "+money(invoiceBalance(x),x.cur||"GHS")});
+      else if(s==="Partially Paid")alerts.push({icon:"💳",title:x.no+" partially paid",detail:(x.client||"No client")+" · balance "+money(invoiceBalance(x),x.cur||"GHS")});
+    });
+    const n=alerts.length;if(badge){badge.textContent=n;badge.style.display=n?"grid":"none"}
+    el.innerHTML=alerts.slice(0,5).map(a=>'<div class="activity-row"><span style="font-size:14px">'+a.icon+'</span><div><b>'+esc(a.title)+'</b><small>'+esc(a.detail)+'</small></div></div>').join("")||'<div style="color:var(--muted);font-size:10px;padding:12px 0">✓ Nothing needs immediate attention.</div>';
+  }
+  window.refreshFBIVisuals=function(){try{renderPulse();renderActivity();renderAlerts()}catch(e){console.warn("FBI visual refresh",e)}};
+  const originalDashboard=window.dashboard;
+  if(typeof originalDashboard==="function"){
+    window.dashboard=function(){const out=originalDashboard.apply(this,arguments);setTimeout(window.refreshFBIVisuals,20);return out};
+  }
+  document.addEventListener("DOMContentLoaded",function(){setTimeout(window.refreshFBIVisuals,250)});
+  window.addEventListener("load",function(){setTimeout(window.refreshFBIVisuals,500)});
+})();
+
+/* Excel-compatible export for the existing report data; no database changes. */
+window.exportReportExcel=function(){
+  try{
+    const table=document.querySelector("#reportPreview table");
+    if(!table){toast("Refresh the report first.");return}
+    const html='<!doctype html><html><head><meta charset="utf-8"></head><body>'+table.outerHTML+'</body></html>';
+    const blob=new Blob([html],{type:"application/vnd.ms-excel"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="FBI-Invoice-Report.xls";document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500);
+    toast("Excel report exported");
+  }catch(e){console.error(e);toast("Could not export Excel report")}
+};
+</script>
 </body>
 </html>

@@ -480,7 +480,7 @@ body.auth-locked{overflow:hidden!important}
       <div class="report-actions">
         <button class="btn" type="button" onclick="resetReportFilters()">Reset</button>
         <button class="btn" type="button" onclick="updateReportPreview()">Refresh Report</button>
-        <button class="btn" type="button" onclick="exportReportCsv()">⬇ Export CSV</button>
+        <button class="btn" type="button" onclick="exportReportCsv()">⬇ Export CSV</button><button class="btn" type="button" onclick="exportReportExcel()">⬇ Excel</button>
         <button class="btn primary" type="button" onclick="printOverviewReport()">🖨 Print / Save PDF</button>
       </div>
       <div class="report-preview" id="reportPreview"></div>
