@@ -1,5 +1,16 @@
 <style id="fbi-payroll-module-style">
-#fbiPayrollView{display:none;padding-bottom:40px}
+#fbiPayrollView{display:none;padding-bottom:40px;max-width:none;margin:0;width:100%}
+body.fbi-payroll-mode .top{align-items:center}
+body.fbi-payroll-mode #fbiPayrollView{position:relative;z-index:1}
+@media(max-width:1100px){
+  body.fbi-payroll-mode .top{flex-wrap:wrap;row-gap:8px}
+  body.fbi-payroll-mode .top>div:first-child{flex:1 1 240px;min-width:0}
+  body.fbi-payroll-mode .top>div:last-child{flex:1 1 auto;min-width:0;justify-content:flex-end}
+}
+@media(max-width:700px){
+  body.fbi-payroll-mode .top>div:last-child{width:100%;justify-content:flex-end}
+  body.fbi-payroll-mode .top{min-height:0}
+}
 #fbiPayrollView.fbi-payroll-active{display:block}
 .fbi-payroll-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
 .fbi-payroll-stat{background:var(--card,#12161e);border:1px solid var(--line,#2b303b);border-radius:12px;padding:14px}
@@ -525,6 +536,11 @@
 
   function activatePayroll(){
     var root=q('fbiPayrollView');if(!root)return;
+    document.body.classList.add('fbi-payroll-mode');
+    var top=q('top');
+    if(top && top.parentNode && root.parentNode!==top.parentNode){
+      top.parentNode.insertBefore(root,top.nextSibling);
+    }
     document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active','print-view');});
     root.classList.add('active','fbi-payroll-active');
     document.querySelectorAll('.nav button').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-v')==='payroll');});
@@ -546,11 +562,14 @@
     window.__FBI_PAYROLL_ORIGINAL_NAV__=original;
     window.__FBI_NAV__=function(v){
       if(v==='payroll'){activatePayroll();return false;}
+      document.body.classList.remove('fbi-payroll-mode');
       return typeof original==='function'?original(v):false;
     };
     window.__FBI_PAYROLL_OPEN__=activatePayroll;
+    window.addEventListener('pagehide',function(){document.body.classList.remove('fbi-payroll-mode');});
     window.addEventListener('hashchange',function(){
       if(String(location.hash||'')==='#payroll')activatePayroll();
+      else document.body.classList.remove('fbi-payroll-mode');
     });
   }
 
