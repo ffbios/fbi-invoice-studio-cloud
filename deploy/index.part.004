@@ -288,7 +288,7 @@ body.auth-locked{overflow:hidden!important}
       var target=document.getElementById('view-'+v);
       if(target) target.classList.add('active');
       document.querySelectorAll('.nav button').forEach(function(btn){btn.classList.toggle('active',btn.getAttribute('data-v')===v);});
-      var titles={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']};
+      var titles={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Completed Jobs','Track finished work and generate completion reports'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']};
       var t=titles[v]||['Invoice Studio',''];
       var title=document.getElementById('title'); if(title) title.textContent=t[0];
       var sub=document.getElementById('subtitle'); if(sub) sub.textContent=t[1];
@@ -309,7 +309,7 @@ body.auth-locked{overflow:hidden!important}
 (function(){
  function sync(){
   var id=location.hash.replace(/^#/,'');
-  var valid={dashboard:1,create:1,clients:1,saved:1,calendar:1,receipts:1,settings:1,whatsapp:1};
+  var valid={dashboard:1,create:1,clients:1,saved:1,calendar:1,receipts:1,settings:1,whatsapp:1,completed:1};
   var v=id.replace(/^view-/,''); if(!valid[v]) v='dashboard';
   document.querySelectorAll('.nav-link').forEach(function(a){a.classList.toggle('active',a.dataset.v===v);});
   var title={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']}[v];
@@ -387,6 +387,7 @@ body.auth-locked{overflow:hidden!important}
     <button type="button" class="nav-link" data-v="create" onclick="show('create')">🧾 Create Invoice</button>
     <button type="button" class="nav-link" data-v="clients" onclick="show('clients')">👥 Client Database</button>
     <button type="button" class="nav-link" data-v="saved" onclick="show('saved')">💾 Saved Invoices</button>
+    <button type="button" class="nav-link" data-v="completed" onclick="show('completed')">✅ Completed Jobs</button>
     <button type="button" class="nav-link" data-v="receipts" onclick="show('receipts')">🧾 Official Receipts</button>
     <button type="button" class="nav-link" data-v="settings" onclick="show('settings')">⚙️ Business Settings</button>
     <button type="button" class="nav-link" data-v="whatsapp" onclick="show('whatsapp')">📱 WhatsApp Alerts</button>
@@ -633,6 +634,33 @@ body.auth-locked{overflow:hidden!important}
 </section>
 
 <section class="view" id="view-saved"><div class="card"><h3>Saved Invoices</h3><div id="saved"></div></div></section>
+<section class="view" id="view-completed">
+  <div class="card completed-jobs-head">
+    <div>
+      <h3>Completed Jobs</h3>
+      <p style="margin:4px 0 0;color:#7d8593">Mark work as completed independently from payment status. Use this section for monthly and yearly job-completion reporting.</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" type="button" onclick="exportCompletedJobsCsv()">⬇ Export CSV</button>
+      <button class="btn primary" type="button" onclick="printCompletedJobsReport()">🖨 Print / Save PDF</button>
+    </div>
+  </div>
+  <div class="stats dashboard-stats completed-job-stats">
+    <div class="stat"><span>Completed Jobs</span><b id="completedCount">0</b><small id="completedCountMeta">All completed work</small></div>
+    <div class="stat"><span>Completed Value</span><b id="completedValue">GHS₵0.00</b><small id="completedValueMeta">Invoice value</small></div>
+    <div class="stat"><span>Collected</span><b id="completedCollected">GHS₵0.00</b><small id="completedCollectedMeta">Amount received</small></div>
+    <div class="stat"><span>Outstanding</span><b id="completedBalance">GHS₵0.00</b><small id="completedBalanceMeta">On completed jobs</small></div>
+  </div>
+  <div class="card">
+    <div class="report-filters" style="margin-bottom:14px">
+      <div><label>From Completion Date</label><input id="completedFrom" type="date" onchange="renderCompletedJobs()"></div>
+      <div><label>To Completion Date</label><input id="completedTo" type="date" onchange="renderCompletedJobs()"></div>
+      <div><label>Payment</label><select id="completedPayment" onchange="renderCompletedJobs()"><option value="">All Payments</option><option value="Paid">Fully Paid</option><option value="Outstanding">Has Balance</option></select></div>
+      <div><label>Client</label><select id="completedClient" onchange="renderCompletedJobs()"><option value="">All Clients</option></select></div>
+    </div>
+    <div id="completedJobsTable"></div>
+  </div>
+</section>
 
 <section class="view" id="view-calendar">
   <div class="card calendar-main-card">
@@ -758,3 +786,10 @@ Name: (FBI) FILM BEYOND IMAGINATION</textarea><button class="btn primary" onclic
 <script>
 const KEY="invoice-studio-fbi-v2";let data=[],clients=[],settings={},current=null;
 const $=id=>document.getElementById(id);
+<style>
+.completed-jobs-head{display:flex;justify-content:space-between;gap:18px;align-items:center}
+.completed-job-stats{margin-top:14px}
+.completed-status-done{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:#e8f7ef;color:#147a48;font-size:11px;font-weight:800}
+.completed-status-open{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:#fff6df;color:#8a6400;font-size:11px;font-weight:800}
+@media(max-width:760px){.completed-jobs-head{align-items:flex-start;flex-direction:column}}
+</style>
