@@ -806,73 +806,118 @@ body.fbi-payroll-mode .fbi-payroll-modal{z-index:300}
   }
 
   function renderOverview(){
-    var rows=STATE.records.slice().sort(function(a,b){return String(b.workDate||'').localeCompare(String(a.workDate||''));});
-    var now=new Date(),period=(q('fbiPayrollOverviewPeriod')&&q('fbiPayrollOverviewPeriod').value)||'all';
+    var rows=STATE.records.slice().sort(function(a,b){return String(b.workDate||"").localeCompare(String(a.workDate||""));});
+    var now=new Date();
+    var period=q("fbiPayrollOverviewPeriod")?q("fbiPayrollOverviewPeriod").value:"all";
     function inPeriod(r){
-      if(period==='all')return true;
-      var d=new Date((r.workDate||today())+'T00:00:00');
+      if(period==="all")return true;
+      var d=new Date((r.workDate||today())+"T00:00:00");
       if(Number.isNaN(d.getTime()))return false;
-      if(period==='month')return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
-      var qNow=Math.floor(now.getMonth()/3),qD=Math.floor(d.getMonth()/3);
-      return qNow===qD&&now.getFullYear()===d.getFullYear();
+      if(period==="month")return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+      var qNow=Math.floor(now.getMonth()/3),qDay=Math.floor(d.getMonth()/3);
+      return qNow===qDay&&d.getFullYear()===now.getFullYear();
     }
-    var scoped=rows.filter(inPeriod),grossTotal=scoped.reduce(function(s,r){return s+gross(r);},0),netTotal=scoped.reduce(function(s,r){return s+net(r);},0),paidTotal=scoped.reduce(function(s,r){return s+paid(r);},0),balTotal=scoped.reduce(function(s,r){return s+balance(r);},0);
-    var activeWorkers=STATE.workers.filter(function(w){return (w.status||'Active')==='Active';}).length;
-    var paidPct=netTotal>0?Math.max(0,Math.min(100,(paidTotal/netTotal)*100)):0;
-    var pending=scoped.filter(function(r){return status(r)!=='Paid';}).length;
-    var kpi=(function(){
-      function k(lbl,val,meta,cls){return '<div class="fbi-payroll-kpi '+cls+'"><span>'+esc(lbl)+'</span><b>'+esc(val)+'</b><small>'+esc(meta)+'</small></div>';}
-      return k('Net Payroll',money(netTotal),scoped.length+' records', 'gold')+
-             k('Paid',money(paidTotal),Math.round(paidPct)+'% settled', 'green')+
-             k('Outstanding',money(balTotal),pending+' records still due', 'orange')+
-             k('Active Workers',String(activeWorkers),STATE.workers.length+' total workers', 'blue')+
-             k('Payroll Records',String(scoped.length),'work records in period', 'pink');
-    })();
-    if(q('fbiPayrollDashboardKpis'))q('fbiPayrollDashboardKpis').innerHTML=kpi;
-    if(q('fbiPayrollOverviewPeriod')&&!q('fbiPayrollOverviewPeriod').dataset.bound){q('fbiPayrollOverviewPeriod').dataset.bound='1';q('fbiPayrollOverviewPeriod').addEventListener('change',renderOverview);}
-    
-    var monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],months=[];
-    for(var i=5;i>=0;i--){var d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push({key:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),label:monthNames[d.getMonth()]});}
-    var mvals=months.map(function(m){var a=scoped.filter(function(r){return String(r.workDate||'').slice(0,7)===m.key;});return {label:m.label,net:a.reduce(function(s,r){return s+net(r);},0),paid:a.reduce(function(s,r){return s+paid(r);},0)};});
+    var scoped=rows.filter(inPeriod);
+    var grossTotal=scoped.reduce(function(s,r){return s+gross(r);},0);
+    var netTotal=scoped.reduce(function(s,r){return s+net(r);},0);
+    var paidTotal=scoped.reduce(function(s,r){return s+paid(r);},0);
+    var balTotal=scoped.reduce(function(s,r){return s+balance(r);},0);
+    var activeWorkers=STATE.workers.filter(function(w){return (w.status||"Active")==="Active";}).length;
+    var paidPct=netTotal>0?Math.max(0,Math.min(100,paidTotal/netTotal*100)):0;
+    var pending=scoped.filter(function(r){return status(r)!=="Paid";}).length;
+
+    function kpi(label,value,meta,cls){
+      return "<div class='fbi-payroll-kpi "+cls+"'><span>"+esc(label)+"</span><b>"+esc(value)+"</b><small>"+esc(meta)+"</small></div>";
+    }
+    if(q("fbiPayrollDashboardKpis")){
+      q("fbiPayrollDashboardKpis").innerHTML=
+        kpi("Net Payroll",money(netTotal),scoped.length+" records","gold")+
+        kpi("Paid",money(paidTotal),Math.round(paidPct)+"% settled","green")+
+        kpi("Outstanding",money(balTotal),pending+" records still due","orange")+
+        kpi("Active Workers",String(activeWorkers),STATE.workers.length+" total workers","blue")+
+        kpi("Payroll Records",String(scoped.length),"work records in period","pink");
+    }
+    if(q("fbiPayrollOverviewPeriod")&&!q("fbiPayrollOverviewPeriod").dataset.bound){
+      q("fbiPayrollOverviewPeriod").dataset.bound="1";
+      q("fbiPayrollOverviewPeriod").addEventListener("change",renderOverview);
+    }
+
+    var monthNames=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],months=[];
+    for(var i=5;i>=0;i--){
+      var md=new Date(now.getFullYear(),now.getMonth()-i,1);
+      months.push({key:md.getFullYear()+"-"+String(md.getMonth()+1).padStart(2,"0"),label:monthNames[md.getMonth()]});
+    }
+    var mvals=months.map(function(m){
+      var list=scoped.filter(function(r){return String(r.workDate||"").slice(0,7)===m.key;});
+      return {label:m.label,net:list.reduce(function(s,r){return s+net(r);},0),paid:list.reduce(function(s,r){return s+paid(r);},0)};
+    });
     var mx=Math.max(1,Math.max.apply(Math,mvals.map(function(x){return x.net;})));
-    if(q('fbiPayrollChartRange'))q('fbiPayrollChartRange').textContent=(period==='all'?'Last 6 months':period==='month'?'This month':'This quarter');
-    if(q('fbiPayrollCashflowChart'))q('fbiPayrollCashflowChart').innerHTML=mvals.map(function(x){
-      var nw=x.net/mx*100,pw=x.paid/mx*100;
-      return '<div class="fbi-payroll-chart-row"><div class="fbi-payroll-chart-label">'+esc(x.label)+'</div><div class="fbi-payroll-bars"><div class="fbi-payroll-bar-track"><div class="fbi-payroll-bar-fill net" style="width:'+nw.toFixed(1)+'%"></div></div><div class="fbi-payroll-bar-track"><div class="fbi-payroll-bar-fill paid" style="width:'+pw.toFixed(1)+'%"></div></div></div><div class="fbi-payroll-chart-value">'+esc(money(x.net))+'</div></div>';
-    }).join('');
+    if(q("fbiPayrollChartRange"))q("fbiPayrollChartRange").textContent=period==="all"?"Last 6 months":period==="month"?"This month":"This quarter";
+    if(q("fbiPayrollCashflowChart")){
+      q("fbiPayrollCashflowChart").innerHTML=mvals.map(function(x){
+        var nw=x.net/mx*100,pw=x.paid/mx*100;
+        return "<div class='fbi-payroll-chart-row'><div class='fbi-payroll-chart-label'>"+esc(x.label)+"</div><div class='fbi-payroll-bars'><div class='fbi-payroll-bar-track'><div class='fbi-payroll-bar-fill net' style='width:"+nw.toFixed(1)+"%'></div></div><div class='fbi-payroll-bar-track'><div class='fbi-payroll-bar-fill paid' style='width:"+pw.toFixed(1)+"%'></div></div></div><div class='fbi-payroll-chart-value'>"+esc(money(x.net))+"</div></div>";
+      }).join("");
+    }
 
     var pctDeg=Math.round(paidPct*3.6);
-    if(q('fbiPayrollHealth'))q('fbiPayrollHealth').innerHTML='<div class="fbi-payroll-health"><div class="fbi-payroll-donut" style="background:conic-gradient(#43b977 0deg '+pctDeg+'deg,#dfe7e4 '+pctDeg+'deg 360deg)"><b>'+Math.round(paidPct)+'%</b></div><div class="fbi-payroll-health-copy"><b>'+esc(paidPct>=100?'Fully settled':paidPct>=70?'Healthy payment position':paidPct>0?'Payments in progress':'No payments yet')+'</b><small>'+esc(money(paidTotal))+' paid from '+esc(money(netTotal))+' net payroll.</small><div class="fbi-payroll-health-stats"><div class="fbi-payroll-health-stat"><span>Gross</span><b>'+esc(money(grossTotal))+'</b></div><div class="fbi-payroll-health-stat"><span>Outstanding</span><b>'+esc(money(balTotal))+'</b></div><div class="fbi-payroll-health-stat"><span>Pending / Partial</span><b>'+pending+'</b></div></div></div></div>';
+    if(q("fbiPayrollHealth")){
+      q("fbiPayrollHealth").innerHTML=
+        "<div class='fbi-payroll-health'>"+
+          "<div class='fbi-payroll-donut' style='background:conic-gradient(#43b977 0deg "+pctDeg+"deg,#dfe7e4 "+pctDeg+"deg 360deg)'><b>"+Math.round(paidPct)+"%</b></div>"+
+          "<div class='fbi-payroll-health-copy'><b>"+esc(paidPct>=100?"Fully settled":paidPct>=70?"Healthy payment position":paidPct>0?"Payments in progress":"No payments yet")+"</b>"+
+          "<small>"+esc(money(paidTotal))+" paid from "+esc(money(netTotal))+" net payroll.</small>"+
+          "<div class='fbi-payroll-health-stats'>"+
+            "<div class='fbi-payroll-health-stat'><span>Gross</span><b>"+esc(money(grossTotal))+"</b></div>"+
+            "<div class='fbi-payroll-health-stat'><span>Outstanding</span><b>"+esc(money(balTotal))+"</b></div>"+
+            "<div class='fbi-payroll-health-stat'><span>Pending / Partial</span><b>"+pending+"</b></div>"+
+          "</div></div>"+
+        "</div>";
+    }
 
     var activity=[];
     scoped.forEach(function(r){
-      var w=getWorker(r.workerId)||{},ps=Array.isArray(r.payments)?r.payments:[];
-      if(ps.length){ps.forEach(function(p){activity.push({type:'payment',date:p.date||r.workDate||'',name:w.name||'Unknown worker',meta:(r.project||r.role||'Payroll payment')+' · '+(p.method||''),amount:num(p.amount),recordId:r.id});});}
-      else activity.push({type:'work',date:r.workDate||'',name:w.name||'Unknown worker',meta:(r.project||r.role||'Payroll work')+' · '+(r.basis||''),amount:net(r),recordId:r.id});
+      var w=getWorker(r.workerId)||{};
+      var ps=Array.isArray(r.payments)?r.payments:[];
+      if(ps.length){
+        ps.forEach(function(p){activity.push({type:"payment",date:p.date||r.workDate||"",name:w.name||"Unknown worker",meta:(r.project||r.role||"Payroll payment")+" · "+(p.method||""),amount:num(p.amount),recordId:r.id});});
+      }else{
+        activity.push({type:"work",date:r.workDate||"",name:w.name||"Unknown worker",meta:(r.project||r.role||"Payroll work")+" · "+(r.basis||""),amount:net(r),recordId:r.id});
+      }
     });
-    activity.sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''));});
+    activity.sort(function(a,b){return String(b.date||"").localeCompare(String(a.date||""));});
     activity=activity.slice(0,7);
-    if(q('fbiPayrollRecentActivity'))q('fbiPayrollRecentActivity').innerHTML=activity.length?activity.map(function(a){var initials=String(a.name||'W').trim().split(/\s+/).slice(0,2).map(function(s){return s.charAt(0);}).join('').toUpperCase();return '<div class="fbi-payroll-list-row"><div class="fbi-payroll-avatar">'+esc(initials||'W')+'</div><div class="grow"><b>'+esc(a.name)+'</b><small>'+esc(a.meta)+' · '+esc(a.date)+'</small></div><div class="fbi-payroll-list-amount"><b>'+esc(money(a.amount))+'</b><small>'+esc(a.type==='payment'?'Paid':'Net')</small></div></div>';}).join(''):'<div class="fbi-payroll-empty">No payroll activity yet.</div>';
+    if(q("fbiPayrollRecentActivity")){
+      q("fbiPayrollRecentActivity").innerHTML=activity.length?activity.map(function(item){
+        var initials=String(item.name||"W").trim().split(/\\s+/).slice(0,2).map(function(s){return s.charAt(0);}).join("").toUpperCase();
+        return "<div class='fbi-payroll-list-row'><div class='fbi-payroll-avatar'>"+esc(initials||"W")+"</div><div class='grow'><b>"+esc(item.name)+"</b><small>"+esc(item.meta)+" · "+esc(item.date)+"</small></div><div class='fbi-payroll-list-amount'><b>"+esc(money(item.amount))+"</b><small>"+esc(item.type==="payment"?"Paid":"Net")+"</small></div></div>";
+      }).join(""):"<div class='fbi-payroll-empty'>No payroll activity yet.</div>";
+    }
 
     var dept={};
-    scoped.forEach(function(r){var w=getWorker(r.workerId)||{},key=w.department||'Unassigned';dept[key]=(dept[key]||0)+net(r);});
-    var depts=Object.keys(dept).sort(function(a,b){return dept[b]-dept[a];}).slice(0,6),dmax=depts.length?Math.max.apply(Math,depts.map(function(k){return dept[k];})):1;
-    if(q('fbiPayrollDepartments'))q('fbiPayrollDepartments').innerHTML=depts.length?depts.map(function(k){return '<div class="fbi-payroll-dept-row"><div><div class="fbi-payroll-dept-label">'+esc(k)+'</div><div class="fbi-payroll-dept-bar"><div class="fbi-payroll-dept-fill" style="width:'+((dept[k]/dmax)*100).toFixed(1)+'%"></div></div></div><div class="fbi-payroll-chart-value">'+esc(money(dept[k]))+'</div></div>';}).join(''):'<div class="fbi-payroll-empty">Department totals will appear when payroll records exist.</div>';
+    scoped.forEach(function(r){
+      var w=getWorker(r.workerId)||{},key=w.department||"Unassigned";
+      dept[key]=(dept[key]||0)+net(r);
+    });
+    var depts=Object.keys(dept).sort(function(a,b){return dept[b]-dept[a];}).slice(0,6);
+    var dmax=depts.length?Math.max.apply(Math,depts.map(function(k){return dept[k];})):1;
+    if(q("fbiPayrollDepartments")){
+      q("fbiPayrollDepartments").innerHTML=depts.length?depts.map(function(k){
+        return "<div class='fbi-payroll-dept-row'><div><div class='fbi-payroll-dept-label'>"+esc(k)+"</div><div class='fbi-payroll-dept-bar'><div class='fbi-payroll-dept-fill' style='width:"+((dept[k]/dmax)*100).toFixed(1)+"%'></div></div></div><div class='fbi-payroll-chart-value'>"+esc(money(dept[k]))+"</div></div>";
+      }).join(""):"<div class='fbi-payroll-empty'>Department totals will appear when payroll records exist.</div>";
+    }
 
     var recent=rows.slice(0,10);
-    if(!recent.length){q('fbiPayrollOverviewTable').innerHTML='<div class="fbi-payroll-empty">No payroll activity yet. Create a worker and payroll record to populate the dashboard.</div>';}
-    else q('fbiPayrollOverviewTable').innerHTML='<div class="fbi-payroll-table-wrap"><table class="fbi-payroll-table"><thead><tr><th>Worker</th><th>Project / Event</th><th>Date</th><th class="num">Net</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>'+
-      recent.map(function(r){var w=getWorker(r.workerId);return '<tr><td><b>'+esc(w?.name||'Unknown')+'</b><span class="sub">'+esc(w?.role||'')+'</span></td><td>'+esc(r.project||r.role||'')+'</td><td>'+esc(r.workDate||'')+'</td><td class="num">'+esc(money(net(r)))+'</td><td class="num">'+esc(money(paid(r)))+'</td><td class="num">'+esc(money(balance(r)))+'</td><td>'+badge(status(r))+'</td></tr>';}).join('')+'</tbody></table></div>';
-
-    [
-      ['fbiPayrollQuickWorkers','workers',function(){showWorkerForm();}],
-      ['fbiPayrollQAWorker','workers',function(){showWorkerForm();}],
-      ['fbiPayrollQuickRecord','records',function(){showRecordForm();}],
-      ['fbiPayrollQARecord','records',function(){showRecordForm();}],
-      ['fbiPayrollQAPayslip','payslips',function(){tabs('payslips');}],
-      ['fbiPayrollQAReport','reports',function(){tabs('reports');}],
-      ['fbiPayrollViewRecords','records',function(){tabs('records');}]
-    ].forEach(function(x){var el=q(x[0]);if(el&&!el.dataset.bound){el.dataset.bound='1';el.onclick=x[2];}});
+    if(q("fbiPayrollOverviewTable")){
+      q("fbiPayrollOverviewTable").innerHTML=recent.length?
+        "<div class='fbi-payroll-table-wrap'><table class='fbi-payroll-table'><thead><tr><th>Worker</th><th>Project / Event</th><th>Date</th><th class='num'>Net</th><th class='num'>Paid</th><th class='num'>Balance</th><th>Status</th></tr></thead><tbody>"+
+        recent.map(function(r){
+          var w=getWorker(r.workerId);
+          return "<tr><td><b>"+esc(w&&w.name?w.name:"Unknown")+"</b><span class='sub'>"+esc(w&&w.role?w.role:"")+"</span></td><td>"+esc(r.project||r.role||"")+"</td><td>"+esc(r.workDate||"")+"</td><td class='num'>"+esc(money(net(r)))+"</td><td class='num'>"+esc(money(paid(r)))+"</td><td class='num'>"+esc(money(balance(r)))+"</td><td>"+badge(status(r))+"</td></tr>";
+        }).join("")+
+        "</tbody></table></div>":
+        "<div class='fbi-payroll-empty'>No payroll activity yet. Create a worker and payroll record to populate the dashboard.</div>";
+    }
   }
   function summary(k,v){return '<div class="fbi-payroll-summary-item"><span>'+esc(k)+'</span><b>'+esc(v)+'</b></div>';}
 
