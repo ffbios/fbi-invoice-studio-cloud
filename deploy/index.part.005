@@ -128,11 +128,13 @@ let serverPersistQueue=Promise.resolve();
 let serverDbOnline=false;
 let lastServerPersistAt=0;
 let pendingInvoiceDeletes=[];
+let pendingClientDeletes=[];
 
 function persist(){
   const deleteIds=pendingInvoiceDeletes.slice();
+  const clientDeleteIds=pendingClientDeletes.slice();
   const payload={data,clients,settings};
-  const envelope={version:4,savedAt:Date.now(),data:payload,deletedInvoiceIds:deleteIds};
+  const envelope={version:4,savedAt:Date.now(),data:payload,deletedInvoiceIds:deleteIds,deletedClientIds:clientDeleteIds};
   const json=JSON.stringify(envelope);
   // Keep the existing browser fallback, but make the local SQLite server the primary store.
   safeStorageSet(window.localStorage,KEY,json);
@@ -149,6 +151,7 @@ function persist(){
       serverDbOnline=true;
       lastServerPersistAt=envelope.savedAt;
       if(deleteIds.length) pendingInvoiceDeletes=pendingInvoiceDeletes.filter(id=>!deleteIds.includes(id));
+      if(clientDeleteIds.length) pendingClientDeletes=pendingClientDeletes.filter(id=>!clientDeleteIds.includes(id));
       const st=$('storageStatus');
       if(st)st.textContent='Cloud PostgreSQL database is connected. Your invoices, clients and settings are stored securely in the cloud.';
       return true;
@@ -525,7 +528,17 @@ function saveCurrentClient(){const name=$("client").value.trim();if(!name){toast
 function clearClientForm(){$("clientId").value="";$("dbClientName").value="";$("dbClientPhone").value="";$("dbClientEmail").value="";$("dbClientAddress").value="";$("dbClientNotes").value="";$("clientFormTitle").textContent="Add Client"}
 function saveClient(){const name=$("dbClientName").value.trim();if(!name){toast("Client name is required");return}const id=$("clientId").value;let c=id?clients.find(x=>x.id===id):null;if(!c){c={id:("av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10)),createdAt:new Date().toISOString()};clients.unshift(c)}c.name=name;c.phone=$("dbClientPhone").value.trim();c.email=$("dbClientEmail").value.trim();c.address=$("dbClientAddress").value.trim();c.notes=$("dbClientNotes").value.trim();persist();clearClientForm();populateClientSelect();renderClients();toast("Client saved")}
 function editClient(id){const c=clients.find(x=>x.id===id);if(!c)return;$("clientId").value=c.id;$("dbClientName").value=c.name||"";$("dbClientPhone").value=c.phone||"";$("dbClientEmail").value=c.email||"";$("dbClientAddress").value=c.address||"";$("dbClientNotes").value=c.notes||"";$("clientFormTitle").textContent="Edit Client";show("clients")}
-function deleteClient(id){if(!confirm("Delete this client from the database? Existing invoices will remain unchanged."))return;clients=clients.filter(x=>x.id!==id);persist();populateClientSelect();renderClients();toast("Client deleted")}
+function deleteClient(id){
+  if(!confirm("Delete this client from the database? Existing invoices will remain unchanged."))return;
+  const target=clients.find(x=>x.id===id);
+  const deleteId=target?.id||id;
+  clients=clients.filter(x=>x.id!==id);
+  if(deleteId)pendingClientDeletes.push(String(deleteId));
+  persist();
+  populateClientSelect();
+  renderClients();
+  toast("Client deleted")
+}
 function useClient(id){const c=clients.find(x=>x.id===id);if(!c)return;newInvoice();$("client").value=c.name||"";$("clientAddress").value=c.address||"";$("clientPhone").value=c.phone||"";$("clientEmail").value=c.email||"";$("clientSelect").value=c.id;show("create")}
 function parseCsvLine(line){
   const out=[];let cur="",quoted=false;
