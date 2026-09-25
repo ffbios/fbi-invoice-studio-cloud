@@ -504,3 +504,20 @@ label{display:block;color:#a0a8b7;font-size:11px;margin:10px 0 5px}input,textare
 .paper.template-29 .paper-footer{border-top:2px solid hsl(63 50% 28%);margin-top:30px}
 .paper.template-29 .watermark{color:hsl(63 50% 28%);opacity:0.065}
 
+
+/* FBI STUDIO UI POLISH v1 */
+:root{--fbi-gold:#c9a227;--fbi-gold-soft:#e3c75d}
+body{background:radial-gradient(circle at 86% -8%,rgba(201,162,39,.09),transparent 31%),#07080b;letter-spacing:.01em}
+.side{width:252px;background:linear-gradient(180deg,#0d0f14,#090b0f);border-right:1px solid #252b35;box-shadow:12px 0 40px rgba(0,0,0,.14)}
+.brand{height:76px;padding:16px 19px;border-bottom:1px solid #252b35}.brand .dot{width:10px;height:10px;background:var(--fbi-gold);box-shadow:0 0 18px rgba(201,162,39,.4)}.brand>div{font-size:14px}.brand small{color:#7d8695;font-size:9px}
+.nav{padding:13px 10px}.nav button,.nav .nav-link{margin:3px 0;border:1px solid transparent;border-left:3px solid transparent;border-radius:8px;padding:11px 13px;color:#8992a1;font-size:11px;font-weight:700}.nav button:hover,.nav button.active,.nav .nav-link:hover,.nav .nav-link.active{background:linear-gradient(90deg,rgba(201,162,39,.12),rgba(201,162,39,.025));color:#fff;border-color:#2b303a;border-left-color:var(--fbi-gold)}
+.sidefoot{padding:15px 17px;color:#646d7c;font-size:9px}.top{height:72px;padding:12px 28px;background:rgba(10,12,16,.9);backdrop-filter:blur(16px);border-bottom:1px solid #252b35}.top h1{font-size:18px}.top small{font-size:10px;color:#818a99}
+.view{padding:28px;max-width:1540px;margin:0 auto;width:100%}.btn{border-radius:9px;border-color:#303744;background:#151922;min-height:36px;padding:8px 13px;font-size:10px;font-weight:800}.btn.primary{background:linear-gradient(135deg,#b48c16,#d4b33f);border-color:#d4b33f;color:#0b0c0f;box-shadow:0 7px 20px rgba(201,162,39,.12)}
+.card,.stat{background:linear-gradient(145deg,rgba(21,25,34,.98),rgba(14,17,23,.98));border:1px solid #272d38;border-radius:14px;box-shadow:0 12px 35px rgba(0,0,0,.12)}.card{padding:19px}.card h3{color:#d7b641;font-size:10px;letter-spacing:1.05px}
+input,textarea,select{background:#090c11;border-color:#2d3440;border-radius:8px;min-height:38px}input:focus,textarea:focus,select:focus{border-color:#a98922;box-shadow:0 0 0 3px rgba(201,162,39,.08)}label{font-size:10px;font-weight:700;color:#9da5b3}
+.dashboard-stats{gap:12px}.dashboard-stats .stat{padding:18px;position:relative;overflow:hidden}.dashboard-stats .stat:after{content:"";position:absolute;right:-28px;top:-38px;width:90px;height:90px;border-radius:50%;background:rgba(201,162,39,.045)}.dashboard-stats .stat span{font-size:9px;letter-spacing:.9px}.dashboard-stats .stat b{font-size:22px}.dashboard-stats .stat .accent{color:#e2c34f}
+.overview-item,.saved,.item{background:#0d1016;border-color:#282e39;border-radius:10px}.overview-item{padding:12px}.overview-item b{font-size:15px}.dashboard-main-grid{margin-top:18px}.recent{margin-top:18px}.dashboard-table th{font-size:8px;letter-spacing:.7px}.dashboard-table td{font-size:10px}
+#view-dashboard:before{content:"BUSINESS OVERVIEW  •  FBI INVOICE STUDIO";display:block;color:#d7b641;font-size:9px;font-weight:900;letter-spacing:1.8px;margin:0 0 10px}
+#view-dashboard>.report-toolbar{position:relative;display:flex;justify-content:space-between;align-items:center;margin-bottom:17px;padding:18px 20px;border:1px solid #2d333e;border-radius:16px;background:linear-gradient(120deg,rgba(201,162,39,.09),rgba(255,255,255,.015) 45%,transparent);box-shadow:0 15px 40px rgba(0,0,0,.12)}
+#view-dashboard>.report-toolbar:before{content:"Your invoicing command center";font-size:20px;font-weight:800;letter-spacing:-.4px;color:#f5f6f8}#view-dashboard>.report-toolbar:after{content:"Monitor invoices, collections, balances and client activity.";position:absolute;left:20px;bottom:9px;color:#858e9f;font-size:9px}
+@media(max-width:600px){.view{padding:12px}.top{height:64px;padding:12px 14px}#view-dashboard>.report-toolbar{align-items:flex-end;padding:15px;min-height:82px}#view-dashboard>.report-toolbar:before{font-size:16px}.dashboard-stats .stat b{font-size:20px}}
