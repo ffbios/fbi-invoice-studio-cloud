@@ -29,69 +29,6 @@
 /* ===== PAYMENT RECEIPTS ===== */
 .receipt-paper{width:148mm;min-height:210mm;background:#fff;color:#1a1d22;margin:auto;padding:13mm 12mm;box-shadow:0 10px 40px #0008;font-family:Arial,sans-serif;font-size:10px;position:relative}.receipt-header{display:grid;grid-template-columns:1fr 170px;gap:20px;align-items:start;border-bottom:2px solid #11131a;padding-bottom:14px}.receipt-brand{display:flex;gap:14px;align-items:flex-start}.receipt-logo{width:86px;height:56px;background:#08090c center/contain no-repeat;border-radius:4px;overflow:hidden}.receipt-biz h2{font-size:16px;line-height:1.15;margin:0 0 7px;font-weight:850}.receipt-biz div{font-size:8.5px;line-height:1.55;color:#5f6671}.receipt-meta{text-align:right}.receipt-meta .label{font-size:7px;letter-spacing:1.2px;text-transform:uppercase;color:#8a919c;font-weight:800;margin:0}.receipt-meta .receipt-no{font-size:19px;font-weight:900;color:#b18a2c;margin:4px 0 9px}.receipt-meta .date{font-size:9px;color:#3f4650}.receipt-title{margin:18px 0 10px;font-size:22px;font-weight:900;letter-spacing:1px;color:#11131a}.receipt-paid-badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:#e9f8f0;color:#167546;font-size:8px;font-weight:900;letter-spacing:.8px;text-transform:uppercase}.receipt-paid-badge.partial{background:#fff4d9;color:#8a6400}.receipt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}.receipt-info{border:1px solid #e4e6ea;border-radius:9px;padding:12px;background:#fafbfc;min-height:72px}.receipt-info .k{font-size:7px;color:#9299a5;letter-spacing:1.2px;text-transform:uppercase;font-weight:800;margin-bottom:6px}.receipt-info .v{font-size:10px;font-weight:750;line-height:1.45;color:#232830}.receipt-items{width:100%;border-collapse:collapse;margin-top:16px}.receipt-items th{font-size:7px;letter-spacing:.8px;text-transform:uppercase;text-align:left;color:#747c87;padding:8px 0;border-bottom:1px solid #cfd3d9}.receipt-items td{padding:8px 0;border-bottom:1px solid #eceef1;font-size:8.8px}.receipt-items th:not(:first-child),.receipt-items td:not(:first-child){text-align:right}.receipt-total{margin-top:18px;display:flex;justify-content:flex-end}.receipt-total-box{width:260px;border:1px solid #dfe2e6;border-radius:10px;overflow:hidden}.receipt-total-line{display:flex;justify-content:space-between;padding:8px 12px;font-size:9px}.receipt-total-line span{color:#707782}.receipt-total-line.total{background:#11131a;color:#fff;font-size:12px;font-weight:900;padding:12px}.receipt-total-line.total span{color:#fff}.receipt-total-line.balance{border-top:1px dashed #d3d6da;font-size:10px;font-weight:850}.receipt-total-line.balance b{color:#b18a2c}.receipt-note{margin-top:18px;padding:10px 12px;border-left:3px solid #b18a2c;background:#fff9e7;border-radius:5px;color:#5f4b13;font-size:8.5px;line-height:1.5}.receipt-sign{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:32px}.receipt-sign .line{border-top:1px solid #aab0b8;padding-top:6px;font-size:7.5px;color:#737b87}.receipt-footer{margin-top:28px;border-top:1px solid #e3e5e8;padding-top:10px;font-size:7.5px;color:#858d98;line-height:1.5}.receipt-footer b{color:#4c535e}.receipt-list{display:grid;gap:8px}.receipt-row{display:flex;align-items:center;gap:10px;border:1px solid #2b303b;background:#10131a;border-radius:8px;padding:10px}.receipt-row .grow{flex:1;min-width:0}.receipt-row .main{font-size:11px;font-weight:850}.receipt-row .meta{color:#727b89;font-size:9px;margin-top:3px}.receipt-row .amount{font-weight:900;font-size:11px}.receipt-empty{text-align:center;color:#737c8b;padding:24px;border:1px dashed #3a404c;border-radius:10px}@media(max-width:700px){.receipt-paper{width:100%;min-height:0;padding:8mm}.receipt-header,.receipt-grid{grid-template-columns:1fr}.receipt-meta{text-align:left}.receipt-sign{grid-template-columns:1fr}}@media print{@page{size:A5 portrait;margin:10mm}body.receipt-print-mode{background:#fff;display:block}body.receipt-print-mode .side,body.receipt-print-mode .top,body.receipt-print-mode .no-print{display:none!important}body.receipt-print-mode .view{display:none!important}body.receipt-print-mode #view-receipt-preview{display:block!important;padding:0}body.receipt-print-mode .preview-wrap{padding:0;background:#fff}body.receipt-print-mode .receipt-paper{box-shadow:none;margin:0;width:100%;min-height:0}}
 
-/* Modern authentication screen */
-body.auth-locked .side,body.auth-locked .main{display:none!important}
-#authView{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 15% 10%,rgba(216,0,91,.18),transparent 32%),radial-gradient(circle at 85% 85%,rgba(255,255,255,.06),transparent 30%),#07080d;color:#fff;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
-#authView[hidden]{display:none!important}#authView:not([hidden]){display:flex!important}body.auth-locked{overflow:hidden!important}
-.auth-shell{width:min(980px,100%);min-height:610px;display:grid;grid-template-columns:1.05fr .95fr;border:1px solid rgba(255,255,255,.10);border-radius:28px;overflow:hidden;background:rgba(16,18,25,.94);box-shadow:0 30px 100px rgba(0,0,0,.55)}
-.auth-brand{padding:52px;background:linear-gradient(145deg,rgba(214,0,88,.22),rgba(11,12,18,.3));display:flex;flex-direction:column;justify-content:space-between}
-.auth-brand .auth-logo{display:flex;align-items:center;gap:13px;font-size:22px;font-weight:900}.auth-brand .auth-dot{width:13px;height:13px;border-radius:50%;background:#d9005b;box-shadow:0 0 25px rgba(217,0,91,.65)}
-.auth-brand h2{font-size:42px;line-height:1.04;margin:25px 0 14px;max-width:430px}.auth-brand p{color:#aeb4c2;line-height:1.7;max-width:430px}.auth-feature{display:grid;gap:10px;margin-top:28px}.auth-feature div{padding:13px 15px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.025);color:#d8dce6;font-size:13px}
-.auth-panel{padding:52px 46px;display:flex;align-items:center}.auth-card{width:100%;max-width:420px;margin:auto}.auth-card h3{font-size:30px;margin:0 0 8px}.auth-card .auth-sub{color:#8e96a7;margin:0 0 28px;line-height:1.55}.auth-field{margin-bottom:16px}.auth-field label{display:block;font-size:12px;color:#aab0bf;margin-bottom:7px}.auth-field input{width:100%;height:48px;border:1px solid #343a49;background:#0b0d13;color:#fff;border-radius:10px;padding:0 14px;outline:none}.auth-field input:focus{border-color:#d9005b;box-shadow:0 0 0 3px rgba(217,0,91,.12)}.auth-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:18px 0}.auth-link{border:0;background:none;color:#ff4f98;cursor:pointer;padding:4px;font:inherit}.auth-primary{width:100%;height:50px;border:0;border-radius:11px;background:#d9005b;color:#fff;font-weight:800;cursor:pointer}.auth-primary:hover{filter:brightness(1.08)}.auth-message{min-height:20px;margin:12px 0;font-size:13px;color:#f0a4a4;line-height:1.45}.auth-recovery{padding:14px;border:1px solid rgba(255,255,255,.10);background:#0b0d13;border-radius:12px;margin:15px 0;color:#cdd3df;font-size:13px}.auth-recovery code{display:block;font-size:20px;letter-spacing:2px;color:#fff;margin-top:8px;text-align:center}.auth-small{color:#737b8d;font-size:11px;margin-top:16px;line-height:1.5}.logout-btn{margin-top:14px;width:100%;height:38px}.top .danger{border-color:#5a2634;background:#24151b;color:#ff9aa8}#no[readonly]{cursor:not-allowed;opacity:.9}
-@media(max-width:760px){.auth-shell{grid-template-columns:1fr;min-height:auto}.auth-brand{display:none}.auth-panel{padding:34px 22px}.auth-card h3{font-size:26px}}
-
-/* FBI branded authentication screen */
-.auth-screen, #auth-overlay {
-  background:
-    radial-gradient(circle at 50% 18%, rgba(255,193,7,.10), transparent 34%),
-    #080a0f !important;
-}
-.fbi-login-brand{
-  width:100%;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  margin:0 auto 22px;
-  overflow:hidden;
-  border-radius:18px;
-  background:#080a0f;
-}
-.fbi-login-brand img{
-  display:block;
-  width:min(100%,420px);
-  height:auto;
-  max-height:190px;
-  object-fit:contain;
-  border-radius:16px;
-  box-shadow:0 14px 45px rgba(0,0,0,.45);
-}
-
-/* ===== FBI CINEMATIC LANDSCAPE LOGIN — FINAL DESIGN ===== */
-body.auth-locked{overflow:hidden!important}
-#authView{position:fixed!important;inset:0!important;z-index:99999!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:clamp(18px,3vw,42px)!important;background:radial-gradient(circle at 15% 20%,rgba(189,27,99,.18),transparent 28%),radial-gradient(circle at 85% 75%,rgba(225,174,70,.10),transparent 30%),#07090e!important;color:#fff!important}
-#authView[hidden]{display:none!important}
-.fbi-auth-shell{width:min(1260px,96vw);height:min(760px,88vh);min-height:620px;display:grid;grid-template-columns:1.12fr .88fr;overflow:hidden;position:relative;border:1px solid rgba(255,255,255,.16);border-radius:26px;background:#0d1016;box-shadow:0 35px 100px rgba(0,0,0,.65),0 0 80px rgba(189,27,99,.08)}
-.fbi-auth-visual{position:relative;overflow:hidden;min-width:0;background:#07080c}
-.fbi-auth-visual-bg{position:absolute;inset:0;background-image:linear-gradient(135deg,#07080b 0%,#160b13 52%,#0a1017 100%);background-size:200% 100%;background-position:left center;background-repeat:no-repeat;filter:saturate(.9) contrast(1.05);transform:scale(1.015)}
-.fbi-auth-visual-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.12),rgba(0,0,0,.06) 58%,rgba(7,9,14,.34)),linear-gradient(180deg,rgba(7,9,14,.05),rgba(7,9,14,.18))}
-.fbi-auth-visual-content{position:relative;z-index:2;height:100%;padding:48px;display:flex;flex-direction:column;justify-content:space-between}
-.fbi-auth-kicker{font-size:10px;letter-spacing:3px;line-height:1.9;color:#e8e9ed;max-width:330px;text-transform:uppercase}
-.fbi-auth-logo-wrap{width:min(430px,80%);margin-top:28px}.fbi-auth-logo-wrap img{width:100%;height:auto;display:block;filter:drop-shadow(0 12px 22px rgba(0,0,0,.45))}
-.fbi-auth-tagline{font-family:cursive;font-style:italic;font-size:34px;line-height:1.05;color:#e5b83f;text-shadow:0 3px 18px #000;margin-top:12px;max-width:280px}
-.fbi-auth-benefits{display:grid;grid-template-columns:repeat(4,1fr);gap:0;max-width:650px;margin-top:auto;padding-top:30px}
-.fbi-auth-benefits>div{padding:0 20px;border-right:1px solid rgba(255,255,255,.24);display:flex;flex-direction:column;gap:4px}.fbi-auth-benefits>div:first-child{padding-left:0}.fbi-auth-benefits>div:last-child{border-right:0}.fbi-auth-benefits span{font-size:22px;color:#e5b83f}.fbi-auth-benefits b{font-size:12px;letter-spacing:1px}.fbi-auth-benefits small{font-size:10px;color:#aeb5c2}
-.fbi-auth-panel{position:relative;background:linear-gradient(145deg,#11151c,#0b0e14);padding:46px 56px;display:flex;flex-direction:column;justify-content:center}
-.fbi-auth-panel-top{display:flex;align-items:center;gap:12px;margin-bottom:42px}.fbi-auth-dot{width:13px;height:13px;border-radius:50%;background:#d01963;box-shadow:0 0 22px rgba(208,25,99,.6)}.fbi-auth-panel-top strong{display:block;font-size:14px;letter-spacing:1.5px}.fbi-auth-panel-top small{display:block;color:#8e96a5;font-size:11px;margin-top:4px}
-.fbi-auth-card{width:100%;max-width:470px;margin:0 auto}.fbi-auth-card h3{font-size:38px;line-height:1.1;margin:0 0 9px;letter-spacing:-.8px}.fbi-auth-card .auth-sub{font-size:14px;color:#929aa9;line-height:1.55;margin:0 0 28px}.fbi-auth-card .auth-field{margin-bottom:16px}.fbi-auth-card .auth-field label{display:block;font-size:11px;color:#b0b6c3;margin:0 0 7px}.fbi-auth-card .auth-field input{height:54px;background:#0b0f15;border:1px solid #37404e;border-radius:10px;padding:0 15px;color:#fff;font-size:13px}.fbi-auth-card .auth-field input:focus{border-color:#d01963;box-shadow:0 0 0 3px rgba(208,25,99,.12)}
-.fbi-password-wrap{position:relative}.fbi-password-wrap input{padding-right:52px!important}.fbi-eye{position:absolute;right:7px;top:7px;height:40px;width:40px;border:0;background:transparent;color:#aab1bf;cursor:pointer}.fbi-eye:hover{color:#fff}
-.fbi-auth-card .auth-actions{display:flex;align-items:center;justify-content:space-between;margin:17px 0 20px}.fbi-remember{display:flex!important;align-items:center;gap:8px!important;color:#c3c8d2!important;font-size:12px!important;margin:0!important;cursor:pointer}.fbi-remember input{width:16px!important;height:16px!important;accent-color:#d01963;cursor:pointer}
-.auth-link{border:0;background:none;color:#e72b78;cursor:pointer;padding:3px;font-size:12px}.auth-primary{width:100%;height:54px;border:0;border-radius:10px;background:linear-gradient(90deg,#bd0e56,#dc176d);color:#fff;font-weight:900;letter-spacing:.2px;cursor:pointer;box-shadow:0 12px 28px rgba(189,14,86,.22)}.auth-primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
-.fbi-or{display:flex;align-items:center;gap:12px;margin:25px 0}.fbi-or span{height:1px;background:#303744;flex:1}.fbi-or b{font-size:10px;color:#87909f;font-weight:500}.fbi-create{width:100%;height:52px;border:1px solid #8d939d;border-radius:9px;background:transparent;color:#fff;font-weight:800;cursor:pointer}.fbi-create:hover{border-color:#e5b83f;color:#e5b83f}
-.auth-message{min-height:20px;margin:12px 0;font-size:12px;color:#f0a4a4;line-height:1.45}.fbi-quote{text-align:center;color:#7e8695;font-size:11px;font-style:italic;letter-spacing:.5px;margin-top:30px}.fbi-auth-panel-foot{position:absolute;left:56px;right:56px;bottom:20px;display:flex;justify-content:space-between;gap:15px;color:#646d7d;font-size:9px}
-@media(max-width:980px){.fbi-auth-shell{width:96vw;height:90vh;grid-template-columns:1fr .9fr}.fbi-auth-visual-content{padding:32px}.fbi-auth-panel{padding:34px}.fbi-auth-card h3{font-size:31px}.fbi-auth-panel-foot{left:34px;right:34px}}
-@media(max-width:760px){#authView{padding:12px!important}.fbi-auth-shell{width:100%;height:100%;min-height:0;max-height:none;grid-template-columns:1fr;border-radius:18px}.fbi-auth-visual{display:none}.fbi-auth-panel{padding:32px 24px}.fbi-auth-panel-top{margin-bottom:28px}.fbi-auth-card h3{font-size:30px}.fbi-auth-panel-foot{position:static;margin-top:28px;flex-direction:column;text-align:center}}
-
-
 /* Final invoice readability override: line items are intentionally larger and bolder. */
 .paper .invtable th{font-size:12px !important}
 .paper .invtable td{font-size:14px !important;font-weight:600 !important}
@@ -277,7 +214,12 @@ body.auth-locked{overflow:hidden!important}
   .fbi-auth-card .auth-sub{font-size:12px}
   .fbi-auth-panel{padding-left:18px;padding-right:18px}
 }
-</style>
+.completed-jobs-head{display:flex;justify-content:space-between;gap:18px;align-items:center}
+.completed-job-stats{margin-top:14px}
+.completed-status-done{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:#e8f7ef;color:#147a48;font-size:11px;font-weight:800}
+.completed-status-open{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:#fff6df;color:#8a6400;font-size:11px;font-weight:800}
+@media(max-width:760px){.completed-jobs-head{align-items:flex-start;flex-direction:column}}
+ .job-status-inline{display:inline-flex;align-items:center;gap:5px;padding:0 6px;border:1px solid #343a48;border-radius:7px;background:#0d1016;color:#9ca5b4;font-size:9px}.job-status-inline span{font-weight:700}.job-status-select{border:0;background:transparent;color:#e8ebf0;font:inherit;outline:none;cursor:pointer;padding:4px 2px}.job-status-select option{background:#11141b;color:#fff}.job-status-badge{display:inline-flex;padding:4px 7px;border-radius:999px;font-size:8px;font-weight:800;white-space:nowrap;background:#eef1f5;color:#4d5663}.job-status-badge.completed{background:#e7f7ee;color:#147a48}.job-status-badge.in-progress{background:#fff4dc;color:#936600}.job-status-badge.scheduled{background:#edf4ff;color:#235fa9}.job-status-badge.cancelled{background:#fff0f1;color:#b42332}.job-status-badge.not-started{background:#eef1f5;color:#59616d}</style>
 <style>.calendar-main-card{overflow:hidden}.calendar-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}.calendar-actions{display:flex;gap:7px;flex-wrap:wrap}.calendar-title-row{display:grid;grid-template-columns:42px 1fr 42px;align-items:center;gap:8px;margin:14px 0}.calendar-title-btn{width:42px;padding:8px}.calendar-month-title{text-align:center;font-size:18px;font-weight:900}.calendar-grid-wrap{overflow:auto}.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;min-width:720px}.calendar-weekday{padding:8px 6px;text-align:center;color:#7d8695;font-size:9px;text-transform:uppercase;letter-spacing:.7px}.calendar-day{min-height:112px;padding:7px;border:1px solid #2b303b;background:#0f1218;border-radius:9px;overflow:hidden}.calendar-day.other-month{opacity:.4}.calendar-day.today{border-color:#bd1b63;box-shadow:inset 0 0 0 1px #bd1b63}.calendar-day-number{font-size:10px;font-weight:900;color:#cbd1db;margin-bottom:6px}.calendar-event{display:block;width:100%;border:1px solid #3a3045;background:#1b1420;color:#fff;border-radius:6px;padding:6px;text-align:left;margin-top:5px;cursor:pointer}.calendar-event:hover{border-color:#bd1b63;background:#24162a}.calendar-event .event-no{display:block;font-size:9px;font-weight:900}.calendar-event .event-client{display:block;font-size:8px;color:#aeb6c4;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.calendar-event .event-cat{display:block;font-size:7px;color:#e6a1c1;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.calendar-event .event-status{display:block;margin-top:4px}.calendar-event .event-status .status-pill{font-size:7px;padding:3px 5px}.calendar-more{font-size:8px;color:#858e9f;margin-top:5px;text-align:center}.calendar-event-list{margin-top:16px;border-top:1px solid #2b303c;padding-top:12px}.calendar-list-row{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #282e38}.calendar-list-date{width:72px;flex:0 0 72px;text-align:center}.calendar-list-date b{display:block;font-size:13px}.calendar-list-date small{display:block;color:#858e9f;font-size:8px;text-transform:uppercase}.calendar-list-main{flex:1;min-width:0}.calendar-list-main b{display:block;font-size:10px}.calendar-list-main small{display:block;color:#7d8695;font-size:8px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.calendar-list-right{text-align:right}.calendar-list-right b{display:block;font-size:10px}.calendar-list-right small{color:#7d8695;font-size:8px}.calendar-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.72);backdrop-filter:blur(5px);z-index:200}.calendar-modal.show{display:flex}.calendar-dialog{width:min(980px,96vw);max-height:92vh;overflow:auto;background:#11141b;border:1px solid #343a48;border-radius:14px;box-shadow:0 30px 90px #000b}.calendar-dialog-head{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:16px 18px;background:#11141bf5;border-bottom:1px solid #2b303c}.calendar-dialog-head h3{margin:0;color:#fff;font-size:14px}.calendar-dialog-head small{display:block;color:#858e9f;font-size:9px;margin-top:4px}.calendar-dialog-body{padding:18px}.calendar-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.calendar-detail-card{border:1px solid #2b303b;background:#0d1016;border-radius:9px;padding:11px}.calendar-detail-card.full{grid-column:1/-1}.calendar-detail-card span{display:block;color:#7d8695;font-size:8px;text-transform:uppercase;letter-spacing:.7px}.calendar-detail-card b{display:block;color:#fff;font-size:11px;margin-top:5px;line-height:1.45;word-break:break-word}.calendar-detail-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:9px}.calendar-detail-table th{padding:7px;text-align:left;color:#858e9f;background:#0d1016;border-bottom:1px solid #343a48;text-transform:uppercase}.calendar-detail-table td{padding:8px 7px;border-bottom:1px solid #282e38}.calendar-detail-table td:not(:first-child),.calendar-detail-table th:not(:first-child){text-align:right}.calendar-detail-section-title{margin:16px 0 8px;color:#e63d7e;font-size:10px;text-transform:uppercase;letter-spacing:.7px}.calendar-dialog-actions{display:flex;justify-content:flex-end;gap:7px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid #2b303c}@media(max-width:600px){.calendar-actions{width:100%}.calendar-actions .btn{flex:1}.calendar-detail-grid{grid-template-columns:1fr}.calendar-detail-card.full{grid-column:auto}.calendar-dialog{width:98vw}.calendar-dialog-body{padding:12px}}</style>
 
 <script>
@@ -288,7 +230,7 @@ body.auth-locked{overflow:hidden!important}
       var target=document.getElementById('view-'+v);
       if(target) target.classList.add('active');
       document.querySelectorAll('.nav button').forEach(function(btn){btn.classList.toggle('active',btn.getAttribute('data-v')===v);});
-      var titles={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Completed Jobs','Track finished work and generate completion reports'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']};
+      var titles={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Jobs','Manage job status linked to every invoice'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']};
       var t=titles[v]||['Invoice Studio',''];
       var title=document.getElementById('title'); if(title) title.textContent=t[0];
       var sub=document.getElementById('subtitle'); if(sub) sub.textContent=t[1];
@@ -312,7 +254,7 @@ body.auth-locked{overflow:hidden!important}
   var valid={dashboard:1,create:1,clients:1,saved:1,calendar:1,receipts:1,settings:1,whatsapp:1,completed:1};
   var v=id.replace(/^view-/,''); if(!valid[v]) v='dashboard';
   document.querySelectorAll('.nav-link').forEach(function(a){a.classList.toggle('active',a.dataset.v===v);});
-  var title={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Completed Jobs','Track finished work and generate completion reports'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']}[v];
+  var title={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Jobs','Manage job status linked to every invoice'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']}[v];
   if(document.getElementById('title')) document.getElementById('title').textContent=title[0];
   if(document.getElementById('subtitle')) document.getElementById('subtitle').textContent=title[1];
   try{if(v==='create' && typeof initServiceCatalog==='function')initServiceCatalog();}catch(e){}
@@ -323,62 +265,6 @@ body.auth-locked{overflow:hidden!important}
 </script>
 </head>
 <body>
-<div id="authView" hidden aria-label="FBI Invoice Studio authentication">
-  <div class="fbi-auth-shell">
-    <section class="fbi-auth-visual" aria-label="FBI branding">
-      <div class="fbi-auth-visual-bg"></div>
-      <div class="fbi-auth-visual-overlay"></div>
-      <div class="fbi-auth-visual-content">
-        <div class="fbi-auth-kicker">PRODUCTION · LIVE STREAMING · PHOTOGRAPHY · ADVERTISING · DRONE WORKS</div>
-        <div class="fbi-auth-logo-wrap">
-          <img src="/assets/fbi-brand-logo.svg" alt="FBI — Film Beyond Imagination">
-        </div>
-        <div class="fbi-auth-tagline">Turning Ideas Into Reality</div>
-        <div class="fbi-auth-benefits">
-          <div><span>▣</span><b>INVOICES</b><small>Professional</small></div>
-          <div><span>♧</span><b>CLIENTS</b><small>Organised</small></div>
-          <div><span>☁</span><b>CLOUD</b><small>Local Storage</small></div>
-          <div><span>▥</span><b>GROWTH</b><small>Simplified</small></div>
-        </div>
-      </div>
-    </section>
-    <section class="fbi-auth-panel">
-      <div class="fbi-auth-panel-top"><span class="fbi-auth-dot"></span><div><strong>FBI INVOICE STUDIO</strong><small>Your Business. Our Technology.</small></div></div>
-      <div class="fbi-auth-card">
-        <div id="loginPanel">
-          <h3 id="authTitle">Welcome Back</h3>
-          <p class="auth-sub" id="authSub">Sign in to access your invoicing workspace.</p>
-          <form id="authForm" onsubmit="return handleAuth(event)">
-            <div class="auth-field"><label>Username</label><input id="authUser" autocomplete="username" required placeholder="Enter your username"></div>
-            <div class="auth-field"><label>Password</label><div class="fbi-password-wrap"><input id="authPass" type="password" autocomplete="current-password" required placeholder="Enter your password"><button type="button" class="fbi-eye" onclick="togglePasswordField('authPass',this)" aria-label="Show password">◉</button></div></div>
-            <div class="auth-field" id="authConfirmWrap" style="display:none"><label>Confirm Password</label><input id="authPassConfirm" type="password" autocomplete="new-password" placeholder="Confirm your password"></div>
-            <div class="auth-actions">
-              <label class="fbi-remember"><input type="checkbox" id="rememberMe"> <span>Remember me</span></label>
-              <button type="button" class="auth-link" onclick="showForgotPassword()">Forgot password?</button>
-            </div>
-            <button class="auth-primary" id="authSubmit" type="submit">Sign In</button>
-            <div class="fbi-or"><span></span><b>OR</b><span></span></div>
-            <button type="button" class="fbi-create" id="createAccountLink" onclick="switchToCreateAccount()">＋ &nbsp;Create Account</button>
-            <div id="authMsg" class="auth-message"></div>
-          </form>
-          <div class="fbi-quote">“Tools for a more organised creative business.”</div>
-        </div>
-        <div id="forgotPanel" style="display:none">
-          <h3>Reset Your Password</h3>
-          <p class="auth-sub">Use the recovery code generated when your account was created.</p>
-          <div class="auth-field"><label>Username</label><input id="forgotUser" autocomplete="username"></div>
-          <div class="auth-field"><label>Recovery Code</label><input id="forgotCode" autocomplete="off" placeholder="XXXX-XXXX-XXXX-XXXX"></div>
-          <div class="auth-field"><label>New Password</label><input id="forgotNew" type="password" autocomplete="new-password"></div>
-          <div class="auth-field"><label>Confirm New Password</label><input id="forgotNewConfirm" type="password" autocomplete="new-password"></div>
-          <button class="auth-primary" type="button" onclick="resetPasswordWithRecovery()">Reset Password</button>
-          <div id="forgotMsg" class="auth-message"></div>
-          <div class="auth-actions"><button type="button" class="auth-link" onclick="hideForgotPassword()">← Back to sign in</button></div>
-        </div>
-      </div>
-      <div class="fbi-auth-panel-foot"><span>© 2026 FBI Invoice Studio. All rights reserved.</span><span>Accra, Ghana&nbsp; | &nbsp;Film Beyond Imagination</span></div>
-    </section>
-  </div>
-</div>
 <aside class="side" id="side">
   <div class="brand"><span class="dot"></span><div>Invoice Studio<small>Professional invoicing system</small></div></div>
   <div class="nav">
@@ -397,7 +283,7 @@ body.auth-locked{overflow:hidden!important}
 <main class="main">
 <header class="top no-print">
   <div style="display:flex;align-items:center;gap:10px"><button class="btn hamb" style="display:none" onclick="side.classList.toggle('open')">☰</button><div><h1 id="title">Overview</h1><small id="subtitle">Your invoicing control center</small></div></div>
-  <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><button id="installAppBtn" class="btn install-app-btn" type="button" onclick="installFBIApp()">⬇ Install App</button><button class="btn" onclick="newInvoice()">New Invoice</button><button class="btn primary" onclick="newInvoice()">＋ Create Invoice</button><button class="btn danger" onclick="logoutApp()">Sign Out</button><div class="theme-switcher no-print" role="group" aria-label="Appearance"><button type="button" class="theme-choice" data-theme-choice="light" onclick="setThemePreference('light')" aria-label="Light mode" title="Light mode">☀️<span>Light</span></button><button type="button" class="theme-choice" data-theme-choice="dark" onclick="setThemePreference('dark')" aria-label="Dark mode" title="Dark mode">🌙<span>Dark</span></button><button type="button" class="theme-choice" data-theme-choice="system" onclick="setThemePreference('system')" aria-label="System mode" title="Follow device theme">⚙️<span>System</span></button></div></div>
+  <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><button id="installAppBtn" class="btn install-app-btn" type="button" onclick="installFBIApp()">⬇ Install App</button><button class="btn" onclick="newInvoice()">New Invoice</button><button class="btn primary" onclick="newInvoice()">＋ Create Invoice</button><div class="theme-switcher no-print" role="group" aria-label="Appearance"><button type="button" class="theme-choice" data-theme-choice="light" onclick="setThemePreference('light')" aria-label="Light mode" title="Light mode">☀️<span>Light</span></button><button type="button" class="theme-choice" data-theme-choice="dark" onclick="setThemePreference('dark')" aria-label="Dark mode" title="Dark mode">🌙<span>Dark</span></button><button type="button" class="theme-choice" data-theme-choice="system" onclick="setThemePreference('system')" aria-label="System mode" title="Follow device theme">⚙️<span>System</span></button></div></div>
 </header>
 
 <section class="view active" id="view-dashboard">
@@ -637,8 +523,8 @@ body.auth-locked{overflow:hidden!important}
 <section class="view" id="view-completed">
   <div class="card completed-jobs-head">
     <div>
-      <h3>Completed Jobs</h3>
-      <p style="margin:4px 0 0;color:#7d8593">Mark work as completed independently from payment status. Use this section for monthly and yearly job-completion reporting.</p>
+      <h3>Jobs</h3>
+      <p style="margin:4px 0 0;color:#7d8593">Every job is linked to its invoice. Payment status and job status are tracked separately.</p>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" type="button" onclick="exportCompletedJobsCsv()">⬇ Export CSV</button>
@@ -646,16 +532,17 @@ body.auth-locked{overflow:hidden!important}
     </div>
   </div>
   <div class="stats dashboard-stats completed-job-stats">
-    <div class="stat"><span>Completed Jobs</span><b id="completedCount">0</b><small id="completedCountMeta">All completed work</small></div>
-    <div class="stat"><span>Completed Value</span><b id="completedValue">GHS₵0.00</b><small id="completedValueMeta">Invoice value</small></div>
-    <div class="stat"><span>Collected</span><b id="completedCollected">GHS₵0.00</b><small id="completedCollectedMeta">Amount received</small></div>
-    <div class="stat"><span>Outstanding</span><b id="completedBalance">GHS₵0.00</b><small id="completedBalanceMeta">On completed jobs</small></div>
+    <div class="stat"><span>Total Jobs</span><b id="completedCount">0</b><small id="completedCountMeta">Linked to invoices</small></div>
+    <div class="stat"><span>Completed</span><b id="completedValue">0</b><small id="completedValueMeta">Jobs finished</small></div>
+    <div class="stat"><span>In Progress</span><b id="completedCollected">0</b><small id="completedCollectedMeta">Scheduled + active</small></div>
+    <div class="stat"><span>Outstanding</span><b id="completedBalance">GHS₵0.00</b><small id="completedBalanceMeta">Balance on jobs</small></div>
   </div>
   <div class="card">
     <div class="report-filters" style="margin-bottom:14px">
-      <div><label>From Completion Date</label><input id="completedFrom" type="date" onchange="renderCompletedJobs()"></div>
-      <div><label>To Completion Date</label><input id="completedTo" type="date" onchange="renderCompletedJobs()"></div>
-      <div><label>Payment</label><select id="completedPayment" onchange="renderCompletedJobs()"><option value="">All Payments</option><option value="Paid">Fully Paid</option><option value="Outstanding">Has Balance</option></select></div>
+      <div><label>From Event Date</label><input id="completedFrom" type="date" onchange="renderCompletedJobs()"></div>
+      <div><label>To Event Date</label><input id="completedTo" type="date" onchange="renderCompletedJobs()"></div>
+      <div><label>Job Status</label><select id="completedJobStatus" onchange="renderCompletedJobs()"><option value="">All Job Statuses</option><option value="Not Started">Not Started</option><option value="Scheduled">Scheduled</option><option value="In Progress">In Progress</option><option value="Completed">Completed</option><option value="Cancelled">Cancelled</option></select></div>
+      <div><label>Payment</label><select id="completedPayment" onchange="renderCompletedJobs()"><option value="">All Payments</option><option value="Paid">Fully Paid</option><option value="Partial">Partially Paid</option><option value="Outstanding">Outstanding</option></select></div>
       <div><label>Client</label><select id="completedClient" onchange="renderCompletedJobs()"><option value="">All Clients</option></select></div>
     </div>
     <div id="completedJobsTable"></div>
@@ -714,7 +601,7 @@ Branch: Dansoman
 MOMO Service
 *203*0771134#
 Name: (FBI) FILM BEYOND IMAGINATION</textarea><button class="btn primary" onclick="saveSettings()">Save Settings</button></div>
-    <div class="card"><h3>Account Recovery</h3><p style="color:#858e9f;font-size:11px;line-height:1.5">Your local password recovery uses a private recovery code. Keep it offline and do not share it.</p><div style="display:flex;gap:8px;align-items:center"><input id="recoveryDisplay" readonly placeholder="Recovery code hidden"><button class="btn" onclick="showRecoveryCode()">Show Code</button><button class="btn danger" onclick="regenerateRecoveryCode()">Regenerate</button></div></div>
+    
   </div>
 </section>
 
@@ -786,10 +673,3 @@ Name: (FBI) FILM BEYOND IMAGINATION</textarea><button class="btn primary" onclic
 <script>
 const KEY="invoice-studio-fbi-v2";let data=[],clients=[],settings={},current=null;
 const $=id=>document.getElementById(id);
-<style>
-.completed-jobs-head{display:flex;justify-content:space-between;gap:18px;align-items:center}
-.completed-job-stats{margin-top:14px}
-.completed-status-done{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:#e8f7ef;color:#147a48;font-size:11px;font-weight:800}
-.completed-status-open{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:#fff6df;color:#8a6400;font-size:11px;font-weight:800}
-@media(max-width:760px){.completed-jobs-head{align-items:flex-start;flex-direction:column}}
-</style>
