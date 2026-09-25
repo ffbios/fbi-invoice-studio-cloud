@@ -2,6 +2,12 @@
 /* ===== FBI PAYROLL MODULE, ISOLATED FROM INVOICE ENGINE ===== */
 #fbiPayrollView{display:none;width:100%;max-width:none;margin:0;padding:0 0 40px;position:relative}
 #fbiPayrollView.fbi-payroll-active{display:block}
+.top>div:last-child{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;margin-left:auto}
+.top>div:last-child .theme-switcher{order:999;flex:0 0 auto;margin-left:6px}
+@media(max-width:700px){
+  .top>div:last-child{width:auto;max-width:100%;justify-content:flex-end}
+  .top>div:last-child .theme-switcher{margin-left:4px}
+}
 .fbi-payroll-shell{width:100%;max-width:1500px;margin:0 auto}
 .fbi-payroll-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding:20px 0 14px;flex-wrap:wrap}
 .fbi-payroll-kicker{font-size:9px;text-transform:uppercase;letter-spacing:1.8px;color:#b48b2f;font-weight:900;margin-bottom:6px}
@@ -715,6 +721,11 @@
     setTimeout(function(){document.body.classList.remove('fbi-payroll-printing');},500);
   }
 
+  function deactivate(){
+    var root=q('fbiPayrollView');
+    if(root)root.classList.remove('active','fbi-payroll-active','print-view');
+    document.body.classList.remove('fbi-payroll-mode');
+  }
   function activate(){
     var root=q('fbiPayrollView');if(!root)return;
     document.body.classList.add('fbi-payroll-mode');
@@ -733,9 +744,9 @@
       var b=document.createElement('button');b.type='button';b.className='nav-link';b.dataset.v='payroll';b.textContent='💰 Payroll';b.onclick=function(e){e.preventDefault();activate();};nav.insertBefore(b,nav.querySelector('[data-v="settings"]')||null);
     }
     var oldNav=window.__FBI_NAV__;
-    window.__FBI_NAV__=function(v){if(v==='payroll'){activate();return false;}document.body.classList.remove('fbi-payroll-mode');return typeof oldNav==='function'?oldNav(v):false;};
+    window.__FBI_NAV__=function(v){if(v==='payroll'){activate();return false;}deactivate();return typeof oldNav==='function'?oldNav(v):false;};
     window.__FBI_PAYROLL_OPEN__=activate;
-    window.addEventListener('hashchange',function(){if(location.hash==='#payroll')activate();else document.body.classList.remove('fbi-payroll-mode');});
+    window.addEventListener('hashchange',function(){if(location.hash==='#payroll')activate();else deactivate();});
   }
   function init(){
     loadState();installNav();
@@ -754,6 +765,6 @@
     renderAll();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-  window.FBIPayrollModule={open:activate,reload:function(){loadState();renderAll();}};
+  window.FBIPayrollModule={open:activate,close:deactivate,reload:function(){loadState();renderAll();}};
 })();
 </script>
