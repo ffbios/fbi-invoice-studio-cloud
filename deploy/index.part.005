@@ -692,13 +692,14 @@ window.renderCalendar=renderCalendar;
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&$("calendarModal")?.classList.contains("show"))closeCalendarModal()});
 function previewSaved(id){loadInvoice(id);setTimeout(preview,30)}
 function invoiceStatusInfo(x){const st=String(x.status||"Draft");const due=String(x.due||"");let dueDate=/^\d{4}-\d{2}-\d{2}$/.test(due)?new Date(due+"T23:59:59"):null;const today=new Date();today.setHours(23,59,59,999);let effective=st;if(st!=="Paid"&&dueDate&&dueDate<today)effective="Overdue";let cls=effective==="Paid"?"status-paid":effective==="Overdue"?"status-overdue":effective==="Partially Paid"?"status-partial":effective==="Sent"?"status-sent":"status-draft";return{status:effective,cls,dueDate}}
-function invoiceBalance(x){return x.status==="Paid"?0:Number(x.balanceDue!=null?x.balanceDue:x.total||0)}
+function amountCollected(x){const total=Math.max(0,Number(x.total||0));const received=Math.max(0,Number(x.amountPaid||0));if(received>0)return Math.min(received,total);return x.status==="Paid"?total:0}
+function invoiceBalance(x){const total=Math.max(0,Number(x.total||0));if(x.status==="Paid")return 0;const received=Math.max(0,Number(x.amountPaid||0));if(received>0)return Math.max(0,total-Math.min(received,total));return Number(x.balanceDue!=null?x.balanceDue:total||0)}
 function fmtMoney(v,c="GHS"){return String(c||"GHS")+"₵"+Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
 function daysFromToday(d){if(!d)return null;const a=new Date();a.setHours(0,0,0,0);const b=new Date(d);b.setHours(0,0,0,0);return Math.round((b-a)/86400000)}
 function dashboard(){
   const infos=data.map(x=>({x,...invoiceStatusInfo(x)}));
   const total=data.reduce((s,x)=>s+Number(x.total||0),0);
-  const paid=data.filter(x=>x.status==="Paid").reduce((s,x)=>s+Number(x.total||0),0);
+  const collected=data.reduce((s,x)=>s+amountCollected(x),0);
   const outstanding=infos.filter(o=>o.status!=="Paid"&&o.status!=="Draft").reduce((s,o)=>s+invoiceBalance(o.x),0);
   const overdue=infos.filter(o=>o.status==="Overdue").reduce((s,o)=>s+invoiceBalance(o.x),0);
   const drafts=infos.filter(o=>o.status==="Draft").length;
