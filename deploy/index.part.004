@@ -400,7 +400,24 @@ body.auth-locked{overflow:hidden!important}
 </header>
 
 <section class="view active" id="view-dashboard">
-  <div class="report-toolbar"><button class="btn primary" type="button" onclick="openReportModal()">📊 Generate Report</button></div>
+  <div class="dashboard-hero">
+  <div>
+    <div class="eyebrow">FBI INVOICE STUDIO · BUSINESS OVERVIEW</div>
+    <h2>Your financial command center</h2>
+    <p>See invoicing, collections, outstanding balances and client activity in one workspace.</p>
+  </div>
+  <div class="hero-metrics">
+    <div class="hero-metric"><span>Collected</span><b id="heroCollected">GHS₵0.00</b></div>
+    <div class="hero-metric"><span>Open invoices</span><b id="heroOpen">0</b></div>
+  </div>
+</div>
+<div class="dashboard-quickstrip">
+  <button class="quick-action" type="button" onclick="newInvoice()"><span class="qa-icon">＋</span><span><b>Create invoice</b><small>Start a new bill</small></span></button>
+  <button class="quick-action" type="button" onclick="show('clients')"><span class="qa-icon">👥</span><span><b>Add client</b><small>Manage customer records</small></span></button>
+  <button class="quick-action" type="button" onclick="show('receipts')"><span class="qa-icon">🧾</span><span><b>Receipts</b><small>Review recorded payments</small></span></button>
+  <button class="quick-action" type="button" onclick="openReportModal()"><span class="qa-icon">↗</span><span><b>Business report</b><small>Generate financial reports</small></span></button>
+</div>
+<div class="report-toolbar"><button class="btn primary" type="button" onclick="openReportModal()">📊 Generate Report</button></div>
   <div class="stats dashboard-stats">
     <div class="stat"><span>Total Invoices</span><b id="sCount">0</b><small id="sCountMeta">All records</small></div>
     <div class="stat"><span>Total Invoiced</span><b id="sInvoiced">GHS₵0.00</b><small id="sInvoicedMeta">All saved invoices</small></div>
@@ -410,6 +427,21 @@ body.auth-locked{overflow:hidden!important}
     <div class="stat"><span>Due Soon</span><b id="sDueSoon">GHS₵0.00</b><small id="sDueSoonMeta">Next 7 days</small></div>
     <div class="stat"><span>Drafts</span><b id="sDraft">0</b><small id="sDraftMeta">Not yet sent</small></div>
     <div class="stat"><span>Clients</span><b id="sClients">0</b><small id="sClientsMeta">Client database</small></div>
+  </div>
+
+  <div class="dashboard-analytics">
+    <div class="card visual-card visual-revenue">
+      <div class="card-headline"><div><h3>Revenue Pulse</h3><div class="visual-meta" id="pulseMeta">Six-month invoiced volume</div></div><span style="font-size:9px;color:#8994a3">Last 6 months</span></div>
+      <div id="revenuePulse" class="pulse-bars" aria-label="Six month revenue pulse"></div>
+    </div>
+    <div class="card visual-card">
+      <div class="card-headline"><div><h3>Recent Activity</h3><div class="visual-meta">Latest invoice movement</div></div></div>
+      <div id="dashboardActivity" class="activity-list"></div>
+    </div>
+    <div class="card visual-card">
+      <div class="card-headline"><div><h3>Attention Center</h3><div class="visual-meta">Items requiring follow-up</div></div></div>
+      <div id="dashboardAlerts" class="alert-list"></div>
+    </div>
   </div>
 
   <div class="grid2 dashboard-main-grid">
