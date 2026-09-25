@@ -127,14 +127,10 @@ function readPersistentPayloadSync(){
 let serverPersistQueue=Promise.resolve();
 let serverDbOnline=false;
 let lastServerPersistAt=0;
-let pendingInvoiceDeletes=[];
-let pendingClientDeletes=[];
 
 function persist(){
-  const deleteIds=pendingInvoiceDeletes.slice();
-  const clientDeleteIds=pendingClientDeletes.slice();
   const payload={data,clients,settings};
-  const envelope={version:4,savedAt:Date.now(),data:payload,deletedInvoiceIds:deleteIds,deletedClientIds:clientDeleteIds};
+  const envelope={version:4,savedAt:Date.now(),data:payload};
   const json=JSON.stringify(envelope);
   // Keep the existing browser fallback, but make the local SQLite server the primary store.
   safeStorageSet(window.localStorage,KEY,json);
@@ -150,8 +146,6 @@ function persist(){
       if(body.ok===false)throw new Error(body.error||'Database save failed');
       serverDbOnline=true;
       lastServerPersistAt=envelope.savedAt;
-      if(deleteIds.length) pendingInvoiceDeletes=pendingInvoiceDeletes.filter(id=>!deleteIds.includes(id));
-      if(clientDeleteIds.length) pendingClientDeletes=pendingClientDeletes.filter(id=>!clientDeleteIds.includes(id));
       const st=$('storageStatus');
       if(st)st.textContent='Cloud PostgreSQL database is connected. Your invoices, clients and settings are stored securely in the cloud.';
       return true;
@@ -465,7 +459,7 @@ function newInvoice(){
   current=null;invoiceNumberReserved="";initTemplates();$("template").value="100";initServiceCatalog();
   const nextNo=nextInvoiceNumber();
   $("no").value=nextNo;
-  $("date").value=new Date().toISOString().slice(0,10);$("due").value="On Receipt";$("status").value="Draft";$("cur").value="GHS";
+  $("date").value=new Date().toISOString().slice(0,10);$("due").value="On Receipt";$("status").value="Draft";if($("jobStatus"))$("jobStatus").value="Not Started";$("cur").value="GHS";
   $("template").value=String(settings.template||100);$("client").value="";$("clientAddress").value="";$("clientPhone").value="";$("clientEmail").value="";
   if($("clientSelect"))$("clientSelect").value="";$("tax").value=20;$("discount").value=0;$("payment").value=settings.defaultPay;$("notes").value="";
   $("vatInclusive").checked=true;$("amountPaid").value=0;$("paymentDate").value="";$("paymentMethod").value="Mobile Money";$("transactionRef").value="";$("receivedBy").value="";$("receiptNo").value="";
@@ -473,7 +467,7 @@ function newInvoice(){
 }
 function addItem(desc="",qty=1,rate=0,days=1){let d=document.createElement("div");d.className="item";d.innerHTML=`<div><input class="desc" list="itemOptions" placeholder="Description" value="${esc(desc)}"></div><div><input class="rate" type="number" min="0" step=".01" value="${rate}"></div><div><input class="days" type="number" min="1" step="1" value="${days||1}"></div><div><input class="qty" type="number" min="0" step=".01" value="${qty}"></div><div><input class="amt" readonly value="${money((Number(qty)||0)*(Number(rate)||0)*(Number(days)||1))}"></div><button class="rm" onclick="this.parentElement.remove();calc()">✕</button>`;$("items").appendChild(d);d.querySelectorAll("input").forEach(i=>i.oninput=calc);calc()}
 function calc(){let sub=0;document.querySelectorAll(".item").forEach(r=>{let q=+r.querySelector(".qty").value||0,p=+r.querySelector(".rate").value||0,d=Math.max(1,+r.querySelector(".days")?.value||1),a=q*p*d;sub+=a;r.querySelector(".amt").value=money(a)});let dis=+$("discount").value||0,tax=Math.max(0,sub-dis)*(+$("tax").value||0)/100,total=Math.max(0,sub-dis)+tax;$("total").textContent=money(total);updatePaymentBalancePreview(total);return{sub,dis,tax,total}}
-function get(){let c=calc();let paid=Math.max(0,Number($("amountPaid")?.value||0));if($("status")?.value==="Paid")paid=c.total;if(paid>0.005&&paid<c.total-0.005)$("status").value="Partially Paid";if(paid>=c.total-0.005&&c.total>0)$("status").value="Paid";let receiptNo=$("receiptNo")?.value||current?.receiptNo||"";if(paid>0.005&&!receiptNo)receiptNo=nextReceiptNumber();return{id:current?.id||("av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10)),no:$("no").value,date:$("date").value,due:$("due").value,status:$("status").value,cur:$("cur").value,template:$("template").value||settings.template||"classic",client:$("client").value,clientAddress:$("clientAddress").value,clientPhone:$("clientPhone").value,clientEmail:$("clientEmail").value,items:[...document.querySelectorAll(".item")].map(r=>({desc:r.querySelector(".desc").value,qty:+r.querySelector(".qty").value||0,rate:+r.querySelector(".rate").value||0,days:Math.max(1,+r.querySelector(".days")?.value||1)})).filter(x=>x.desc),taxRate:+$("tax").value||0,discount:+$("discount").value||0,vatInclusive:$("vatInclusive").checked,...c,payment:$("payment").value,notes:$("notes").value,template:selectedTemplate(),category:$("serviceCategory")?.value||"Media Works",serviceBrand:$("brandModelFilter")?.value||"",serviceItem:$("catalogItemSelect")?.value||$("itemSearch")?.value||"",eventDate:$("eventDate")?.value||"",eventEndDate:$("eventEndDate")?.value||$("eventDate")?.value||"",rentalStart:$("rentalStart")?.value||"",rentalEnd:$("rentalEnd")?.value||"",jobLocation:$("jobLocation")?.value||"",rentalRef:$("rentalRef")?.value||"",rentalUnit:$("rentalUnit")?.value||"Per Day",deposit:+($("deposit")?.value||0),amountPaid:paid,paymentDate:$("paymentDate")?.value||"",paymentMethod:$("paymentMethod")?.value||"",transactionRef:$("transactionRef")?.value||"",receivedBy:$("receivedBy")?.value||"",receiptNo}}
+function get(){let c=calc();let paid=Math.max(0,Number($("amountPaid")?.value||0));if($("status")?.value==="Paid")paid=c.total;if(paid>0.005&&paid<c.total-0.005)$("status").value="Partially Paid";if(paid>=c.total-0.005&&c.total>0)$("status").value="Paid";let receiptNo=$("receiptNo")?.value||current?.receiptNo||"";if(paid>0.005&&!receiptNo)receiptNo=nextReceiptNumber();return{id:current?.id||("av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10)),no:$("no").value,date:$("date").value,due:$("due").value,status:$("status").value,jobStatus:$("jobStatus")?.value||"Not Started",cur:$("cur").value,template:$("template").value||settings.template||"classic",client:$("client").value,clientAddress:$("clientAddress").value,clientPhone:$("clientPhone").value,clientEmail:$("clientEmail").value,items:[...document.querySelectorAll(".item")].map(r=>({desc:r.querySelector(".desc").value,qty:+r.querySelector(".qty").value||0,rate:+r.querySelector(".rate").value||0,days:Math.max(1,+r.querySelector(".days")?.value||1)})).filter(x=>x.desc),taxRate:+$("tax").value||0,discount:+$("discount").value||0,vatInclusive:$("vatInclusive").checked,...c,payment:$("payment").value,notes:$("notes").value,template:selectedTemplate(),category:$("serviceCategory")?.value||"Media Works",serviceBrand:$("brandModelFilter")?.value||"",serviceItem:$("catalogItemSelect")?.value||$("itemSearch")?.value||"",eventDate:$("eventDate")?.value||"",eventEndDate:$("eventEndDate")?.value||$("eventDate")?.value||"",rentalStart:$("rentalStart")?.value||"",rentalEnd:$("rentalEnd")?.value||"",jobLocation:$("jobLocation")?.value||"",rentalRef:$("rentalRef")?.value||"",rentalUnit:$("rentalUnit")?.value||"Per Day",deposit:+($("deposit")?.value||0),amountPaid:paid,paymentDate:$("paymentDate")?.value||"",paymentMethod:$("paymentMethod")?.value||"",transactionRef:$("transactionRef")?.value||"",receivedBy:$("receivedBy")?.value||"",receiptNo}}
 async function save(){
   try{
     let x=get();
@@ -516,7 +510,7 @@ function loadInvoice(id){
   clearPersistentDraft();
   let x=data.find(a=>a.id===id);if(!x)return;current=x;invoiceNumberReserved=x.no||"";
   ["no","date","due","status","cur","client","clientAddress","clientPhone","clientEmail","tax","discount","payment","notes"].forEach(k=>$(k).value=x[{no:"no",date:"date",due:"due",status:"status",cur:"cur",client:"client",clientAddress:"clientAddress",clientPhone:"clientPhone",clientEmail:"clientEmail",tax:"taxRate",discount:"discount",payment:"payment",notes:"notes"}[k]]??"");
-  $("template").value=String(Number(x.template)||100);$("vatInclusive").checked=x.vatInclusive!==false;$("amountPaid").value=Number(x.amountPaid||0);$("paymentDate").value=x.paymentDate||"";$("paymentMethod").value=x.paymentMethod||"Mobile Money";$("transactionRef").value=x.transactionRef||"";$("receivedBy").value=x.receivedBy||"";$("receiptNo").value=x.receiptNo||"";
+  $("template").value=String(Number(x.template)||100);if($("jobStatus"))$("jobStatus").value=x.jobStatus||"Not Started";$("vatInclusive").checked=x.vatInclusive!==false;$("amountPaid").value=Number(x.amountPaid||0);$("paymentDate").value=x.paymentDate||"";$("paymentMethod").value=x.paymentMethod||"Mobile Money";$("transactionRef").value=x.transactionRef||"";$("receivedBy").value=x.receivedBy||"";$("receiptNo").value=x.receiptNo||"";
   $("eventDate").value=x.eventDate||"";$("eventEndDate").value=x.eventEndDate||x.eventDate||"";$("rentalStart").value=x.rentalStart||"";$("rentalEnd").value=x.rentalEnd||"";$("jobLocation").value=x.jobLocation||"";$("rentalRef").value=x.rentalRef||"";$("rentalUnit").value=x.rentalUnit||"Per Day";$("deposit").value=x.deposit||0;
   if($("payment") && !String(x.payment||"").trim())$("payment").value=settings.defaultPay||"";
   setTemplate($("template").value);$("items").innerHTML="";(x.items||[]).forEach(a=>addItem(a.desc,a.qty,a.rate));initTemplates();$("template").value=String(Number(x.template)||100);
@@ -528,17 +522,7 @@ function saveCurrentClient(){const name=$("client").value.trim();if(!name){toast
 function clearClientForm(){$("clientId").value="";$("dbClientName").value="";$("dbClientPhone").value="";$("dbClientEmail").value="";$("dbClientAddress").value="";$("dbClientNotes").value="";$("clientFormTitle").textContent="Add Client"}
 function saveClient(){const name=$("dbClientName").value.trim();if(!name){toast("Client name is required");return}const id=$("clientId").value;let c=id?clients.find(x=>x.id===id):null;if(!c){c={id:("av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10)),createdAt:new Date().toISOString()};clients.unshift(c)}c.name=name;c.phone=$("dbClientPhone").value.trim();c.email=$("dbClientEmail").value.trim();c.address=$("dbClientAddress").value.trim();c.notes=$("dbClientNotes").value.trim();persist();clearClientForm();populateClientSelect();renderClients();toast("Client saved")}
 function editClient(id){const c=clients.find(x=>x.id===id);if(!c)return;$("clientId").value=c.id;$("dbClientName").value=c.name||"";$("dbClientPhone").value=c.phone||"";$("dbClientEmail").value=c.email||"";$("dbClientAddress").value=c.address||"";$("dbClientNotes").value=c.notes||"";$("clientFormTitle").textContent="Edit Client";show("clients")}
-function deleteClient(id){
-  if(!confirm("Delete this client from the database? Existing invoices will remain unchanged."))return;
-  const target=clients.find(x=>x.id===id);
-  const deleteId=target?.id||id;
-  clients=clients.filter(x=>x.id!==id);
-  if(deleteId)pendingClientDeletes.push(String(deleteId));
-  persist();
-  populateClientSelect();
-  renderClients();
-  toast("Client deleted")
-}
+function deleteClient(id){if(!confirm("Delete this client from the database? Existing invoices will remain unchanged."))return;clients=clients.filter(x=>x.id!==id);persist();populateClientSelect();renderClients();toast("Client deleted")}
 function useClient(id){const c=clients.find(x=>x.id===id);if(!c)return;newInvoice();$("client").value=c.name||"";$("clientAddress").value=c.address||"";$("clientPhone").value=c.phone||"";$("clientEmail").value=c.email||"";$("clientSelect").value=c.id;show("create")}
 function parseCsvLine(line){
   const out=[];let cur="",quoted=false;
@@ -585,13 +569,11 @@ function renderClients(){
   };
 }
 
-function del(id){if(confirm("Delete this invoice?")){const target=data.find(x=>x.id===id);const deleteId=target?.id||target?.no||id;data=data.filter(x=>x.id!==id);if(deleteId)pendingInvoiceDeletes.push(String(deleteId));persist();renderSaved();dashboard();toast("Invoice deleted")}}
+function del(id){if(confirm("Delete this invoice?")){data=data.filter(x=>x.id!==id);persist();renderSaved();dashboard();toast("Invoice deleted")}}
 function renderSaved(){
   const el=$("saved");if(!el)return;
-  el.innerHTML=data.length?data.map(x=>`<div class="saved" data-invoice-row="${esc(x.id)}"><span class="grow">${esc(x.no)} <span class="meta">${esc(x.client||"No client")} · ${esc(x.status)}</span></span><b>${x.cur}₵${Number(x.total||0).toLocaleString(undefined,{minimumFractionDigits:2})}</b><button type="button" class="btn" data-invoice-action="edit" data-invoice-id="${esc(x.id)}">Edit</button><button type="button" class="btn" data-invoice-action="view" data-invoice-id="${esc(x.id)}">View</button>${Number(x.amountPaid||0)>0?`<button type="button" class="btn primary" data-invoice-action="receipt" data-invoice-id="${esc(x.id)}">Receipt</button>`:""}<label class="job-status-inline" title="Job status"><span>Job</span><select class="job-status-select" data-job-status-id="${esc(x.id)}"><option value="Not Started" ${jobStatus(x)==="Not Started"?"selected":""}>Not Started</option><option value="Scheduled" ${jobStatus(x)==="Scheduled"?"selected":""}>Scheduled</option><option value="In Progress" ${jobStatus(x)==="In Progress"?"selected":""}>In Progress</option><option value="Completed" ${jobStatus(x)==="Completed"?"selected":""}>Completed</option><option value="Cancelled" ${jobStatus(x)==="Cancelled"?"selected":""}>Cancelled</option></select></label><button type="button" class="btn danger" data-invoice-action="delete" data-invoice-id="${esc(x.id)}">Delete</button></div>`).join(""):'<div style="color:#777;text-align:center;padding:20px">No saved invoices.</div>';
+  el.innerHTML=data.length?data.map(x=>`<div class="saved" data-invoice-row="${esc(x.id)}"><span class="grow">${esc(x.no)} <span class="meta">${esc(x.client||"No client")} · ${esc(x.status)}</span></span><b>${x.cur}₵${Number(x.total||0).toLocaleString(undefined,{minimumFractionDigits:2})}</b><button type="button" class="btn" data-invoice-action="edit" data-invoice-id="${esc(x.id)}">Edit</button><button type="button" class="btn" data-invoice-action="view" data-invoice-id="${esc(x.id)}">View</button>${Number(x.amountPaid||0)>0?`<button type="button" class="btn primary" data-invoice-action="receipt" data-invoice-id="${esc(x.id)}">Receipt</button>`:""}<button type="button" class="btn danger" data-invoice-action="delete" data-invoice-id="${esc(x.id)}">Delete</button></div>`).join(""):'<div style="color:#777;text-align:center;padding:20px">No saved invoices.</div>';
   el.onclick=function(e){
-    const jobSelect=e.target.closest(".job-status-select[data-job-status-id]");
-    if(jobSelect){e.preventDefault();e.stopPropagation();if(typeof window.setJobStatusFromSelect==="function")window.setJobStatusFromSelect(jobSelect.getAttribute("data-job-status-id"),jobSelect.value);return;}
     const btn=e.target.closest("button[data-invoice-action][data-invoice-id]");
     if(!btn)return;
     e.preventDefault();e.stopPropagation();
@@ -710,14 +692,13 @@ window.renderCalendar=renderCalendar;
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&$("calendarModal")?.classList.contains("show"))closeCalendarModal()});
 function previewSaved(id){loadInvoice(id);setTimeout(preview,30)}
 function invoiceStatusInfo(x){const st=String(x.status||"Draft");const due=String(x.due||"");let dueDate=/^\d{4}-\d{2}-\d{2}$/.test(due)?new Date(due+"T23:59:59"):null;const today=new Date();today.setHours(23,59,59,999);let effective=st;if(st!=="Paid"&&dueDate&&dueDate<today)effective="Overdue";let cls=effective==="Paid"?"status-paid":effective==="Overdue"?"status-overdue":effective==="Partially Paid"?"status-partial":effective==="Sent"?"status-sent":"status-draft";return{status:effective,cls,dueDate}}
-function amountCollected(x){const total=Math.max(0,Number(x.total||0));const received=Math.max(0,Number(x.amountPaid||0));if(received>0)return Math.min(received,total);return x.status==="Paid"?total:0}
-function invoiceBalance(x){const total=Math.max(0,Number(x.total||0));if(x.status==="Paid")return 0;const received=Math.max(0,Number(x.amountPaid||0));if(received>0)return Math.max(0,total-Math.min(received,total));return Number(x.balanceDue!=null?x.balanceDue:total||0)}
+function invoiceBalance(x){return x.status==="Paid"?0:Number(x.balanceDue!=null?x.balanceDue:x.total||0)}
 function fmtMoney(v,c="GHS"){return String(c||"GHS")+"₵"+Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
 function daysFromToday(d){if(!d)return null;const a=new Date();a.setHours(0,0,0,0);const b=new Date(d);b.setHours(0,0,0,0);return Math.round((b-a)/86400000)}
 function dashboard(){
   const infos=data.map(x=>({x,...invoiceStatusInfo(x)}));
   const total=data.reduce((s,x)=>s+Number(x.total||0),0);
-  const collected=data.reduce((s,x)=>s+amountCollected(x),0);
+  const paid=data.filter(x=>x.status==="Paid").reduce((s,x)=>s+Number(x.total||0),0);
   const outstanding=infos.filter(o=>o.status!=="Paid"&&o.status!=="Draft").reduce((s,o)=>s+invoiceBalance(o.x),0);
   const overdue=infos.filter(o=>o.status==="Overdue").reduce((s,o)=>s+invoiceBalance(o.x),0);
   const drafts=infos.filter(o=>o.status==="Draft").length;
