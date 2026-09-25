@@ -165,7 +165,20 @@ function persist(){
   return serverPersistQueue;
 }
 function readPersistentPayload(){
-  return fetch('/api/state',{cache:'no-store'})
+  // The server injects the authoritative PostgreSQL state into the initial
+  // HTML. Use it first so startup never depends on a race with fetch/PWA cache.
+  try{
+    if(window.__FBI_SERVER_STATE__){
+      const injected=parseStoredEnvelope(JSON.stringify(window.__FBI_SERVER_STATE__));
+      if(injected){
+        serverDbOnline=true;
+        const st=$('storageStatus');
+        if(st)st.textContent='Cloud PostgreSQL database is connected. Your invoices, clients and settings are restored from the cloud database.';
+        return Promise.resolve(injected);
+      }
+    }
+  }catch(e){console.warn('Injected cloud state could not be parsed:',e)}
+  return fetch('/api/state',{cache:'no-store',credentials:'same-origin'})
     .then(async res=>{
       if(!res.ok)throw new Error('HTTP '+res.status);
       const body=await res.json();
@@ -177,7 +190,7 @@ function readPersistentPayload(){
     })
     .catch(e=>{
       serverDbOnline=false;
-      console.warn('SQLite database read failed; using browser fallback:',e);
+      console.warn('Cloud database read failed; using browser fallback:',e);
       return readPersistentPayloadSync();
     });
 }
