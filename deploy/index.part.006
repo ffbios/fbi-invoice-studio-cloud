@@ -802,10 +802,10 @@ window.exportReportExcel=function(){
       table.innerHTML='<div class="report-empty">No completed jobs match the selected filters.</div>';
       return;
     }
-    table.innerHTML='<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Invoice</th><th>Client</th><th>Category</th><th>Event Date</th><th>Completed</th><th>Payment</th><th class="num">Invoice Total</th><th class="num">Collected</th><th class="num">Balance</th></tr></thead><tbody>'+
+    table.innerHTML='<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Invoice</th><th>Client</th><th>Job Status</th><th>Event Date</th><th>Payment</th><th class="num">Invoice Total</th><th class="num">Collected</th><th class="num">Balance</th></tr></thead><tbody>'+
       rows.map(x=>{
         const bal=invoiceBalance(x), paid=amountCollected(x);
-        return '<tr><td>'+esc(x.no||"—")+'</td><td>'+esc(x.client||"—")+'</td><td>'+esc(x.category||"—")+'</td><td>'+esc(x.eventDate||"—")+'</td><td>'+esc(String(x.jobCompletedDate||"").slice(0,10)||"—")+'</td><td><span class="'+(bal<=0?"completed-status-done":"completed-status-open")+'">'+(bal<=0?"Fully Paid":"Balance Due")+'</span></td><td class="num">'+esc(fmtMoney(x.total,x.cur||"GHS"))+'</td><td class="num">'+esc(fmtMoney(paid,x.cur||"GHS"))+'</td><td class="num">'+esc(fmtMoney(bal,x.cur||"GHS"))+'</td></tr>';
+        return '<tr><td>'+esc(x.no||"—")+'</td><td>'+esc(x.client||"—")+'</td><td>'+esc(jobStatus(x))+'</td><td>'+esc(x.eventDate||"—")+'</td><td>'+esc(invoiceBalance(x)<=0?"Fully Paid":amountCollected(x)>0?"Partially Paid":"Outstanding")+'</td><td class="num">'+esc(fmtMoney(x.total,x.cur||"GHS"))+'</td><td class="num">'+esc(fmtMoney(paid,x.cur||"GHS"))+'</td><td class="num">'+esc(fmtMoney(bal,x.cur||"GHS"))+'</td></tr>';
       }).join("")+'</tbody></table></div>';
   };
   window.exportCompletedJobsCsv=function(){
