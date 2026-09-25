@@ -62,25 +62,10 @@ async function importArchiveState() {
     if (typeof state === 'string') state = JSON.parse(state);
     if (!state || !state.data || !Array.isArray(state.data.data) || !Array.isArray(state.data.clients) || !state.data.settings) return;
 
-    const deletedInvoiceIds = new Set(
-      Array.isArray(state.deletedInvoiceIds)
-        ? state.deletedInvoiceIds.map(v => String(v || '').trim()).filter(Boolean)
-        : []
-    );
-    const invoiceIsDeleted = incoming => {
-      const id = String(incoming?.id || '').trim();
-      const no = String(incoming?.no || '').trim();
-      return (id && deletedInvoiceIds.has('id:' + id)) || (no && deletedInvoiceIds.has('no:' + no));
-    };
-
     const invoices = Array.isArray(archive.invoices) ? archive.invoices : [];
     const clients = Array.isArray(archive.clients) ? archive.clients : [];
-    const archiveInvoicesSatisfied = invoices.every(incoming =>
-      invoiceIsDeleted(incoming) ||
-      state.data.data.some(x => String(x.no || '').trim() === String(incoming.no || '').trim())
-    );
     const archiveAlreadyPresent =
-      archiveInvoicesSatisfied &&
+      invoices.every(incoming => state.data.data.some(x => String(x.no || '').trim() === String(incoming.no || '').trim())) &&
       clients.every(incoming => state.data.clients.some(x =>
         String(x.name || '').trim().toLowerCase() === String(incoming.name || '').trim().toLowerCase() &&
         String(x.phone || '').replace(/\D/g, '') === String(incoming.phone || '').replace(/\D/g, '')
@@ -99,13 +84,10 @@ async function importArchiveState() {
     }
 
     for (const incoming of invoices) {
-      if (invoiceIsDeleted(incoming)) continue;
       const no = String(incoming.no || '').trim();
       const exists = state.data.data.some(x => String(x.no || '').trim() === no);
       if (!exists) state.data.data.push(incoming);
     }
-
-    state.data.data = state.data.data.filter(x => !invoiceIsDeleted(x));
 
     state.data.data.sort((a, b) => {
       const an = Number(String(a.no || '').replace(/\D/g, '')) || 0;
@@ -121,7 +103,6 @@ async function importArchiveState() {
       Number(state.data.settings.invoiceSequence) || 1,
       maxInvoiceNo + 1
     );
-    state.deletedInvoiceIds = Array.from(deletedInvoiceIds);
     state.archiveImportVersion = Number(archive.version);
     const savedAt = Date.now();
 
@@ -464,30 +445,12 @@ function mergeInvoiceStates(existingState, incomingState) {
     ? existingState.data.data : [];
   const incomingData = incomingState.data.data;
 
-  const deletedInvoiceIds = new Set();
-  for (const value of (Array.isArray(existingState?.deletedInvoiceIds) ? existingState.deletedInvoiceIds : [])) {
-    const key = String(value || '').trim();
-    if (key) deletedInvoiceIds.add(key);
-  }
-  for (const value of (Array.isArray(incomingState?.deletedInvoiceIds) ? incomingState.deletedInvoiceIds : [])) {
-    const key = String(value || '').trim();
-    if (key) deletedInvoiceIds.add(key);
-  }
-
-  function invoiceIsDeleted(item) {
-    const id = String(item?.id || '').trim();
-    const no = String(item?.no || '').trim();
-    return (id && deletedInvoiceIds.has('id:' + id)) || (no && deletedInvoiceIds.has('no:' + no));
-  }
-
   const invoiceMap = new Map();
   for (const item of existingData) {
-    if (invoiceIsDeleted(item)) continue;
     const key = String(item.id || item.no || ('existing-' + invoiceMap.size));
     invoiceMap.set(key, item);
   }
   for (const item of incomingData) {
-    if (invoiceIsDeleted(item)) continue;
     const key = String(item.id || item.no || ('incoming-' + invoiceMap.size));
     invoiceMap.set(key, item);
   }
@@ -512,7 +475,6 @@ function mergeInvoiceStates(existingState, incomingState) {
   return {
     version: Math.max(Number(existingState?.version) || 1, Number(incomingState.version) || 1),
     savedAt: Math.max(Number(existingState?.savedAt) || 0, Number(incomingState.savedAt) || 0, Date.now()),
-    deletedInvoiceIds: Array.from(deletedInvoiceIds),
     data: {
       data: Array.from(invoiceMap.values()),
       clients: Array.from(clientMap.values()),

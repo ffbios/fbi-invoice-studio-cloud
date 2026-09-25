@@ -404,8 +404,7 @@ body.auth-locked{overflow:hidden!important}
   <div class="stats dashboard-stats">
     <div class="stat"><span>Total Invoices</span><b id="sCount">0</b><small id="sCountMeta">All records</small></div>
     <div class="stat"><span>Total Invoiced</span><b id="sInvoiced">GHS₵0.00</b><small id="sInvoicedMeta">All saved invoices</small></div>
-    <div class="stat"><span>Total Collected</span><b id="sPaid">GHS₵0.00</b><small id="sPaidMeta">All recorded payments</small></div>
-    <div class="stat"><span>Partially Paid</span><b id="sPartial">GHS₵0.00</b><small id="sPartialMeta">0 invoices · received</small></div><div class="stat"><span>Payment Entries</span><b id="sPayments">0</b><small id="sPaymentsMeta">All recorded payments</small></div>
+    <div class="stat"><span>Paid</span><b id="sPaid">GHS₵0.00</b><small id="sPaidMeta">0 invoices</small></div>
     <div class="stat"><span>Outstanding</span><b class="accent" id="sDue">GHS₵0.00</b><small id="sDueMeta">0 invoices</small></div>
     <div class="stat"><span>Overdue</span><b id="sOverdue">GHS₵0.00</b><small id="sOverdueMeta">0 invoices</small></div>
     <div class="stat"><span>Due Soon</span><b id="sDueSoon">GHS₵0.00</b><small id="sDueSoonMeta">Next 7 days</small></div>
@@ -419,7 +418,7 @@ body.auth-locked{overflow:hidden!important}
       <div class="overview-grid">
         <div class="overview-item"><span>Sent / Awaiting Payment</span><b id="ovSent">0</b></div>
         <div class="overview-item"><span>Partially Paid</span><b id="ovPartial">0</b></div>
-        <div class="overview-item"><span>Paid Invoices</span><b id="ovPaid">0</b></div><div class="overview-item"><span>Total Money Collected</span><b id="ovCollected">GHS₵0.00</b></div><div class="overview-item"><span>Partial Payments Collected</span><b id="ovPartialCollected">GHS₵0.00</b></div>
+        <div class="overview-item"><span>Paid Invoices</span><b id="ovPaid">0</b></div>
         <div class="overview-item"><span>Overdue Invoices</span><b id="ovOverdue">0</b></div>
         <div class="overview-item"><span>Draft Invoices</span><b id="ovDraft">0</b></div>
         <div class="overview-item"><span>Collection Rate</span><b id="ovCollection">0%</b></div>
@@ -439,16 +438,6 @@ body.auth-locked{overflow:hidden!important}
       <table class="dashboard-table">
         <thead><tr><th>Invoice</th><th>Client</th><th>Date</th><th>Due</th><th>Status</th><th>Amount</th><th>Balance</th><th></th></tr></thead>
         <tbody id="recent"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="card recent">
-    <div class="dashboard-section-head"><div><h3 style="margin-bottom:3px">Partially Paid Invoices</h3><small>Every partial payment counts toward total money collected while the remaining balance stays outstanding.</small></div><button class="btn" onclick="show('receipts')">View Payment Receipts →</button></div>
-    <div class="invoice-table-wrap">
-      <table class="dashboard-table">
-        <thead><tr><th>Invoice</th><th>Client</th><th>Status</th><th>Invoice Total</th><th>Received</th><th>Balance</th><th></th></tr></thead>
-        <tbody id="partialPayments"></tbody>
       </table>
     </div>
   </div>
@@ -579,7 +568,7 @@ body.auth-locked{overflow:hidden!important}
   <div class="card"><h3>Payment Info</h3><textarea id="payment" rows="6" placeholder="Bank Name: Cal Bank&#10;Account Name: FILM BEYOND IMAGINATION (FBI)&#10;Account Number: 1400010238562&#10;Branch: Dansoman&#10;&#10;Momo service Name: MTN&#10;Momo Number: 0257407350&#10;Account Name: Jerbel Mark Addeh"></textarea><label>Additional Notes</label><textarea id="notes" rows="3"></textarea><label style="display:flex;align-items:center;gap:8px;margin-top:12px"><input id="vatInclusive" type="checkbox" style="width:auto" checked> Show note: <b>This invoice is VAT inclusive.</b></label>
     <div class="no-print" style="display:flex;gap:7px;margin-top:12px"><button class="btn" onclick="save()">💾 Save Invoice</button><button class="btn primary" onclick="preview()">👁 Preview</button><button class="btn" onclick="printInvoice()">🖨 Print / PDF</button><button class="btn primary no-print" type="button" onclick="savePdfToDrive()">Print / Save Invoice PDF</button></div>
   </div>
-  <div class="card"><h3>Payment Received & Official Receipt</h3><div class="grid2"><div><label>New Payment Received</label><input id="amountPaid" type="number" min="0" step="0.01" value="0" placeholder="0.00"><label>Payment Date</label><input id="paymentDate" type="date"><label>Payment Method</label><select id="paymentMethod"><option>Cash</option><option selected>Mobile Money</option><option>Bank Transfer</option><option>Card</option><option>Cheque</option><option>Other</option></select></div><div><label>Transaction / Payment Reference</label><input id="transactionRef" placeholder="Bank / MoMo / card / payment reference"><label>Received By</label><input id="receivedBy" placeholder="Accounts / Cashier"><label>Receipt Number</label><input id="receiptNo" readonly placeholder="Generated when payment is recorded"></div></div><div class="payment-summary-grid"><div class="payment-summary-card"><span>Previously Received</span><b id="paymentTotalReceived">GHS₵0.00</b></div><div class="payment-summary-card"><span>This Payment</span><b id="paymentThisReceived">GHS₵0.00</b></div><div class="payment-summary-card"><span>Total After Payment</span><b id="paymentTotalAfter">GHS₵0.00</b></div></div><div class="payment-history" id="paymentHistory"><div class="payment-history-head"><b>Payment History</b><small>Every payment recorded against this invoice</small></div><div id="paymentHistoryList"></div></div><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:12px;padding:11px 12px;border:1px solid #303642;background:#0e1117;border-radius:8px"><div><div style="font-size:9px;color:#858e9f;text-transform:uppercase;letter-spacing:.7px">Remaining Balance</div><b id="paymentBalancePreview" style="font-size:15px">GHS₵0.00</b></div><button class="btn primary" onclick="recordPayment()">🧾 Record Payment & Generate Receipt</button></div><small style="display:block;color:#727b89;font-size:9px;line-height:1.5;margin-top:8px">A professional payment receipt is generated from the recorded payment and linked to this invoice. Partial payments generate a receipt for the amount actually received.</small></div>
+  <div class="card"><h3>Payment Received & Official Receipt</h3><div class="grid2"><div><label>Amount Paid</label><input id="amountPaid" type="number" min="0" step="0.01" value="0" placeholder="0.00"><label>Payment Date</label><input id="paymentDate" type="date"><label>Payment Method</label><select id="paymentMethod"><option>Cash</option><option selected>Mobile Money</option><option>Bank Transfer</option><option>Card</option><option>Cheque</option><option>Other</option></select></div><div><label>Transaction / Payment Reference</label><input id="transactionRef" placeholder="Bank / MoMo / card / payment reference"><label>Received By</label><input id="receivedBy" placeholder="Accounts / Cashier"><label>Receipt Number</label><input id="receiptNo" readonly placeholder="Generated when payment is recorded"></div></div><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:12px;padding:11px 12px;border:1px solid #303642;background:#0e1117;border-radius:8px"><div><div style="font-size:9px;color:#858e9f;text-transform:uppercase;letter-spacing:.7px">Remaining Balance</div><b id="paymentBalancePreview" style="font-size:15px">GHS₵0.00</b></div><button class="btn primary" onclick="recordPayment()">🧾 Record Payment & Generate Receipt</button></div><small style="display:block;color:#727b89;font-size:9px;line-height:1.5;margin-top:8px">A professional payment receipt is generated from the recorded payment and linked to this invoice. Partial payments generate a receipt for the amount actually received.</small></div>
 </section>
 
 <section class="view" id="view-receipts"><div class="card"><div class="dashboard-section-head"><div><h3 style="margin-bottom:3px">Official Payment Receipts</h3><small>Print a professional receipt for every payment recorded against an invoice.</small></div><button class="btn" onclick="show('saved')">View Invoices →</button></div><div id="receiptList" class="receipt-list"></div></div></section>
@@ -735,5 +724,5 @@ Name: (FBI) FILM BEYOND IMAGINATION</textarea><button class="btn primary" onclic
 <div class="toast" id="toast"></div>
 
 <script>
-const KEY="invoice-studio-fbi-v2";let data=[],clients=[],settings={},current=null,deletedInvoiceIds=[];
+const KEY="invoice-studio-fbi-v2";let data=[],clients=[],settings={},current=null;
 const $=id=>document.getElementById(id);
