@@ -725,3 +725,90 @@ window.exportReportExcel=function(){
 </script>
 </body>
 </html>
+<script>
+(function(){
+  function jobStatus(x){return String(x&&x.jobStatus||"Not Started");}
+  function jobDone(x){return jobStatus(x)==="Done";}
+  function completedRows(){
+    const from=$("completedFrom")?.value||"";
+    const to=$("completedTo")?.value||"";
+    const payment=$("completedPayment")?.value||"";
+    const client=$("completedClient")?.value||"";
+    return data.filter(x=>{
+      if(!jobDone(x))return false;
+      const d=String(x.jobCompletedDate||"").slice(0,10);
+      if(from&&(!d||d<from))return false;
+      if(to&&(!d||d>to))return false;
+      if(payment==="Paid"&&invoiceBalance(x)>0)return false;
+      if(payment==="Outstanding"&&invoiceBalance(x)<=0)return false;
+      if(client&&String(x.client||"")!==client)return false;
+      return true;
+    }).sort((a,b)=>String(b.jobCompletedDate||"").localeCompare(String(a.jobCompletedDate||"")));
+  }
+  window.toggleJobDone=async function(id){
+    const x=data.find(a=>a.id===id);
+    if(!x)return;
+    if(jobDone(x)){
+      if(!confirm("Reopen this job? It will no longer appear in Completed Jobs reports."))return;
+      delete x.jobStatus;
+      delete x.jobCompletedDate;
+    }else{
+      x.jobStatus="Done";
+      x.jobCompletedDate=new Date().toISOString();
+    }
+    const ok=await persist();
+    renderSaved();
+    dashboard();
+    if(typeof renderCompletedJobs==="function")renderCompletedJobs();
+    toast(ok?(jobDone(x)?"Job marked as done":"Job reopened"):"Job status could not be saved");
+  };
+  window.renderCompletedJobs=function(){
+    const table=$("completedJobsTable");
+    if(!table)return;
+    const clientsSorted=[...new Set(data.filter(jobDone).map(x=>String(x.client||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    const cs=$("completedClient");
+    if(cs){
+      const selected=cs.value;
+      cs.innerHTML='<option value="">All Clients</option>'+clientsSorted.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
+      if(clientsSorted.includes(selected))cs.value=selected;
+    }
+    const rows=completedRows();
+    const total=rows.reduce((s,x)=>s+Number(x.total||0),0);
+    const collected=rows.reduce((s,x)=>s+amountCollected(x),0);
+    const balance=rows.reduce((s,x)=>s+invoiceBalance(x),0);
+    $("completedCount").textContent=rows.length;
+    $("completedCountMeta").textContent=rows.length===1?"Completed job":"Completed jobs";
+    $("completedValue").textContent=fmtMoney(total,"GHS");
+    $("completedCollected").textContent=fmtMoney(collected,"GHS");
+    $("completedBalance").textContent=fmtMoney(balance,"GHS");
+    $("completedValueMeta").textContent="Invoice value";
+    $("completedCollectedMeta").textContent=rows.filter(x=>invoiceBalance(x)<=0).length+" fully paid";
+    $("completedBalanceMeta").textContent=balance>0?"Outstanding on completed work":"No outstanding balance";
+    if(!rows.length){
+      table.innerHTML='<div class="report-empty">No completed jobs match the selected filters.</div>';
+      return;
+    }
+    table.innerHTML='<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Invoice</th><th>Client</th><th>Category</th><th>Event Date</th><th>Completed</th><th>Payment</th><th class="num">Invoice Total</th><th class="num">Collected</th><th class="num">Balance</th></tr></thead><tbody>'+
+      rows.map(x=>{
+        const bal=invoiceBalance(x), paid=amountCollected(x);
+        return '<tr><td>'+esc(x.no||"—")+'</td><td>'+esc(x.client||"—")+'</td><td>'+esc(x.category||"—")+'</td><td>'+esc(x.eventDate||"—")+'</td><td>'+esc(String(x.jobCompletedDate||"").slice(0,10)||"—")+'</td><td><span class="'+(bal<=0?"completed-status-done":"completed-status-open")+'">'+(bal<=0?"Fully Paid":"Balance Due")+'</span></td><td class="num">'+esc(fmtMoney(x.total,x.cur||"GHS"))+'</td><td class="num">'+esc(fmtMoney(paid,x.cur||"GHS"))+'</td><td class="num">'+esc(fmtMoney(bal,x.cur||"GHS"))+'</td></tr>';
+      }).join("")+'</tbody></table></div>';
+  };
+  window.exportCompletedJobsCsv=function(){
+    const rows=completedRows();
+    const header=["Invoice","Client","Category","Event Date","Completed Date","Payment Status","Invoice Total","Collected","Balance"];
+    const lines=[header].concat(rows.map(x=>[x.no||"",x.client||"",x.category||"",x.eventDate||"",String(x.jobCompletedDate||"").slice(0,10),invoiceBalance(x)<=0?"Fully Paid":"Balance Due",Number(x.total||0),amountCollected(x),invoiceBalance(x)]));
+    const csv=lines.map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\n");
+    const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="FBI-Completed-Jobs-"+new Date().toISOString().slice(0,10)+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  };
+  window.printCompletedJobsReport=function(){
+    const rows=completedRows(), total=rows.reduce((s,x)=>s+Number(x.total||0),0), collected=rows.reduce((s,x)=>s+amountCollected(x),0), balance=rows.reduce((s,x)=>s+invoiceBalance(x),0);
+    const biz=(settings&&settings.biz)||"FBI Invoice Studio";
+    const html='<!doctype html><html><head><meta charset="utf-8"><title>Completed Jobs Report</title><style>body{font-family:Arial,sans-serif;padding:30px;color:#1b1f27}h1{margin:0 0 5px}p{color:#68707c}.cards{display:flex;gap:12px;margin:20px 0}.card{border:1px solid #ddd;border-radius:8px;padding:12px;flex:1}.card b{display:block;font-size:18px;margin-top:5px}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:11px}th{background:#111;color:#fff}.num{text-align:right}@media print{body{padding:0}}</style></head><body><h1>'+esc(biz)+' — Completed Jobs Report</h1><p>'+new Date().toLocaleString()+' · '+rows.length+' completed jobs</p><div class="cards"><div class="card">Completed Jobs<b>'+rows.length+'</b></div><div class="card">Completed Value<b>'+esc(fmtMoney(total,"GHS"))+'</b></div><div class="card">Collected<b>'+esc(fmtMoney(collected,"GHS"))+'</b></div><div class="card">Outstanding<b>'+esc(fmtMoney(balance,"GHS"))+'</b></div></div><table><thead><tr><th>Invoice</th><th>Client</th><th>Category</th><th>Event Date</th><th>Completed</th><th>Payment</th><th>Total</th><th>Collected</th><th>Balance</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.no||"")+'</td><td>'+esc(x.client||"")+'</td><td>'+esc(x.category||"")+'</td><td>'+esc(x.eventDate||"")+'</td><td>'+esc(String(x.jobCompletedDate||"").slice(0,10))+'</td><td>'+esc(invoiceBalance(x)<=0?"Fully Paid":"Balance Due")+'</td><td class="num">'+esc(fmtMoney(x.total,x.cur||"GHS"))+'</td><td class="num">'+esc(fmtMoney(amountCollected(x),x.cur||"GHS"))+'</td><td class="num">'+esc(fmtMoney(invoiceBalance(x),x.cur||"GHS"))+'</td></tr>').join("")+'</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>';
+    const w=window.open("","_blank");if(!w){toast("Please allow pop-ups to print the report");return}w.document.write(html);w.document.close();
+  };
+  const oldRenderSaved=window.renderSaved;
+  document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){try{renderCompletedJobs()}catch(e){}},100);});
+})();
+</script>
