@@ -22,34 +22,6 @@
 function saveSettings(){settings.biz=$("biz").value;settings.owner=$("owner").value;settings.baddr=$("baddr").value;settings.bphone=$("bphone").value;settings.bemail=$("bemail").value;settings.bnum=$("bnum").value;settings.defaultPay=$("defaultPay").value;settings.template=Number($("template")?.value||settings.template||100)||100;persist();$("payment").value=settings.defaultPay;toast("Settings saved")}
 $("logoFile").onchange=function(){let f=this.files[0];if(!f)return;let r=new FileReader();r.onload=e=>{settings.logo=e.target.result;persist();toast("Logo saved")};r.readAsDataURL(f)}
 
-const LOCAL_RECOVERY_KEY="fbi-invoice-recovery-v1";
-function generateRecoveryCode(){
-  const bytes=new Uint8Array(8);
-  if(window.crypto&&window.crypto.getRandomValues)window.crypto.getRandomValues(bytes);
-  else for(let i=0;i<bytes.length;i++)bytes[i]=Math.floor(Math.random()*256);
-  const hex=Array.from(bytes).map(b=>b.toString(16).padStart(2,"0")).join("").toUpperCase();
-  return hex.match(/.{1,4}/g).join("-");
-}
-function getAuth(){
-  try{
-    const raw=window.localStorage.getItem(LOCAL_RECOVERY_KEY);
-    const a=raw?JSON.parse(raw):null;
-    if(a&&typeof a==="object")return a;
-  }catch(e){}
-  return null;
-}
-function setAuth(a){
-  try{
-    window.localStorage.setItem(LOCAL_RECOVERY_KEY,JSON.stringify(a));
-    return true;
-  }catch(e){
-    console.warn("Recovery code could not be saved locally:",e);
-    return false;
-  }
-}
-
-function showRecoveryCode(){const a=getAuth();if(!a?.recoveryCode){toast("No recovery code available");return}$('recoveryDisplay').value=a.recoveryCode;toast("Recovery code displayed")}
-function regenerateRecoveryCode(){if(!confirm("Generate a new recovery code? The old code will stop working."))return;const a=getAuth();if(!a)return;a.recoveryCode=generateRecoveryCode();a.recoveryIssuedAt=new Date().toISOString();setAuth(a);$('recoveryDisplay').value=a.recoveryCode;alert("NEW RECOVERY CODE:\n\n"+a.recoveryCode+"\n\nSave it in a safe place.");toast("Recovery code regenerated")}
 function saveWhatsAppSettings(){
   settings.waEnabled=$("waEnabled").value;
   settings.waRecipient=$("waRecipient").value.replace(/\D/g,"");
@@ -298,23 +270,15 @@ async function startApp(){
     initTemplates();
     initServiceCatalog();
 
-    // Login is temporarily disabled while the application is being completed.
-    // Keep the authentication code intact so it can be re-enabled later.
+    // Login has been completely removed from the frontend for the current build.
     await hydrateCloudState();
-    enterApp();
+    const target=cloudDraftRestoredOnStartup?"create":"dashboard";
+    try{location.hash=target==="create"?"#view-create":"#view-dashboard"}catch(ignore){}
+    try{show(target)}catch(ignore){}
     return;
   }catch(e){
     console.error("Invoice Studio startup error",e);
-    try{init(true);initServiceCatalog()}catch(ignore){}
-    try{
-      const st=await refreshAuthStatus();
-      if(st && st.loginRequired===false){
-        await hydrateCloudState();
-        enterApp();
-        return;
-      }
-    }catch(ignore){}
-    try{showAuthScreen()}catch(ignore){}
+    try{init(true);initServiceCatalog();await hydrateCloudState();show("dashboard")}catch(ignore){}
   }
 }
 
