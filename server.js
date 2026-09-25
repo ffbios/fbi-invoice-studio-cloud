@@ -52,27 +52,71 @@ const pool = new Pool({
 });
 
 async function importArchiveState() {
-  if (!fs.existsSync(ARCHIVE_IMPORT_FILE)) return;
+  if (!fs.existsSync(ARCHIVE_IMPORT_FILE)) {
+    console.warn('Archive import file is missing at ' + ARCHIVE_IMPORT_FILE);
+    return;
+  }
+
   try {
     const archive = JSON.parse(fs.readFileSync(ARCHIVE_IMPORT_FILE, 'utf8'));
-    if (!archive || !Number(archive.version)) return;
-    const result = await pool.query('SELECT state_json FROM app_state WHERE id=1');
-    if (!result.rows[0]) return;
-    let state = result.rows[0].state_json;
+    if (!archive || !Number(archive.version)) {
+      console.warn('Archive import file is invalid or has no version.');
+      return;
+    }
+
+    const archiveInvoices = Array.isArray(archive.invoices) ? archive.invoices : [];
+    const archiveClients = Array.isArray(archive.clients) ? archive.clients : [];
+
+    let result = await pool.query('SELECT state_json FROM app_state WHERE id=1');
+
+    // If app_state is missing for any reason, rebuild a valid base state from seed
+    // before applying the recovered records. Never delete an existing database row.
+    if (!result.rows[0]) {
+      if (!fs.existsSync(SEED_FILE)) {
+        console.warn('Cannot repair app_state: seed-state.json is missing.');
+        return;
+      }
+      const seed = JSON.parse(fs.readFileSync(SEED_FILE, 'utf8'));
+      if (!seed || !seed.data || !Array.isArray(seed.data.data) || !Array.isArray(seed.data.clients) || !seed.data.settings) {
+        console.warn('Cannot repair app_state: seed-state.json is invalid.');
+        return;
+      }
+      await pool.query(
+        'INSERT INTO app_state (id,version,saved_at,state_json) VALUES (1,$1,$2,$3::jsonb) ON CONFLICT(id) DO NOTHING',
+        [Number(seed.version) || 1, Number(seed.savedAt) || Date.now(), JSON.stringify(seed)]
+      );
+      result = await pool.query('SELECT state_json FROM app_state WHERE id=1');
+    }
+
+    let state = result.rows[0]?.state_json;
     if (typeof state === 'string') state = JSON.parse(state);
-    if (!state || !state.data || !Array.isArray(state.data.data) || !Array.isArray(state.data.clients) || !state.data.settings) return;
 
-    const invoices = Array.isArray(archive.invoices) ? archive.invoices : [];
-    const clients = Array.isArray(archive.clients) ? archive.clients : [];
-    const archiveAlreadyPresent =
-      invoices.every(incoming => state.data.data.some(x => String(x.no || '').trim() === String(incoming.no || '').trim())) &&
-      clients.every(incoming => state.data.clients.some(x =>
-        String(x.name || '').trim().toLowerCase() === String(incoming.name || '').trim().toLowerCase() &&
-        String(x.phone || '').replace(/\D/g, '') === String(incoming.phone || '').replace(/\D/g, '')
-      ));
-    if (Number(state.archiveImportVersion || 0) >= Number(archive.version) && archiveAlreadyPresent) return;
+    // Repair malformed/legacy state without discarding the database row.
+    if (!state || !state.data || !Array.isArray(state.data.data) || !Array.isArray(state.data.clients) || !state.data.settings) {
+      if (!fs.existsSync(SEED_FILE)) {
+        console.warn('Cannot repair malformed app_state: seed-state.json is missing.');
+        return;
+      }
+      const seed = JSON.parse(fs.readFileSync(SEED_FILE, 'utf8'));
+      if (!seed || !seed.data || !Array.isArray(seed.data.data) || !Array.isArray(seed.data.clients) || !seed.data.settings) {
+        console.warn('Cannot repair malformed app_state: seed-state.json is invalid.');
+        return;
+      }
+      state = {
+        version: Number(seed.version) || 1,
+        savedAt: Number(seed.savedAt) || Date.now(),
+        data: {
+          data: [...seed.data.data],
+          clients: [...seed.data.clients],
+          settings: { ...seed.data.settings }
+        }
+      };
+    }
 
-    for (const incoming of clients) {
+    const beforeInvoices = state.data.data.length;
+    const beforeClients = state.data.clients.length;
+
+    for (const incoming of archiveClients) {
       const name = String(incoming.name || '').trim().toLowerCase();
       const phone = String(incoming.phone || '').replace(/\D/g, '');
       const exists = state.data.clients.some(c => {
@@ -83,7 +127,7 @@ async function importArchiveState() {
       if (!exists) state.data.clients.push(incoming);
     }
 
-    for (const incoming of invoices) {
+    for (const incoming of archiveInvoices) {
       const no = String(incoming.no || '').trim();
       const exists = state.data.data.some(x => String(x.no || '').trim() === no);
       if (!exists) state.data.data.push(incoming);
@@ -103,14 +147,25 @@ async function importArchiveState() {
       Number(state.data.settings.invoiceSequence) || 1,
       maxInvoiceNo + 1
     );
-    state.archiveImportVersion = Number(archive.version);
-    const savedAt = Date.now();
+
+    const invoicesAdded = state.data.data.length - beforeInvoices;
+    const clientsAdded = state.data.clients.length - beforeClients;
+
+    // Mark the archive as applied only after the recovered records are actually present.
+    state.archiveImportVersion = Math.max(
+      Number(state.archiveImportVersion) || 0,
+      Number(archive.version)
+    );
+    state.savedAt = Date.now();
 
     await pool.query(
       'UPDATE app_state SET version=$1,saved_at=$2,state_json=$3::jsonb WHERE id=1',
-      [Number(state.version) || 4, savedAt, JSON.stringify(state)]
+      [Number(state.version) || 4, state.savedAt, JSON.stringify(state)]
     );
-    console.log(`Archive import v${archive.version} loaded: ${invoices.length} invoices and ${clients.length} clients.`);
+
+    console.log(
+      `Archive recovery check complete: +${invoicesAdded} invoices, +${clientsAdded} clients; total ${state.data.data.length} invoices and ${state.data.clients.length} clients.`
+    );
   } catch (err) {
     console.warn('Archive import could not be loaded:', err.message);
   }
