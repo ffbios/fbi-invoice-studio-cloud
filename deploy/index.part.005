@@ -588,7 +588,21 @@ function renderClients(){
 function del(id){if(confirm("Delete this invoice?")){const target=data.find(x=>x.id===id);const deleteId=target?.id||target?.no||id;data=data.filter(x=>x.id!==id);if(deleteId)pendingInvoiceDeletes.push(String(deleteId));persist();renderSaved();dashboard();toast("Invoice deleted")}}
 function renderSaved(){
   const el=$("saved");if(!el)return;
-  el.innerHTML=data.length?data.map(x=>`<div class="saved" data-invoice-row="${esc(x.id)}"><span class="grow">${esc(x.no)} <span class="meta">${esc(x.client||"No client")} · ${esc(x.status)}</span></span><b>${x.cur}₵${Number(x.total||0).toLocaleString(undefined,{minimumFractionDigits:2})}</b><button type="button" class="btn" data-invoice-action="edit" data-invoice-id="${esc(x.id)}">Edit</button><button type="button" class="btn" data-invoice-action="view" data-invoice-id="${esc(x.id)}">View</button>${Number(x.amountPaid||0)>0?`<button type="button" class="btn primary" data-invoice-action="receipt" data-invoice-id="${esc(x.id)}">Receipt</button>`:""}<button type="button" class="btn primary" onclick="toggleJobDone('${esc(x.id)}')">${String(x.jobStatus||"Not Started")==="Done"?"↩ Undo Done":"✓ Mark Job Done"}</button><button type="button" class="btn danger" data-invoice-action="delete" data-invoice-id="${esc(x.id)}">Delete</button></div>`).join(""):'<div style="color:#777;text-align:center;padding:20px">No saved invoices.</div>';
+  el.innerHTML=data.length?data.map(x=>{
+    const js=String(x.jobStatus||"Not Started")==="Done"?"Completed":String(x.jobStatus||"Not Started");
+    const opts=["Not Started","Scheduled","In Progress","Completed","Cancelled"].map(s=>`<option value="${esc(s)}" ${js===s?"selected":""}>${esc(s)}</option>`).join("");
+    return `<div class="saved" data-invoice-row="${esc(x.id)}" style="align-items:center;flex-wrap:wrap">
+      <span class="grow">${esc(x.no)} <span class="meta">${esc(x.client||"No client")} · ${esc(x.status)}</span></span>
+      <b>${x.cur}₵${Number(x.total||0).toLocaleString(undefined,{minimumFractionDigits:2})}</b>
+      <label style="display:flex;align-items:center;gap:6px;margin:0;color:#7f8897;font-size:9px;font-weight:800;white-space:nowrap">Job Status
+        <select class="job-status-select" data-job-status-id="${esc(x.id)}" aria-label="Job status for ${esc(x.no)}">${opts}</select>
+      </label>
+      <button type="button" class="btn" data-invoice-action="edit" data-invoice-id="${esc(x.id)}">Edit</button>
+      <button type="button" class="btn" data-invoice-action="view" data-invoice-id="${esc(x.id)}">View</button>
+      ${Number(x.amountPaid||0)>0?`<button type="button" class="btn primary" data-invoice-action="receipt" data-invoice-id="${esc(x.id)}">Receipt</button>`:""}
+      <button type="button" class="btn danger" data-invoice-action="delete" data-invoice-id="${esc(x.id)}">Delete</button>
+    </div>`;
+  }).join(""):'<div style="color:#777;text-align:center;padding:20px">No saved invoices.</div>';
   el.onclick=function(e){
     const btn=e.target.closest("button[data-invoice-action][data-invoice-id]");
     if(!btn)return;
@@ -599,6 +613,12 @@ function renderSaved(){
     else if(action==="view")previewSaved(id);
     else if(action==="receipt")showReceipt(id);
     else if(action==="delete")del(id);
+  };
+  el.onchange=function(e){
+    const sel=e.target.closest("select[data-job-status-id]");
+    if(!sel)return;
+    e.preventDefault();e.stopPropagation();
+    if(typeof window.setJobStatusFromSelect==="function")window.setJobStatusFromSelect(sel.getAttribute("data-job-status-id"),sel.value);
   };
 }
 
