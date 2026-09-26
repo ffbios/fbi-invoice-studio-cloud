@@ -275,6 +275,7 @@
     <button type="button" class="nav-link" data-v="saved" onclick="show('saved')">💾 Saved Invoices</button>
     <button type="button" class="nav-link" data-v="completed" onclick="show('completed')">✅ Completed Jobs</button>
     <button type="button" class="nav-link" data-v="receipts" onclick="show('receipts')">🧾 Official Receipts</button>
+    <button type="button" class="nav-link" data-v="expenses" onclick="show('expenses')">💸 Expenses / Petty Cash</button>
     <button type="button" class="nav-link" data-v="payroll" onclick="window.__FBI_NAV__ ? window.__FBI_NAV__('payroll') : (window.__FBI_PAYROLL_OPEN__ && window.__FBI_PAYROLL_OPEN__())">💰 Payroll</button>
     <button type="button" class="nav-link" data-v="settings" onclick="show('settings')">⚙️ Business Settings</button>
     <button type="button" class="nav-link" data-v="whatsapp" onclick="show('whatsapp')">📱 WhatsApp Alerts</button>
