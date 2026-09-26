@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0e13">
+<title>FBI Payroll Staff Registration Form</title>
+<style>
+:root{--bg:#090c11;--card:#121720;--card2:#0e131a;--border:#2b3442;--text:#eef2f7;--muted:#8d98a8;--gold:#d7b15a;--pink:#bd1b63}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(850px 420px at 85% -5%,rgba(215,177,90,.09),transparent 60%),radial-gradient(720px 500px at 0 100%,rgba(189,27,99,.06),transparent 62%),var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;padding:20px}
+.wrap{width:min(980px,100%);margin:0 auto}.hero{padding:24px 24px 20px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(145deg,#141a22,#0e131a);box-shadow:0 20px 70px rgba(0,0,0,.22);margin-bottom:14px}.eyebrow{font-size:9px;letter-spacing:2px;color:var(--gold);font-weight:900;text-transform:uppercase}.hero h1{font-size:26px;margin:8px 0 5px}.hero p{margin:0;color:var(--muted);font-size:12px;line-height:1.6;max-width:780px}.note{margin-top:14px;padding:11px 13px;border:1px solid #394454;background:#0d1218;border-radius:10px;color:#aeb8c6;font-size:10px;line-height:1.55}
+.card{padding:18px;border:1px solid var(--border);border-radius:16px;background:linear-gradient(160deg,#121720,#0e131a);margin-bottom:14px}.head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:13px;flex-wrap:wrap}.head h2{margin:0;font-size:14px}.head p{margin:4px 0 0;color:var(--muted);font-size:9px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.field{min-width:0}.field.full{grid-column:1/-1}.field label{display:block;color:#8f99a8;font-size:8px;text-transform:uppercase;letter-spacing:.7px;font-weight:850;margin:0 0 5px}.field input,.field select,.field textarea{width:100%;border:1px solid #303a48;background:#0b1016;color:#eef2f7;border-radius:9px;padding:10px 11px;font-size:11px;outline:none}.field textarea{min-height:82px;resize:vertical}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(215,177,90,.08)}.required{color:#ef6f8f}
+.actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}.btn{border:1px solid #354050;background:#161c25;color:#eef2f7;border-radius:9px;padding:10px 14px;font-size:10px;font-weight:850;cursor:pointer;text-decoration:none}.btn.primary{background:#82103f;border-color:#ae1b5b}.btn:hover{transform:translateY(-1px)}
+.success{display:none;margin-top:12px;padding:12px 13px;border:1px solid #2d5b47;background:#10241c;color:#91e5bc;border-radius:10px;font-size:10px;line-height:1.5}.success.show{display:block}
+.footer{color:#707b8b;font-size:8px;text-align:center;padding:8px 0 18px}
+@media(max-width:680px){body{padding:10px}.hero,.card{border-radius:13px;padding:14px}.hero h1{font-size:21px}.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.actions .btn{flex:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<section class="hero">
+<div class="eyebrow">Film Beyond Imagination · Payroll</div>
+<h1>Staff / Worker Registration Form</h1>
+<p>Please complete this form carefully. This information will be used to create or update your worker profile in the FBI Payroll system.</p>
+<div class="note"><b>Important:</b> Complete all relevant fields accurately. After filling the form, click <b>Download Completed Form</b> and send the downloaded file to the Payroll administrator by WhatsApp, email or another trusted method. The form does not automatically publish your information online.</div>
+</section>
+<form id="staffForm">
+<section class="card">
+<div class="head"><div><h2>1. Personal Information</h2><p>Basic identity and contact details.</p></div></div>
+<div class="grid">
+<div class="field"><label>Full Name <span class="required">*</span></label><input id="name" required autocomplete="name"></div>
+<div class="field"><label>Staff / Worker ID</label><input id="workerCode" placeholder="Leave blank if not assigned"></div>
+<div class="field"><label>Phone Number <span class="required">*</span></label><input id="phone" type="tel" required autocomplete="tel"></div>
+<div class="field"><label>Email</label><input id="email" type="email" autocomplete="email"></div>
+<div class="field full"><label>Residential Address</label><input id="address" autocomplete="street-address"></div>
+<div class="field"><label>Date of Birth</label><input id="dateOfBirth" type="date"></div>
+<div class="field"><label>Gender</label><select id="gender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option><option>Prefer not to say</option></select></div>
+<div class="field"><label>Marital Status</label><select id="maritalStatus"><option value="">Select</option><option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option><option>Prefer not to say</option></select></div>
+<div class="field"><label>Ghana Card / ID Reference</label><input id="idRef"></div>
+</div>
+</section>
+<section class="card">
+<div class="head"><div><h2>2. Employment Information</h2><p>How the worker is engaged at FBI.</p></div></div>
+<div class="grid">
+<div class="field"><label>Role / Job Title</label><input id="role"></div>
+<div class="field"><label>Department</label><select id="department"><option>Media Production</option><option>IT / Networking</option><option>CCTV / Security</option><option>Smart Home</option><option>Administration</option><option>Other</option></select></div>
+<div class="field"><label>Worker Type</label><select id="workerType"><option>Staff</option><option>Media Worker</option><option>IT Technician</option><option>Network Technician</option><option>CCTV Installer</option><option>Other</option></select></div>
+<div class="field"><label>Date Joined</label><input id="dateJoined" type="date"></div>
+<div class="field"><label>TIN</label><input id="tin"></div>
+<div class="field"><label>SSNIT Number</label><input id="ssnit"></div>
+</div>
+</section>
+<section class="card">
+<div class="head"><div><h2>3. Payment Information</h2><p>Provide the payment details you want the company to use.</p></div></div>
+<div class="grid">
+<div class="field"><label>Preferred Payment Method</label><select id="paymentMethod"><option>Mobile Money</option><option>Bank</option><option>Cash</option></select></div>
+<div class="field"><label>MoMo Number</label><input id="momo" type="tel"></div>
+<div class="field"><label>Bank Name</label><input id="bank"></div>
+<div class="field"><label>Account Name</label><input id="accountName"></div>
+<div class="field"><label>Account Number</label><input id="accountNumber"></div>
+</div>
+</section>
+<section class="card">
+<div class="head"><div><h2>4. Emergency / Next-of-Kin Information</h2><p>Contact information for urgent situations.</p></div></div>
+<div class="grid">
+<div class="field"><label>Emergency / Contact Person</label><input id="emergency"></div>
+<div class="field"><label>Emergency Phone</label><input id="emergencyPhone" type="tel"></div>
+<div class="field full"><label>Next of Kin</label><input id="nextOfKin"></div>
+</div>
+</section>
+<section class="card">
+<div class="head"><div><h2>5. Additional Information</h2><p>Anything Payroll should know before creating the worker profile.</p></div></div>
+<div class="grid">
+<div class="field"><label>Current Status</label><select id="status"><option>Active</option><option>Inactive</option></select></div>
+<div class="field full"><label>Notes</label><textarea id="notes" placeholder="Optional additional information"></textarea></div>
+</div>
+</section>
+<section class="card">
+<div class="head"><div><h2>6. Confirmation</h2><p>Review the information before generating your completed form.</p></div></div>
+<div class="note">By generating the completed form, you confirm that the information you entered is intended for your FBI Payroll worker profile and should be checked by the Payroll administrator before final entry.</div>
+<div class="actions"><button class="btn" type="button" id="printBtn">🖨 Print / Save as PDF</button><button class="btn primary" type="submit">⬇ Download Completed Form</button></div>
+<div class="success" id="successBox"></div>
+</section>
+</form>
+<div class="footer">FBI Payroll · Staff Registration · Keep the completed file private and send it only to the Payroll administrator.</div>
+</div>
+<script>
+(function(){
+const ids=['name','workerCode','phone','email','address','dateOfBirth','gender','maritalStatus','idRef','role','department','workerType','dateJoined','tin','ssnit','paymentMethod','momo','bank','accountName','accountNumber','emergency','emergencyPhone','nextOfKin','status','notes'];
+function val(id){return String(document.getElementById(id)?.value||'').trim();}
+function safeName(id){return val(id).replace(/[^A-Za-z0-9 _-]/g,'').trim().replace(/\s+/g,'-').slice(0,60)||'Staff';}
+document.getElementById('staffForm').addEventListener('submit',function(e){
+e.preventDefault();
+if(!document.getElementById('name').value.trim()){document.getElementById('name').focus();return;}
+if(!document.getElementById('phone').value.trim()){document.getElementById('phone').focus();return;}
+const worker={};ids.forEach(id=>worker[id]=val(id));
+const payload={type:'fbi-payroll-staff-form',version:1,formName:'FBI Payroll Staff Registration Form',submittedAt:new Date().toISOString(),worker};
+const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+const a=document.createElement('a');const url=URL.createObjectURL(blob);a.href=url;a.download='FBI-Payroll-Staff-'+safeName('name')+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+const box=document.getElementById('successBox');box.innerHTML='✅ <b>Completed form generated.</b><br>Send the downloaded JSON file to the Payroll administrator. It can be imported directly into the FBI Payroll system.';box.classList.add('show');
+});
+document.getElementById('printBtn').addEventListener('click',function(){window.print();});
+})();
+</script>
+</body>
+</html>
