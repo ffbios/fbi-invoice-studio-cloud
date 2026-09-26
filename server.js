@@ -872,8 +872,17 @@ async function handlePayrollPdfImport(req, res) {
         }
       }
     }
+    if (!worker.name && body && body.filename) {
+      const filename = String(body.filename).replace(/\\.[^.]+$/, '');
+      const m = filename.match(/FBI[- _]Payroll[- _]Staff[- _](.+)$/i);
+      if (m && m[1]) {
+        const candidate = m[1].replace(/[-_]+/g,' ').replace(/\\s+/g,' ').trim();
+        if (candidate && !/^(form|registration|staff)$/i.test(candidate)) worker.name = candidate;
+      }
+    }
+
     if (!worker.name) {
-      return json(res, 422, { ok: false, error: 'The PDF was read, but a Full Name could not be detected. Use the “Generate Completed PDF” button on the FBI Staff Registration Form, then save that printout as PDF.', extractedText: extractedText.slice(0,12000) });
+      return json(res, 422, { ok: false, error: 'The PDF was read, but a Full Name could not be detected. Please generate a fresh PDF from the FBI Staff Registration Form and save it as PDF before importing.', extractedText: extractedText.slice(0,12000) });
     }
     return json(res, 200, { ok: true, worker, pages: result.total || null });
   } catch (err) {
