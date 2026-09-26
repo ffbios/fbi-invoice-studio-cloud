@@ -733,12 +733,15 @@ async function handlePayrollStateGet(req, res) {
 async function handlePayrollStateWrite(req, res) {
   const session = await requireAuth(req, res);
   if (!session) return;
+  const client = await pool.connect();
   try {
     const incoming = await parseJsonBody(req);
     if (!incoming || !Array.isArray(incoming.workers) || !Array.isArray(incoming.records) || !Array.isArray(incoming.payslips)) {
       return json(res, 400, { ok: false, error: 'Invalid Payroll state.' });
     }
-    const currentResult = await pool.query('SELECT version,saved_at,state_json FROM payroll_state WHERE id=1');
+    await client.query('BEGIN');
+    await client.query('SELECT pg_advisory_xact_lock($1)', [492012]);
+    const currentResult = await client.query('SELECT version,saved_at,state_json FROM payroll_state WHERE id=1 FOR UPDATE');
     let current = null;
     if (currentResult.rows[0]) {
       current = currentResult.rows[0].state_json;
@@ -751,15 +754,19 @@ async function handlePayrollStateWrite(req, res) {
     merged.workers = merged.workers.filter(w => !deletedWorkers.has(String(w.id || '')));
     merged.records = merged.records.filter(r => !deletedRecords.has(String(r.id || '')));
     merged.payslips = merged.payslips.filter(p => !deletedPayslips.has(String(p.id || '')));
-    await pool.query(
+    await client.query(
       `INSERT INTO payroll_state (id,version,saved_at,state_json) VALUES (1,$1,$2,$3::jsonb)
        ON CONFLICT(id) DO UPDATE SET version=EXCLUDED.version,saved_at=EXCLUDED.saved_at,state_json=EXCLUDED.state_json`,
       [Number(merged.version) || 1, Number(merged.savedAt) || Date.now(), JSON.stringify(merged)]
     );
+    await client.query('COMMIT');
     return json(res, 200, { ok: true, savedAt: Number(merged.savedAt) || Date.now(), workerCount: merged.workers.length, recordCount: merged.records.length, payslipCount: merged.payslips.length });
   } catch (err) {
+    try { await client.query('ROLLBACK'); } catch {}
     console.error('Payroll database write failed:', err);
     return json(res, 500, { ok: false, error: err.message || 'Payroll database write failed.' });
+  } finally {
+    client.release();
   }
 }
 
