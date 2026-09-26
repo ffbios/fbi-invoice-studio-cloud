@@ -544,7 +544,22 @@ function mergeInvoiceStates(existingState, incomingState) {
   }
   for (const item of incomingData) {
     const key = String(item.id || item.no || ('incoming-' + invoiceMap.size));
-    invoiceMap.set(key, item);
+    const existing = invoiceMap.get(key);
+    if (!existing) {
+      invoiceMap.set(key, item);
+    } else {
+      const existingJobStamp = Date.parse(String(existing.jobStatusUpdatedAt || '')) || 0;
+      const incomingJobStamp = Date.parse(String(item.jobStatusUpdatedAt || '')) || 0;
+      const mergedItem = { ...existing, ...item };
+      if (existingJobStamp > incomingJobStamp) {
+        if (Object.prototype.hasOwnProperty.call(existing, 'jobStatus')) mergedItem.jobStatus = existing.jobStatus;
+        else delete mergedItem.jobStatus;
+        if (Object.prototype.hasOwnProperty.call(existing, 'jobCompletedDate')) mergedItem.jobCompletedDate = existing.jobCompletedDate;
+        else delete mergedItem.jobCompletedDate;
+        mergedItem.jobStatusUpdatedAt = existing.jobStatusUpdatedAt;
+      }
+      invoiceMap.set(key, mergedItem);
+    }
   }
 
   const existingClients = existingState && existingState.data && Array.isArray(existingState.data.clients)
