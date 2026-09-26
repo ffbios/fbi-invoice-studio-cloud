@@ -12,6 +12,8 @@ const SEED_FILE = path.join(ROOT, 'seed-state.json');
 const ARCHIVE_IMPORT_FILE = path.join(ROOT, 'archive-import.json');
 const STATIC_FILES = {
   '/manifest.json': { file: path.join(ROOT, 'manifest.json'), type: 'application/manifest+json; charset=utf-8' },
+  '/assets/fbi-logo-background.jpg': { file: path.join(ROOT, 'assets', 'fbi-logo-background.jpg'), type: 'image/jpeg' },
+  '/assets/fbi-logo-transparent.png': { file: path.join(ROOT, 'assets', 'fbi-logo-transparent.png'), type: 'image/png' },
   '/payroll-staff-form.html': { file: path.join(ROOT, 'payroll-staff-form.html'), type: 'text/html; charset=utf-8' },
   '/sw.js': { file: path.join(ROOT, 'sw.js'), type: 'application/javascript; charset=utf-8' },
   '/icons/icon-192.svg': { file: path.join(ROOT, 'icons', 'icon-192.svg'), type: 'image/svg+xml' },
@@ -200,6 +202,7 @@ async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires_at ON auth_sessions(expires_at);
   `);
 
+  await pool.query('CREATE TABLE IF NOT EXISTS payroll_state (id INTEGER PRIMARY KEY CHECK (id = 1), version INTEGER NOT NULL DEFAULT 1, saved_at BIGINT NOT NULL, state_json JSONB NOT NULL)');
   await pool.query('ALTER TABLE app_state ADD COLUMN IF NOT EXISTS draft_saved_at BIGINT');
   await pool.query('ALTER TABLE app_state ADD COLUMN IF NOT EXISTS draft_json JSONB');
 
@@ -635,6 +638,208 @@ async function handleStateWrite(req, res) {
   }
 }
 
+
+function mergePayrollStates(existingState, incomingState) {
+  const existing = existingState && typeof existingState === 'object' ? existingState : {};
+  const incoming = incomingState && typeof incomingState === 'object' ? incomingState : {};
+  function stamp(v) { const t = Date.parse(String(v || '')); return Number.isFinite(t) ? t : 0; }
+  function mergeById(existingArr, incomingArr, mergeOne) {
+    const map = new Map();
+    for (const item of Array.isArray(existingArr) ? existingArr : []) {
+      const key = String(item && item.id || '').trim();
+      if (key) map.set(key, item);
+    }
+    for (const item of Array.isArray(incomingArr) ? incomingArr : []) {
+      const key = String(item && item.id || '').trim();
+      if (!key) continue;
+      map.set(key, map.has(key) ? mergeOne(map.get(key), item) : item);
+    }
+    return Array.from(map.values());
+  }
+  function mergeWorker(a, b) {
+    const newer = stamp(b.updatedAt) >= stamp(a.updatedAt) ? b : a;
+    const older = newer === b ? a : b;
+    return { ...older, ...newer, id: a.id || b.id, updatedAt: new Date(Math.max(stamp(a.updatedAt), stamp(b.updatedAt), Date.now() - 86400000)).toISOString() };
+  }
+  function mergeRecord(a, b) {
+    const newer = stamp(b.updatedAt) >= stamp(a.updatedAt) ? b : a;
+    const older = newer === b ? a : b;
+    const paymentMap = new Map();
+    for (const p of Array.isArray(a.payments) ? a.payments : []) {
+      const key = String(p && p.id || p && p.reference || '').trim();
+      if (key) paymentMap.set(key, p);
+    }
+    for (const p of Array.isArray(b.payments) ? b.payments : []) {
+      const key = String(p && p.id || p && p.reference || '').trim();
+      if (!key) continue;
+      if (!paymentMap.has(key)) paymentMap.set(key, p);
+      else {
+        const oldP = paymentMap.get(key);
+        paymentMap.set(key, stamp(p.date) >= stamp(oldP.date) ? { ...oldP, ...p } : { ...p, ...oldP });
+      }
+    }
+    const merged = { ...older, ...newer, id: a.id || b.id };
+    merged.payments = Array.from(paymentMap.values());
+    if (merged.payments.length) {
+      merged.payments.sort((x,y) => String(x.date || '').localeCompare(String(y.date || '')) || String(x.id || '').localeCompare(String(y.id || '')));
+      const last = merged.payments[merged.payments.length - 1];
+      merged.lastPaymentDate = last.date || merged.lastPaymentDate || '';
+      merged.lastPaymentMethod = last.method || merged.lastPaymentMethod || '';
+      merged.lastPaymentReference = last.reference || merged.lastPaymentReference || '';
+      merged.lastPaidBy = last.paidBy || merged.lastPaidBy || '';
+    }
+    merged.updatedAt = new Date(Math.max(stamp(a.updatedAt), stamp(b.updatedAt), Date.now() - 86400000)).toISOString();
+    return merged;
+  }
+  function mergePayslip(a, b) {
+    const newer = stamp(b.generatedAt) >= stamp(a.generatedAt) ? b : a;
+    const older = newer === b ? a : b;
+    return { ...older, ...newer, id: a.id || b.id };
+  }
+  return {
+    version: Math.max(Number(existing.version) || 1, Number(incoming.version) || 1),
+    savedAt: Math.max(Number(existing.savedAt) || 0, Number(incoming.savedAt) || 0, Date.now()),
+    workers: mergeById(existing.workers, incoming.workers, mergeWorker),
+    records: mergeById(existing.records, incoming.records, mergeRecord),
+    payslips: mergeById(existing.payslips, incoming.payslips, mergePayslip)
+  };
+}
+
+async function handlePayrollStateGet(req, res) {
+  const session = await requireAuth(req, res);
+  if (!session) return;
+  const { rows } = await pool.query('SELECT version,saved_at,state_json FROM payroll_state WHERE id=1');
+  if (!rows[0]) return json(res, 200, { ok: true, state: null });
+  let state = rows[0].state_json;
+  if (typeof state === 'string') {
+    try { state = JSON.parse(state); } catch { return json(res, 500, { ok: false, error: 'Stored payroll record is invalid.' }); }
+  }
+  return json(res, 200, { ok: true, state });
+}
+
+async function handlePayrollStateWrite(req, res) {
+  const session = await requireAuth(req, res);
+  if (!session) return;
+  try {
+    const incoming = await parseJsonBody(req);
+    if (!incoming || !Array.isArray(incoming.workers) || !Array.isArray(incoming.records) || !Array.isArray(incoming.payslips)) {
+      return json(res, 400, { ok: false, error: 'Invalid Payroll state.' });
+    }
+    const currentResult = await pool.query('SELECT version,saved_at,state_json FROM payroll_state WHERE id=1');
+    let current = null;
+    if (currentResult.rows[0]) {
+      current = currentResult.rows[0].state_json;
+      if (typeof current === 'string') current = JSON.parse(current);
+    }
+    const merged = mergePayrollStates(current || {workers:[],records:[],payslips:[]}, incoming);
+    const deletedWorkers = new Set((incoming.deletedWorkerIds || []).map(v => String(v || '').trim()).filter(Boolean));
+    const deletedRecords = new Set((incoming.deletedRecordIds || []).map(v => String(v || '').trim()).filter(Boolean));
+    const deletedPayslips = new Set((incoming.deletedPayslipIds || []).map(v => String(v || '').trim()).filter(Boolean));
+    merged.workers = merged.workers.filter(w => !deletedWorkers.has(String(w.id || '')));
+    merged.records = merged.records.filter(r => !deletedRecords.has(String(r.id || '')));
+    merged.payslips = merged.payslips.filter(p => !deletedPayslips.has(String(p.id || '')));
+    await pool.query(
+      `INSERT INTO payroll_state (id,version,saved_at,state_json) VALUES (1,$1,$2,$3::jsonb)
+       ON CONFLICT(id) DO UPDATE SET version=EXCLUDED.version,saved_at=EXCLUDED.saved_at,state_json=EXCLUDED.state_json`,
+      [Number(merged.version) || 1, Number(merged.savedAt) || Date.now(), JSON.stringify(merged)]
+    );
+    return json(res, 200, { ok: true, savedAt: Number(merged.savedAt) || Date.now(), workerCount: merged.workers.length, recordCount: merged.records.length, payslipCount: merged.payslips.length });
+  } catch (err) {
+    console.error('Payroll database write failed:', err);
+    return json(res, 500, { ok: false, error: err.message || 'Payroll database write failed.' });
+  }
+}
+
+function textFieldValue(lines, labels) {
+  const lowerLabels = labels.map(x => String(x).toLowerCase());
+  for (let i=0;i<lines.length;i++) {
+    const line = lines[i].trim();
+    const low = line.toLowerCase();
+    for (const label of lowerLabels) {
+      if (low === label || low === label + ':') {
+        const next = String(lines[i+1] || '').trim();
+        if (next && !lowerLabels.includes(next.toLowerCase().replace(/:$/,''))) return next;
+      }
+      if (low.startsWith(label + ':')) {
+        const v = line.slice(label.length + 1).trim();
+        if (v) return v;
+      }
+      const sep = low.indexOf(label + ' - ');
+      if (sep === 0) return line.slice(label.length + 3).trim();
+    }
+  }
+  return '';
+}
+function parsePayrollWorkerText(rawText) {
+  const text = String(rawText || '').replace(/\u00a0/g,' ').replace(/\r/g,'');
+  const lines = text.split(/\n+/).map(s => s.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const get = (...labels) => textFieldValue(lines, labels);
+  const email = get('email','email address') || ((text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)||[])[0] || '');
+  const phones = text.match(/(?:\+233|0)\s?\d{2,3}[\s-]?\d{3}[\s-]?\d{3,4}/g) || [];
+  const phone = get('phone number','phone','mobile number','mobile') || phones[0] || '';
+  let paymentMethod = get('preferred payment method','payment method');
+  if (!paymentMethod) {
+    const low = text.toLowerCase();
+    if (low.includes('mobile money') || low.includes('momo')) paymentMethod='Mobile Money';
+    else if (low.includes('bank')) paymentMethod='Bank';
+    else if (low.includes('cash')) paymentMethod='Cash';
+  }
+  return {
+    workerCode:get('staff / worker id','staff id','worker id','employee id','employee number'),
+    name:get('full name','employee name','staff name','name'),
+    phone,
+    email,
+    address:get('residential address','home address','address'),
+    role:get('role / job title','job title','role','position'),
+    department:get('department','division','team'),
+    workerType:get('worker type','employment type','employee type'),
+    paymentMethod:paymentMethod || '',
+    momo:get('momo number','mobile money number','momo'),
+    bank:get('bank name','bank'),
+    accountName:get('account name','account holder name'),
+    accountNumber:get('account number','bank account number'),
+    idRef:get('ghana card / id reference','ghana card','national id','id number'),
+    emergency:get('emergency / contact person','emergency contact','next of kin name'),
+    emergencyPhone:get('emergency phone','emergency contact phone','next of kin phone'),
+    status:get('current status','status') || 'Active',
+    notes:get('notes','additional information'),
+    dateOfBirth:get('date of birth','dob'),
+    gender:get('gender'),
+    maritalStatus:get('marital status'),
+    dateJoined:get('date joined','date of joining','employment start date'),
+    tin:get('tin','tax identification number'),
+    ssnit:get('ssnit','ssnit number'),
+    nextOfKin:get('next of kin','next-of-kin')
+  };
+}
+
+async function handlePayrollPdfImport(req, res) {
+  const session = await requireAuth(req, res);
+  if (!session) return;
+  try {
+    const body = await parseJsonBody(req);
+    const b64 = String(body && body.data || '').replace(/^data:application\/pdf;base64,/i,'').trim();
+    if (!b64) return json(res, 400, { ok: false, error: 'No PDF data was supplied.' });
+    const approxBytes = Math.floor(b64.length * 3 / 4);
+    if (approxBytes > 15 * 1024 * 1024) return json(res, 413, { ok: false, error: 'PDF is larger than 15 MB.' });
+    const buffer = Buffer.from(b64,'base64');
+    if (buffer.length < 4 || buffer.subarray(0,4).toString('ascii') !== '%PDF') return json(res, 400, { ok: false, error: 'The uploaded file is not a valid PDF.' });
+    const { CanvasFactory } = require('pdf-parse/worker');
+    const { PDFParse } = require('pdf-parse');
+    const parser = new PDFParse({ data: buffer, CanvasFactory });
+    const result = await parser.getText();
+    await parser.destroy();
+    const worker = parsePayrollWorkerText(result.text || '');
+    if (!worker.name) {
+      return json(res, 422, { ok: false, error: 'The PDF was read, but a full name could not be detected. The PDF may be image-only/scanned or use labels the importer does not recognize.', extractedText: String(result.text || '').slice(0,12000) });
+    }
+    return json(res, 200, { ok: true, worker, pages: result.total || null });
+  } catch (err) {
+    console.error('Payroll PDF import failed:', err);
+    return json(res, 422, { ok: false, error: err.message || 'The PDF could not be read. Try a text-based PDF.' });
+  }
+}
+
 async function handleDraftGet(req, res) {
   const session = await requireAuth(req, res);
   if (!session) return;
@@ -717,6 +922,16 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/api/auth/login' && req.method === 'POST') return handleAuthLogin(req, res);
     if (url.pathname === '/api/auth/logout' && req.method === 'POST') return handleAuthLogout(req, res);
     if (url.pathname === '/api/auth/reset' && req.method === 'POST') return handleAuthReset(req, res);
+
+    if (url.pathname === '/api/payroll-state') {
+      if (req.method === 'GET') return handlePayrollStateGet(req, res);
+      if (req.method === 'PUT' || req.method === 'POST') return handlePayrollStateWrite(req, res);
+      return json(res, 405, { ok: false, error: 'Method not allowed.' });
+    }
+
+    if (url.pathname === '/api/payroll/import-pdf' && (req.method === 'POST' || req.method === 'PUT')) {
+      return handlePayrollPdfImport(req, res);
+    }
 
     if (url.pathname === '/api/draft') {
       if (req.method === 'GET') return handleDraftGet(req, res);
