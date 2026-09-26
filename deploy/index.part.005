@@ -410,26 +410,91 @@ function syncEventEndDate(){
 }
 function toggleRentalDetails(){const isRental=$("serviceCategory")?.value==="Equipment Rentals";const el=$("rentalDetailsCard");if(el)el.style.display=isRental?"block":"none";}
 function clearRentalDetails(){["rentalStart","rentalEnd","jobLocation","rentalRef"].forEach(id=>{if($(id))$(id).value=""});if($("rentalUnit"))$("rentalUnit").value="Per Day";if($("deposit"))$("deposit").value=0;}
-function nextReceiptNumber(){let max=0;data.forEach(x=>{let m=String(x.receiptNo||"").match(/(\d+)$/);if(m)max=Math.max(max,parseInt(m[1],10)||0)});return "REC"+String(max+1).padStart(4,"0")}
+function paymentHistory(x){
+  if(!x)return[];
+  if(Array.isArray(x.payments)&&x.payments.length)return x.payments.slice();
+  const legacyAmount=Math.max(0,Number(x.amountPaid||0));
+  if(legacyAmount<=0)return[];
+  return [{id:"legacy-"+String(x.id||x.no||"invoice"),receiptNo:String(x.receiptNo||nextReceiptNumber()),amount:legacyAmount,date:x.paymentDate||x.date||new Date().toISOString().slice(0,10),method:x.paymentMethod||"Payment",transactionRef:x.transactionRef||"",receivedBy:x.receivedBy||"",balanceAfter:Math.max(0,Number(x.total||0)-legacyAmount),legacy:true}];
+}
+function allReceiptRecords(){
+  const rows=[];
+  data.forEach(x=>paymentHistory(x).forEach(p=>rows.push({invoice:x,payment:p})));
+  return rows.sort((a,b)=>String(b.payment.date||"").localeCompare(String(a.payment.date||""))||String(b.payment.receiptNo||"").localeCompare(String(a.payment.receiptNo||"")));
+}
+function nextReceiptNumber(){
+  let max=0;
+  allReceiptRecords().forEach(r=>{const m=String(r.payment.receiptNo||"").match(/(\d+)$/);if(m)max=Math.max(max,parseInt(m[1],10)||0)});
+  return "REC"+String(max+1).padStart(4,"0");
+}
 $("eventDate")?.addEventListener("change",syncEventEndDate);
 $("eventEndDate")?.addEventListener("change",toggleEventDate);
-function paymentTotals(x){const total=Number(x.total||0),paid=Math.max(0,Number(x.amountPaid||0));return{total,paid,balance:Math.max(0,total-paid)}}
+let activeReceiptPayment=null;
+function paymentTotals(x){
+  const total=Number(x?.total||0);
+  if(activeReceiptPayment&&String(activeReceiptPayment.invoiceId)===String(x?.id)&&activeReceiptPayment.receiptNo){
+    return {total,paid:Math.max(0,Number(activeReceiptPayment.amount||0)),balance:Math.max(0,Number(activeReceiptPayment.balanceAfter||0))};
+  }
+  const paid=Math.max(0,paymentHistory(x).reduce((s,p)=>s+Number(p.amount||0),0));
+  return {total,paid,balance:Math.max(0,total-paid)};
+}
 function updatePaymentBalancePreview(totalOverride){const el=$("paymentBalancePreview");if(!el)return;let total=Number(totalOverride);if(!Number.isFinite(total)){let sub=0;document.querySelectorAll(".item").forEach(r=>{let q=+r.querySelector(".qty").value||0,p=+r.querySelector(".rate").value||0;sub+=q*p});let dis=+$("discount").value||0,tax=Math.max(0,sub-dis)*(+$("tax").value||0)/100;total=Math.max(0,sub-dis)+tax}const paid=Math.max(0,Number($("amountPaid")?.value||0));el.textContent=fmtMoney(Math.max(0,total-paid),$("cur")?.value||"GHS")}
-function renderReceipts(){const el=$("receiptList");if(!el)return;const list=data.filter(x=>Number(x.amountPaid||0)>0).sort((a,b)=>String(b.paymentDate||b.date||"").localeCompare(String(a.paymentDate||a.date||"")));if(!list.length){el.innerHTML='<div class="receipt-empty">No payment receipts have been recorded yet. Record a payment on an invoice to generate the first receipt.</div>';return}el.innerHTML=list.map(x=>{const p=paymentTotals(x),full=p.balance<=0.005;return `<div class="receipt-row"><div class="grow"><div class="main">${esc(x.receiptNo||"—")} · ${esc(x.no||"")}</div><div class="meta">${esc(x.client||"No client")} · ${esc(x.paymentDate||x.date||"—")} · ${esc(x.paymentMethod||"Payment")}</div></div><div class="amount">${fmtMoney(p.paid,x.cur)}</div><span class="status-pill ${full?"status-paid":"status-partial"}">${full?"Paid in Full":"Partial Payment"}</span><button class="btn" onclick="showReceipt('${x.id}')">View</button><button class="btn primary" onclick="showReceipt('${x.id}');setTimeout(printReceipt,30)">Print</button></div>`}).join("")}
+function renderReceipts(){
+  const el=$("receiptList");if(!el)return;
+  const list=allReceiptRecords();
+  if(!list.length){el.innerHTML='<div class="receipt-empty">No payment receipts have been recorded yet. Record a payment on an invoice to generate the first receipt.</div>';return}
+  el.innerHTML=list.map(r=>{
+    const x=r.invoice,p=r.payment,full=Number(p.balanceAfter||0)<=0.005;
+    return '<div class="receipt-row"><div class="grow"><div class="main">'+esc(p.receiptNo||"—")+' · '+esc(x.no||"")+'</div><div class="meta">'+esc(x.client||"No client")+' · '+esc(p.date||x.date||"—")+' · '+esc(p.method||"Payment")+'</div></div><div class="amount">'+fmtMoney(Number(p.amount||0),x.cur)+'</div><span class="status-pill '+(full?"status-paid":"status-partial")+'">'+(full?"Paid in Full":"Partial Payment")+'</span><button class="btn" onclick="showReceipt(\''+esc(x.id)+'\',\''+esc(p.id||"")+'\')">View</button><button class="btn primary" onclick="showReceipt(\''+esc(x.id)+'\',\''+esc(p.id||"")+'\');setTimeout(printReceipt,30)">Print</button></div>';
+  }).join("");
+}
 async function recordPayment(){
   const total=Number(calc().total||0),paid=Math.max(0,Number($("amountPaid")?.value||0));
   if(paid<=0){alert("Enter the amount received before generating a receipt.");return}
-  if(paid>total+0.005){alert("Amount paid cannot be greater than the invoice total.");return}
-  if(!$("paymentDate").value)$("paymentDate").value=new Date().toISOString().slice(0,10);
-  if(!$("receiptNo").value){
-    try{$("receiptNo").value=await gsRun_("getNextReceiptNumber")}catch(e){$("receiptNo").value=nextReceiptNumber()}
+  if(!current){
+    const draftAmount=$("amountPaid").value;
+    $("amountPaid").value="0";
+    const created=await save();
+    $("amountPaid").value=draftAmount;
+    if(!created)return;
   }
-  $("status").value=paid>=total-0.005?"Paid":"Partially Paid";
+  const x=current;
+  if(!Array.isArray(x.payments))x.payments=paymentHistory(x);
+  const alreadyPaid=x.payments.reduce((s,p)=>s+Math.max(0,Number(p.amount||0)),0);
+  const balance=Math.max(0,total-alreadyPaid);
+  if(paid>balance+0.005){alert("Amount paid cannot be greater than the remaining invoice balance.");return}
+  if(!$("paymentDate").value)$("paymentDate").value=new Date().toISOString().slice(0,10);
+  const receiptNo=nextReceiptNumber();
+  const paymentId="pay-"+Date.now()+"-"+Math.random().toString(36).slice(2,8);
+  const newPaid=alreadyPaid+paid;
+  const payment={id:paymentId,receiptNo,amount:paid,date:$("paymentDate").value,method:$("paymentMethod").value||"Payment",transactionRef:$("transactionRef").value||"",receivedBy:$("receivedBy").value||"",balanceAfter:Math.max(0,total-newPaid)};
+  x.payments.push(payment);
+  x.amountPaid=newPaid;
+  x.receiptNo=receiptNo;
+  x.paymentDate=payment.date;
+  x.paymentMethod=payment.method;
+  x.transactionRef=payment.transactionRef;
+  x.receivedBy=payment.receivedBy;
+  x.status=newPaid>=total-0.005?"Paid":"Partially Paid";
+  $("receiptNo").value=receiptNo;
   const savedInvoice=await save();
   if(!savedInvoice)return;
-  await showReceipt(current?.id);
+  await showReceipt(current?.id,paymentId);
 }
-function showReceipt(id){const x=data.find(a=>a.id===id)||current;if(!x||Number(x.amountPaid||0)<=0){toast("Record a payment before generating a receipt");return}current=x;if(!x.receiptNo){x.receiptNo=nextReceiptNumber();persist()}renderReceipt(x);document.querySelectorAll(".view").forEach(v=>v.classList.remove("active","print-view"));$("view-receipt-preview").classList.add("active");$("side").classList.remove("open")}
+function showReceipt(id,receiptId){
+  const x=data.find(a=>a.id===id)||current;
+  if(!x){toast("Receipt record not found");return}
+  const records=paymentHistory(x);
+  const p=records.find(a=>String(a.id)===String(receiptId))||records[records.length-1];
+  if(!p||Number(p.amount||0)<=0){toast("Record a payment before generating a receipt");return}
+  current=x;
+  activeReceiptPayment={invoiceId:x.id,receiptNo:p.receiptNo,amount:Number(p.amount||0),balanceAfter:Number(p.balanceAfter||0)};
+  const view={...x,paymentDate:p.date||x.paymentDate,paymentMethod:p.method||x.paymentMethod,transactionRef:p.transactionRef||"",receivedBy:p.receivedBy||"",receiptNo:p.receiptNo||x.receiptNo};
+  renderReceipt(view);
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active","print-view"));
+  $("view-receipt-preview").classList.add("active");
+  $("side").classList.remove("open");
+}
 function renderReceipt(x){const s=settings,p=paymentTotals(x),full=p.balance<=0.005,logo=s.logo?`<div class="receipt-logo" style="background-image:url('${s.logo}')"></div>`:`<div class="receipt-logo"></div>`;const rows=(x.items||[]).map(i=>`<tr><td>${esc(i.desc)}</td><td>${i.qty}</td><td>${esc(money(i.qty*i.rate))}</td></tr>`).join("");const statusLabel=full?"PAID IN FULL":"PARTIAL PAYMENT";$("receiptPaper").innerHTML=`<div class="receipt-header"><div class="receipt-brand">${logo}<div class="receipt-biz"><h2>${esc(s.biz||"FILM BEYOND IMAGINATION (FBI)")}</h2><div>${s.owner?esc(s.owner)+"<br>":""}${esc(s.baddr||"")}<br>${esc(s.bphone||"")} · ${esc(s.bemail||"")}</div></div></div><div class="receipt-meta"><div class="label">Receipt Number</div><div class="receipt-no">${esc(x.receiptNo||nextReceiptNumber())}</div><div class="label">Payment Date</div><div class="date">${esc(x.paymentDate||new Date().toISOString().slice(0,10))}</div></div></div><div class="receipt-title">OFFICIAL PAYMENT RECEIPT</div><span class="receipt-paid-badge ${full?"":"partial"}">${statusLabel}</span><div class="receipt-grid"><div class="receipt-info"><div class="k">Received From</div><div class="v">${esc(x.client||"Client")}<br>${esc(x.clientAddress||"")}<br>${esc(x.clientPhone||"")}${x.clientEmail?" · "+esc(x.clientEmail):""}</div></div><div class="receipt-info"><div class="k">Reference</div><div class="v">Invoice: ${esc(x.no||"—")}<br>Payment Method: ${esc(x.paymentMethod||"—")}<br>Transaction Ref: ${esc(x.transactionRef||"—")}</div></div></div><table class="receipt-items"><thead><tr><th>Description</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${rows||`<tr><td>Invoice payment</td><td>1</td><td>${esc(fmtMoney(p.paid,x.cur))}</td></tr>`}</tbody></table><div class="receipt-total"><div class="receipt-total-box"><div class="receipt-total-line"><span>Invoice Total</span><b>${esc(fmtMoney(p.total,x.cur))}</b></div><div class="receipt-total-line"><span>Amount Received</span><b>${esc(fmtMoney(p.paid,x.cur))}</b></div><div class="receipt-total-line total"><span>RECEIVED</span><b>${esc(fmtMoney(p.paid,x.cur))}</b></div><div class="receipt-total-line balance"><span>Balance Remaining</span><b>${esc(fmtMoney(p.balance,x.cur))}</b></div></div></div><div class="receipt-note">Received with thanks. This receipt acknowledges payment made against the referenced invoice. ${x.notes?esc(x.notes):"Thank you for your business."}</div><div class="receipt-sign"><div class="line">Customer / Payer</div><div class="line">Received By${x.receivedBy?": "+esc(x.receivedBy):""}</div></div><div class="receipt-footer"><b>Receipt Record</b><br>Receipt ${esc(x.receiptNo||"")} · Invoice ${esc(x.no||"")} · ${esc(statusLabel)}<br>This document is a payment receipt. It is not a GRA E-VAT receipt unless issued through a GRA-certified invoicing system.</div>`}
 function openDocumentPrint(element, title, pageCss){
   if(!element){throw new Error("Document preview is empty")};
@@ -473,7 +538,18 @@ function newInvoice(){
 }
 function addItem(desc="",qty=1,rate=0,days=1){let d=document.createElement("div");d.className="item";d.innerHTML=`<div><input class="desc" list="itemOptions" placeholder="Description" value="${esc(desc)}"></div><div><input class="rate" type="number" min="0" step=".01" value="${rate}"></div><div><input class="days" type="number" min="1" step="1" value="${days||1}"></div><div><input class="qty" type="number" min="0" step=".01" value="${qty}"></div><div><input class="amt" readonly value="${money((Number(qty)||0)*(Number(rate)||0)*(Number(days)||1))}"></div><button class="rm" onclick="this.parentElement.remove();calc()">✕</button>`;$("items").appendChild(d);d.querySelectorAll("input").forEach(i=>i.oninput=calc);calc()}
 function calc(){let sub=0;document.querySelectorAll(".item").forEach(r=>{let q=+r.querySelector(".qty").value||0,p=+r.querySelector(".rate").value||0,d=Math.max(1,+r.querySelector(".days")?.value||1),a=q*p*d;sub+=a;r.querySelector(".amt").value=money(a)});let dis=+$("discount").value||0,tax=Math.max(0,sub-dis)*(+$("tax").value||0)/100,total=Math.max(0,sub-dis)+tax;$("total").textContent=money(total);updatePaymentBalancePreview(total);return{sub,dis,tax,total}}
-function get(){let c=calc();let paid=Math.max(0,Number($("amountPaid")?.value||0));if($("status")?.value==="Paid")paid=c.total;if(paid>0.005&&paid<c.total-0.005)$("status").value="Partially Paid";if(paid>=c.total-0.005&&c.total>0)$("status").value="Paid";let receiptNo=$("receiptNo")?.value||current?.receiptNo||"";if(paid>0.005&&!receiptNo)receiptNo=nextReceiptNumber();return{id:current?.id||("av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10)),no:$("no").value,date:$("date").value,due:$("due").value,status:$("status").value,cur:$("cur").value,template:$("template").value||settings.template||"classic",client:$("client").value,clientAddress:$("clientAddress").value,clientPhone:$("clientPhone").value,clientEmail:$("clientEmail").value,items:[...document.querySelectorAll(".item")].map(r=>({desc:r.querySelector(".desc").value,qty:+r.querySelector(".qty").value||0,rate:+r.querySelector(".rate").value||0,days:Math.max(1,+r.querySelector(".days")?.value||1)})).filter(x=>x.desc),taxRate:+$("tax").value||0,discount:+$("discount").value||0,vatInclusive:$("vatInclusive").checked,...c,payment:$("payment").value,notes:$("notes").value,template:selectedTemplate(),category:$("serviceCategory")?.value||"Media Works",serviceBrand:$("brandModelFilter")?.value||"",serviceItem:$("catalogItemSelect")?.value||$("itemSearch")?.value||"",eventDate:$("eventDate")?.value||"",eventEndDate:$("eventEndDate")?.value||$("eventDate")?.value||"",rentalStart:$("rentalStart")?.value||"",rentalEnd:$("rentalEnd")?.value||"",jobLocation:$("jobLocation")?.value||"",rentalRef:$("rentalRef")?.value||"",rentalUnit:$("rentalUnit")?.value||"Per Day",deposit:+($("deposit")?.value||0),amountPaid:paid,paymentDate:$("paymentDate")?.value||"",paymentMethod:$("paymentMethod")?.value||"",transactionRef:$("transactionRef")?.value||"",receivedBy:$("receivedBy")?.value||"",receiptNo}}
+function get(){
+  let c=calc();
+  const inputPaid=Math.max(0,Number($("amountPaid")?.value||0));
+  const hasPaymentHistory=Array.isArray(current?.payments)&&current.payments.length>0;
+  let paid=hasPaymentHistory?current.payments.reduce((s,p)=>s+Math.max(0,Number(p.amount||0)),0):inputPaid;
+  if(!hasPaymentHistory&&$("status")?.value==="Paid")paid=c.total;
+  if(!hasPaymentHistory&&paid>0.005&&paid<c.total-0.005)$("status").value="Partially Paid";
+  if(paid>=c.total-0.005&&c.total>0)$("status").value="Paid";
+  let receiptNo=$("receiptNo")?.value||current?.receiptNo||"";
+  if(paid>0.005&&!receiptNo)receiptNo=nextReceiptNumber();
+  return{id:current?.id||("av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10)),no:$("no").value,date:$("date").value,due:$("due").value,status:$("status").value,cur:$("cur").value,template:$("template").value||settings.template||"classic",client:$("client").value,clientAddress:$("clientAddress").value,clientPhone:$("clientPhone").value,clientEmail:$("clientEmail").value,items:[...document.querySelectorAll(".item")].map(r=>({desc:r.querySelector(".desc").value,qty:+r.querySelector(".qty").value||0,rate:+r.querySelector(".rate").value||0,days:Math.max(1,+r.querySelector(".days")?.value||1)})).filter(x=>x.desc),taxRate:+$("tax").value||0,discount:+$("discount").value||0,vatInclusive:$("vatInclusive").checked,...c,payment:$("payment").value,notes:$("notes").value,template:selectedTemplate(),category:$("serviceCategory")?.value||"Media Works",serviceBrand:$("brandModelFilter")?.value||"",serviceItem:$("catalogItemSelect")?.value||$("itemSearch")?.value||"",eventDate:$("eventDate")?.value||"",eventEndDate:$("eventEndDate")?.value||$("eventDate")?.value||"",rentalStart:$("rentalStart")?.value||"",rentalEnd:$("rentalEnd")?.value||"",jobLocation:$("jobLocation")?.value||"",rentalRef:$("rentalRef")?.value||"",rentalUnit:$("rentalUnit")?.value||"Per Day",deposit:+($("deposit")?.value||0),amountPaid:paid,paymentDate:$("paymentDate")?.value||"",paymentMethod:$("paymentMethod")?.value||"",transactionRef:$("transactionRef")?.value||"",receivedBy:$("receivedBy")?.value||"",receiptNo,payments:Array.isArray(current?.payments)?current.payments.slice():undefined}
+}
 async function save(){
   try{
     let x=get();
