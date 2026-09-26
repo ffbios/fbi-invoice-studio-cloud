@@ -309,7 +309,7 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
         <button class="btn" type="button" id="fbiPayrollImportForm">⬆ Import Completed Form</button>
         <button class="btn" type="button" id="fbiPayrollQuickWorker">＋ Add Worker</button>
         <button class="btn primary" type="button" id="fbiPayrollQuickRecord">＋ New Payroll</button>
-        <input id="fbiPayrollImportFile" type="file" accept="application/json,.json" style="display:none">
+        <input id="fbiPayrollImportFile" type="file" accept="application/json,.json,application/pdf,.pdf" style="display:none">
       </div>
     </div>
 
@@ -506,16 +506,137 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
   function uid(prefix){if(window.crypto&&crypto.randomUUID)return prefix+'-'+crypto.randomUUID();return prefix+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,9);}
   function toastLocal(msg){try{if(typeof window.toast==='function'){window.toast(msg);return}}catch(e){}}
 
-  /* Payroll-only persistence. This never calls the invoice persist() function. */
+  /* Payroll persistence: local fallback plus isolated PostgreSQL storage. Invoice state is never touched. */
+  var payrollCloudQueue=Promise.resolve();
+  var payrollCloudOnline=false;
+  var payrollPendingDeletes={workers:[],records:[],payslips:[]};
+
+  function payrollSnapshotJson(){
+    return JSON.stringify({
+      version:1,
+      savedAt:Date.now(),
+      workers:STATE.workers,
+      records:STATE.records,
+      payslips:STATE.payslips,
+      deletedWorkerIds:payrollPendingDeletes.workers.slice(),
+      deletedRecordIds:payrollPendingDeletes.records.slice(),
+      deletedPayslipIds:payrollPendingDeletes.payslips.slice()
+    });
+  }
+
+  function queuePayrollCloudSave(){
+    const json=payrollSnapshotJson();
+    const sentDeletes={
+      workers:payrollPendingDeletes.workers.slice(),
+      records:payrollPendingDeletes.records.slice(),
+      payslips:payrollPendingDeletes.payslips.slice()
+    };
+    payrollCloudQueue=payrollCloudQueue.then(async function(){
+      try{
+        const res=await fetch('/api/payroll-state',{method:'PUT',headers:{'Content-Type':'application/json'},body:json,cache:'no-store'});
+        if(!res.ok)throw new Error('HTTP '+res.status);
+        const body=await res.json().catch(function(){return{};});
+        if(body.ok===false)throw new Error(body.error||'Payroll cloud save failed');
+        payrollCloudOnline=true;
+        sentDeletes.workers.forEach(function(id){payrollPendingDeletes.workers=payrollPendingDeletes.workers.filter(function(x){return x!==id;});});
+        sentDeletes.records.forEach(function(id){payrollPendingDeletes.records=payrollPendingDeletes.records.filter(function(x){return x!==id;});});
+        sentDeletes.payslips.forEach(function(id){payrollPendingDeletes.payslips=payrollPendingDeletes.payslips.filter(function(x){return x!==id;});});
+        return true;
+      }catch(e){
+        payrollCloudOnline=false;
+        console.warn('Payroll cloud save failed:',e);
+        return false;
+      }
+    });
+    return payrollCloudQueue;
+  }
+
   function saveState(){
     try{
       localStorage.setItem(KEY,JSON.stringify(STATE));
-      return true;
     }catch(e){
       console.error('Payroll storage failed',e);
       alert('Payroll could not be saved on this device.');
       return false;
     }
+    queuePayrollCloudSave();
+    return true;
+  }
+
+  async function saveStateAndWait(){
+    if(!saveState())return false;
+    return await payrollCloudQueue;
+  }
+
+  function payrollArrayHasData(x){
+    return !!(x&&((x.workers&&x.workers.length)||(x.records&&x.records.length)||(x.payslips&&x.payslips.length)));
+  }
+
+  function mergePayrollClientStates(remote,local){
+    remote=remote||{workers:[],records:[],payslips:[]};
+    local=local||{workers:[],records:[],payslips:[]};
+    function stamp(v){var t=Date.parse(String(v||''));return Number.isFinite(t)?t:0;}
+    function mergeWorker(a,b){
+      var newer=stamp(b.updatedAt)>=stamp(a.updatedAt)?b:a, older=newer===b?a:b;
+      return Object.assign({},older,newer,{id:a.id||b.id,updatedAt:stamp(a.updatedAt)||stamp(b.updatedAt)?new Date(Math.max(stamp(a.updatedAt),stamp(b.updatedAt))).toISOString():newer.updatedAt});
+    }
+    function mergeRecord(a,b){
+      var newer=stamp(b.updatedAt)>=stamp(a.updatedAt)?b:a, older=newer===b?a:b;
+      var out=Object.assign({},older,newer,{id:a.id||b.id});
+      var map={};
+      (Array.isArray(a.payments)?a.payments:[]).forEach(function(p){var k=String(p.id||p.reference||'').trim();if(k)map[k]=p;});
+      (Array.isArray(b.payments)?b.payments:[]).forEach(function(p){var k=String(p.id||p.reference||'').trim();if(k){if(!map[k])map[k]=p;else map[k]=stamp(p.date)>=stamp(map[k].date)?Object.assign({},map[k],p):Object.assign({},p,map[k]);}});
+      out.payments=Object.keys(map).map(function(k){return map[k];}).sort(function(x,y){return String(x.date||'').localeCompare(String(y.date||''))||String(x.id||'').localeCompare(String(y.id||''));});
+      if(out.payments.length){
+        var last=out.payments[out.payments.length-1];
+        out.lastPaymentDate=last.date||out.lastPaymentDate||'';
+        out.lastPaymentMethod=last.method||out.lastPaymentMethod||'';
+        out.lastPaymentReference=last.reference||out.lastPaymentReference||'';
+        out.lastPaidBy=last.paidBy||out.lastPaidBy||'';
+      }
+      var mt=Math.max(stamp(a.updatedAt),stamp(b.updatedAt));
+      if(mt)out.updatedAt=new Date(mt).toISOString();
+      return out;
+    }
+    function mergePayslip(a,b){
+      var newer=stamp(b.generatedAt)>=stamp(a.generatedAt)?b:a, older=newer===b?a:b;
+      return Object.assign({},older,newer,{id:a.id||b.id});
+    }
+    function mergeList(a,b,mergeOne){
+      var map={};
+      (Array.isArray(a)?a:[]).forEach(function(item){var k=String(item&&item.id||'').trim();if(k)map[k]=item;});
+      (Array.isArray(b)?b:[]).forEach(function(item){var k=String(item&&item.id||'').trim();if(k){map[k]=map[k]?mergeOne(map[k],item):item;}});
+      return Object.keys(map).map(function(k){return map[k];});
+    }
+    return {
+      version:Math.max(Number(remote.version)||1,Number(local.version)||1),
+      savedAt:Math.max(Number(remote.savedAt)||0,Number(local.savedAt)||0),
+      workers:mergeList(remote.workers,local.workers,mergeWorker),
+      records:mergeList(remote.records,local.records,mergeRecord),
+      payslips:mergeList(remote.payslips,local.payslips,mergePayslip)
+    };
+  }
+
+  async function hydratePayrollCloud(){
+    var local={workers:STATE.workers.slice(),records:STATE.records.slice(),payslips:STATE.payslips.slice()};
+    try{
+      const res=await fetch('/api/payroll-state',{cache:'no-store'});
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      const body=await res.json().catch(function(){return{};});
+      if(body.ok===false)throw new Error(body.error||'Payroll cloud read failed');
+      payrollCloudOnline=true;
+      if(body.state&&typeof body.state==='object'){
+        STATE=mergePayrollClientStates(body.state,local);
+        try{localStorage.setItem(KEY,JSON.stringify(STATE));}catch(e){}
+        await queuePayrollCloudSave();
+      }else if(payrollArrayHasData(local)){
+        await saveStateAndWait();
+      }
+    }catch(e){
+      payrollCloudOnline=false;
+      console.warn('Payroll cloud read failed; using local Payroll copy:',e);
+    }
+    renderAll();
   }
   function normalizeRecord(r){
     r=r||{};
@@ -671,6 +792,7 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     w.emergencyPhone=(q('pwEmergencyPhone')?.value||'').trim();
     w.status=q('pwStatus')?.value||'Active';
     w.notes=(q('pwNotes')?.value||'').trim();
+    w.updatedAt=new Date().toISOString();
     var idx=STATE.workers.findIndex(function(x){return x.id===w.id;});
     if(idx>=0)STATE.workers[idx]=w;else STATE.workers.push(w);
     if(saveState()){editingWorkerId='';q('fbiPayrollWorkerFormWrap').innerHTML='';selectedWorkerId=w.id;renderAll();toastLocal('Worker saved');}
@@ -722,6 +844,7 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     if(STATE.records.some(function(r){return r.workerId===idv;})){alert('This worker has payroll records. Set the worker to Inactive instead of deleting the profile.');return;}
     if(!confirm('Delete this worker profile?'))return;
     STATE.workers=STATE.workers.filter(function(w){return w.id!==idv;});
+    payrollPendingDeletes.workers.push(idv);
     if(selectedWorkerId===idv)selectedWorkerId='';
     saveState();renderAll();
   }
@@ -823,6 +946,7 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     r.previousBalance=num(q('prPreviousBalance')?.value);
     r.notes=(q('prNotes')?.value||'').trim();
     normalizeRecord(r);
+    r.updatedAt=new Date().toISOString();
     var idx=STATE.records.findIndex(function(x){return x.id===r.id;});
     if(idx>=0)STATE.records[idx]=r;else STATE.records.push(r);
     if(saveState()){editingRecordId='';q('fbiPayrollRecordFormWrap').innerHTML='';renderAll();toastLocal(existing?'Payroll record updated':'Payroll record saved');}
@@ -852,7 +976,10 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
   function deleteRecord(idv){
     if(!confirm('Delete this Payroll record?'))return;
     STATE.records=STATE.records.filter(function(r){return r.id!==idv;});
+    var removedPayslips=STATE.payslips.filter(function(p){return p.recordId===idv;});
     STATE.payslips=STATE.payslips.filter(function(p){return p.recordId!==idv;});
+    payrollPendingDeletes.records.push(idv);
+    removedPayslips.forEach(function(p){if(p.id)payrollPendingDeletes.payslips.push(p.id);});
     saveState();renderAll();toastLocal('Payroll record deleted');
   }
 
@@ -871,7 +998,7 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     q('fbiPayrollPaymentModal').setAttribute('aria-hidden','false');
   }
   function closePayment(){paymentRecordId='';q('fbiPayrollPaymentModal').classList.remove('show');q('fbiPayrollPaymentModal').setAttribute('aria-hidden','true');}
-  function savePayment(){
+  async function savePayment(){
     var r=STATE.records.find(function(x){return x.id===paymentRecordId;});if(!r)return;
     var amount=num(q('fbiPayrollPaymentAmount').value),bal=balance(r);
     if(amount<=0||amount>bal+0.005){alert('Enter a payment amount up to '+money(bal)+'.');return;}
@@ -887,7 +1014,11 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     r.lastPaymentMethod=method;
     r.lastPaymentReference=ref;
     r.lastPaidBy=by;
-    saveState();closePayment();renderAll();toastLocal(status(r)==='Paid'?'Payroll fully paid':'Partial payroll payment recorded');
+    r.updatedAt=new Date().toISOString();
+    saveState();
+    const cloudSaved=await saveStateAndWait();
+    closePayment();renderAll();
+    toastLocal(cloudSaved?(status(r)==='Paid'?'Payroll fully paid':'Partial payroll payment recorded'):'Payment saved locally; cloud sync is retrying');
   }
 
   function renderOverview(){
@@ -1109,72 +1240,76 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     var w=raw&&raw.worker?raw.worker:raw||{};
     function s(v){return String(v==null?'':v).trim();}
     return {
-      workerCode:s(w.workerCode),
-      name:s(w.name),
-      phone:s(w.phone),
-      email:s(w.email),
-      address:s(w.address),
-      role:s(w.role),
-      department:s(w.department)||'Other',
-      workerType:s(w.workerType)||'Media Worker',
-      paymentMethod:s(w.paymentMethod)||'Mobile Money',
-      momo:s(w.momo),
-      bank:s(w.bank),
-      accountName:s(w.accountName),
-      accountNumber:s(w.accountNumber),
-      idRef:s(w.idRef),
-      emergency:s(w.emergency),
-      emergencyPhone:s(w.emergencyPhone),
-      status:s(w.status)||'Active',
-      notes:s(w.notes),
-      dateOfBirth:s(w.dateOfBirth),
-      gender:s(w.gender),
-      maritalStatus:s(w.maritalStatus),
-      dateJoined:s(w.dateJoined),
-      tin:s(w.tin),
-      ssnit:s(w.ssnit),
-      nextOfKin:s(w.nextOfKin)
+      workerCode:s(w.workerCode),name:s(w.name),phone:s(w.phone),email:s(w.email),address:s(w.address),role:s(w.role),
+      department:s(w.department)||'Other',workerType:s(w.workerType)||'Media Worker',paymentMethod:s(w.paymentMethod)||'Mobile Money',
+      momo:s(w.momo),bank:s(w.bank),accountName:s(w.accountName),accountNumber:s(w.accountNumber),idRef:s(w.idRef),
+      emergency:s(w.emergency),emergencyPhone:s(w.emergencyPhone),status:s(w.status)||'Active',notes:s(w.notes),
+      dateOfBirth:s(w.dateOfBirth),gender:s(w.gender),maritalStatus:s(w.maritalStatus),dateJoined:s(w.dateJoined),
+      tin:s(w.tin),ssnit:s(w.ssnit),nextOfKin:s(w.nextOfKin)
     };
+  }
+
+  function applyImportedWorker(imported,sourceLabel){
+    imported=normalizeImportedWorker(imported);
+    if(!imported.name)throw new Error('The '+(sourceLabel||'staff form')+' does not contain a full name.');
+    var existing=null;
+    if(imported.workerCode)existing=STATE.workers.find(function(w){return String(w.workerCode||'').trim().toLowerCase()===imported.workerCode.toLowerCase();})||null;
+    if(!existing&&imported.email)existing=STATE.workers.find(function(w){return String(w.email||'').trim().toLowerCase()===imported.email.toLowerCase();})||null;
+    var importedPhone=imported.phone.replace(/\D/g,'');
+    if(!existing&&importedPhone)existing=STATE.workers.find(function(w){return String(w.phone||'').replace(/\D/g,'')===importedPhone;})||null;
+
+    if(existing){
+      var update=window.confirm('A worker with matching ID, email or phone already exists: '+existing.name+'.\n\nUpdate that existing worker with this completed '+(sourceLabel||'staff form')+'?');
+      if(!update){toastLocal('Import cancelled');return;}
+      var keepId=existing.id,keepCreated=existing.createdAt;
+      Object.assign(existing,imported,{id:keepId,createdAt:keepCreated||new Date().toISOString(),updatedAt:new Date().toISOString()});
+      selectedWorkerId=existing.id;
+      if(saveState()){renderAll();toastLocal('Worker information updated from '+(sourceLabel||'staff form'));}
+      return;
+    }
+
+    var worker=Object.assign({id:uid('worker'),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()},imported);
+    STATE.workers.push(worker);
+    selectedWorkerId=worker.id;
+    if(saveState()){
+      renderAll();
+      toastLocal(worker.name+' imported into Payroll');
+    }
+  }
+
+  async function importPayrollPdf(file){
+    var reader=new FileReader();
+    reader.onload=async function(){
+      try{
+        var dataUrl=String(reader.result||'');
+        var base64=dataUrl.split(',')[1]||'';
+        const res=await fetch('/api/payroll/import-pdf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,data:base64}),cache:'no-store'});
+        const body=await res.json().catch(function(){return{};});
+        if(!res.ok||body.ok===false)throw new Error(body.error||'The PDF could not be imported.');
+        applyImportedWorker(body.worker,'PDF form');
+      }catch(err){
+        console.error('Payroll PDF import failed',err);
+        alert(err.message||'Could not import the PDF form.');
+      }finally{
+        q('fbiPayrollImportFile').value='';
+      }
+    };
+    reader.readAsDataURL(file);
   }
 
   function importStaffFormFile(evt){
     var file=evt.target.files&&evt.target.files[0];if(!file)return;
+    if(file.type==='application/pdf'||/\.pdf$/i.test(file.name)){importPayrollPdf(file);return;}
     var reader=new FileReader();
     reader.onload=function(){
       try{
         var obj=JSON.parse(String(reader.result||'{}'));
-        if(obj.type!=='fbi-payroll-staff-form' || Number(obj.version)!==1) throw new Error('This is not a valid FBI Payroll Staff Registration Form.');
-        var imported=normalizeImportedWorker(obj);
-        if(!imported.name) throw new Error('The form does not contain a full name.');
-        var existing=null;
-        if(imported.workerCode) existing=STATE.workers.find(function(w){return String(w.workerCode||'').trim().toLowerCase()===imported.workerCode.toLowerCase();})||null;
-        if(!existing&&imported.email) existing=STATE.workers.find(function(w){return String(w.email||'').trim().toLowerCase()===imported.email.toLowerCase();})||null;
-        var importedPhone=imported.phone.replace(/\D/g,'');
-        if(!existing&&importedPhone) existing=STATE.workers.find(function(w){return String(w.phone||'').replace(/\D/g,'')===importedPhone;})||null;
-
-        if(existing){
-          var update=window.confirm('A worker with matching ID, email or phone already exists: '+existing.name+'.\n\nUpdate that existing worker with this completed form?');
-          if(!update){toastLocal('Import cancelled');return;}
-          var keepId=existing.id,keepCreated=existing.createdAt;
-          Object.assign(existing,imported,{id:keepId,createdAt:keepCreated||new Date().toISOString(),updatedAt:new Date().toISOString()});
-          selectedWorkerId=existing.id;
-          if(saveState()){renderAll();toastLocal('Worker information updated from form');}
-          return;
-        }
-
-        var worker=Object.assign({id:uid('worker'),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()},imported);
-        STATE.workers.push(worker);
-        selectedWorkerId=worker.id;
-        if(saveState()){
-          renderAll();
-          toastLocal(worker.name+' imported into Payroll');
-        }
+        if(obj.type!=='fbi-payroll-staff-form'||Number(obj.version)!==1)throw new Error('This is not a valid FBI Payroll Staff Registration Form.');
+        applyImportedWorker(obj,'JSON form');
       }catch(err){
         console.error('Payroll staff form import failed',err);
         alert(err.message||'Could not import the completed staff form.');
-      }finally{
-        evt.target.value='';
-      }
+      }finally{evt.target.value='';}
     };
     reader.readAsText(file);
   }
@@ -1231,8 +1366,9 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     q('fbiPayrollPaymentClose').onclick=closePayment;q('fbiPayrollPaymentCancel').onclick=closePayment;q('fbiPayrollPaymentSave').onclick=savePayment;
     q('fbiPayrollPaymentModal').addEventListener('click',function(e){if(e.target===this)closePayment();});
     renderAll();
+    hydratePayrollCloud();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-  window.FBIPayrollModule={open:activate,close:deactivate,reload:function(){loadState();renderAll();}};
+  window.FBIPayrollModule={open:activate,close:deactivate,reload:function(){loadState();renderAll();hydratePayrollCloud();}};
 })();
 </script>
