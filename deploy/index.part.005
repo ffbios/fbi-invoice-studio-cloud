@@ -438,11 +438,11 @@ function paymentTotals(x){
   const paid=Math.max(0,paymentHistory(x).reduce((s,p)=>s+Number(p.amount||0),0));
   return {total,paid,balance:Math.max(0,total-paid)};
 }
-function renderPaymentHistory(){
+function renderPaymentHistory(totalOverride){
   const el=$("paymentHistoryPanel");if(!el)return;
   const records=paymentHistory(current);
   if(!records.length){el.innerHTML='<div style="color:#727b89;font-size:9px">No payments recorded yet. The first payment will generate the first receipt.</div>';return}
-  const total=Number(current?.total||calc().total||0);
+  const total=Number.isFinite(Number(totalOverride))?Number(totalOverride):Number(current?.total||0);
   const paid=records.reduce((s,p)=>s+Math.max(0,Number(p.amount||0)),0);
   const balance=Math.max(0,total-paid);
   el.innerHTML='<div style="font-size:9px;color:#858e9f;text-transform:uppercase;letter-spacing:.7px;font-weight:800;margin-bottom:7px">Payment History · '+records.length+' Receipt'+(records.length===1?'':'s')+'</div>'+
@@ -465,7 +465,7 @@ function updatePaymentBalancePreview(totalOverride){
   const historical=paymentHistory(current).reduce((s,p)=>s+Math.max(0,Number(p.amount||0)),0);
   const entered=Math.max(0,Number($("amountPaid")?.value||0));
   el.textContent=fmtMoney(Math.max(0,total-historical-entered),$("cur")?.value||"GHS");
-  renderPaymentHistory();
+  renderPaymentHistory(total);
 }
 function renderReceipts(){
   const el=$("receiptList");if(!el)return;
