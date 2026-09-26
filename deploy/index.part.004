@@ -230,7 +230,7 @@
       var target=document.getElementById('view-'+v);
       if(target) target.classList.add('active');
       document.querySelectorAll('.nav button').forEach(function(btn){btn.classList.toggle('active',btn.getAttribute('data-v')===v);});
-      var titles={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Jobs','Manage job status linked to every invoice'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],expenses:['Expenses / Petty Cash','Track fuel, feeding and business spending'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']};
+      var titles={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Jobs','Manage job status linked to every invoice'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']};
       var t=titles[v]||['Invoice Studio',''];
       var title=document.getElementById('title'); if(title) title.textContent=t[0];
       var sub=document.getElementById('subtitle'); if(sub) sub.textContent=t[1];
@@ -241,7 +241,6 @@
       try{ if(v==='saved' && typeof window.renderSaved==='function') window.renderSaved(); }catch(e){}
       try{ if(v==='calendar' && typeof window.renderCalendar==='function') window.renderCalendar(); }catch(e){}
       try{ if(v==='receipts' && typeof window.renderReceipts==='function') window.renderReceipts(); }catch(e){}
-      try{ if(v==='expenses' && typeof window.renderExpenses==='function') window.renderExpenses(); }catch(e){}
       try{ if(v==='create' && typeof window.populateClientSelect==='function') window.populateClientSelect(); }catch(e){}
       return false;
     }catch(e){console.error('Navigation error',e);return false;}
@@ -252,10 +251,10 @@
 (function(){
  function sync(){
   var id=location.hash.replace(/^#/,'');
-  var valid={dashboard:1,create:1,clients:1,saved:1,calendar:1,receipts:1,expenses:1,settings:1,whatsapp:1,completed:1};
+  var valid={dashboard:1,create:1,clients:1,saved:1,calendar:1,receipts:1,settings:1,whatsapp:1,completed:1};
   var v=id.replace(/^view-/,''); if(!valid[v]) v='dashboard';
   document.querySelectorAll('.nav-link').forEach(function(a){a.classList.toggle('active',a.dataset.v===v);});
-  var title={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Jobs','Manage job status linked to every invoice'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],expenses:['Expenses / Petty Cash','Track fuel, feeding and business spending'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']}[v];
+  var title={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Jobs','Manage job status linked to every invoice'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']}[v];
   if(document.getElementById('title')) document.getElementById('title').textContent=title[0];
   if(document.getElementById('subtitle')) document.getElementById('subtitle').textContent=title[1];
   try{if(v==='create' && typeof initServiceCatalog==='function')initServiceCatalog();}catch(e){}
@@ -276,7 +275,6 @@
     <button type="button" class="nav-link" data-v="saved" onclick="show('saved')">💾 Saved Invoices</button>
     <button type="button" class="nav-link" data-v="completed" onclick="show('completed')">✅ Completed Jobs</button>
     <button type="button" class="nav-link" data-v="receipts" onclick="show('receipts')">🧾 Official Receipts</button>
-    <button type="button" class="nav-link" data-v="expenses">💸 Expenses / Petty Cash</button>
     <button type="button" class="nav-link" data-v="payroll" onclick="window.__FBI_NAV__ ? window.__FBI_NAV__('payroll') : (window.__FBI_PAYROLL_OPEN__ && window.__FBI_PAYROLL_OPEN__())">💰 Payroll</button>
     <button type="button" class="nav-link" data-v="settings" onclick="show('settings')">⚙️ Business Settings</button>
     <button type="button" class="nav-link" data-v="whatsapp" onclick="show('whatsapp')">📱 WhatsApp Alerts</button>
@@ -493,19 +491,7 @@
   <div class="card"><h3>Payment Received & Official Receipt</h3><div class="grid2"><div><label>Amount Paid</label><input id="amountPaid" type="number" min="0" step="0.01" value="0" placeholder="0.00"><label>Payment Date</label><input id="paymentDate" type="date"><label>Payment Method</label><select id="paymentMethod"><option>Cash</option><option selected>Mobile Money</option><option>Bank Transfer</option><option>Card</option><option>Cheque</option><option>Other</option></select></div><div><label>Transaction / Payment Reference</label><input id="transactionRef" placeholder="Bank / MoMo / card / payment reference"><label>Received By</label><input id="receivedBy" placeholder="Accounts / Cashier"><label>Receipt Number</label><input id="receiptNo" readonly placeholder="Generated when payment is recorded"></div></div><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:12px;padding:11px 12px;border:1px solid #303642;background:#0e1117;border-radius:8px"><div><div style="font-size:9px;color:#858e9f;text-transform:uppercase;letter-spacing:.7px">Remaining Balance</div><b id="paymentBalancePreview" style="font-size:15px">GHS₵0.00</b></div><button class="btn primary" onclick="recordPayment()">🧾 Record Payment & Generate Receipt</button></div><small style="display:block;color:#727b89;font-size:9px;line-height:1.5;margin-top:8px">A professional payment receipt is generated from the recorded payment and linked to this invoice. Partial payments generate a receipt for the amount actually received.</small></div>
 </section>
 
-<section class="view" id="view-receipts"><div class="card"><div class="dashboard-section-head"><div><h3 style="margin-bottom:3px">Official Payment Receipts</h3><small>Print a professional receipt for every payment recorded against an invoice.</small></div><button class="btn" onclick="show('saved')">View Invoices →</button></div><div id="receiptList" class="receipt-list"></div></div></section><section class="view" id="view-expenses">
-<div class="dashboard-hero"><div><div class="eyebrow">FBI INVOICE STUDIO · EXPENSE CONTROL</div><h2>Expenses & Petty Cash</h2><p>Record fuel, feeding, transport, petty cash and every small business expense so you can see where the money went.</p></div><div class="hero-metrics"><div class="hero-metric"><span>Total Expenses</span><b id="expenseTotal">GHS₵0.00</b></div><div class="hero-metric"><span>Entries</span><b id="expenseCount">0</b></div></div></div>
-<div class="stats dashboard-stats" style="margin-bottom:16px"><div class="stat"><span>This Month</span><b id="expenseMonthTotal">GHS₵0.00</b><small>Current calendar month</small></div><div class="stat"><span>Fuel</span><b id="expenseFuelTotal">GHS₵0.00</b><small>Fuel and transport fuel</small></div><div class="stat"><span>Feeding</span><b id="expenseFeedingTotal">GHS₵0.00</b><small>Meals and refreshments</small></div><div class="stat"><span>Miscellaneous</span><b id="expenseMiscTotal">GHS₵0.00</b><small>Other small expenses</small></div></div>
-<div class="grid2">
-<div class="card"><h3>Record Expense</h3><input id="expenseId" type="hidden"><div class="row"><div><label>Date *</label><input id="expenseDate" type="date"></div><div><label>Amount *</label><input id="expenseAmount" type="number" min="0" step="0.01" placeholder="0.00"></div></div>
-<div class="row"><div><label>Category *</label><select id="expenseCategory"><option>Fuel</option><option>Feeding</option><option>Transport</option><option>Parking / Tolls</option><option>Data / Airtime</option><option>Equipment / Consumables</option><option>Accommodation</option><option>Petty Cash</option><option>Miscellaneous</option><option>Other</option></select></div><div><label>Payment Method</label><select id="expenseMethod"><option>Cash</option><option>Mobile Money</option><option>Bank Transfer</option><option>Card</option><option>Other</option></select></div></div>
-<label>Description *</label><input id="expenseDescription" placeholder="e.g. Fuel for shoot vehicle"><div class="row"><div><label>Spent By</label><input id="expenseSpentBy" placeholder="Staff / crew member"></div><div><label>Project / Job / Invoice</label><input id="expenseProject" placeholder="Optional job or invoice number"></div></div>
-<label>Reference / Receipt No.</label><input id="expenseReference" placeholder="Optional receipt, MoMo or transaction reference"><label>Notes</label><textarea id="expenseNotes" rows="3" placeholder="Additional details"></textarea>
-<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn primary" type="button" onclick="saveExpense()">Save Expense</button><button class="btn" type="button" onclick="clearExpenseForm()">Clear</button></div><div id="expenseFormStatus" style="font-size:9px;color:#7d8695;margin-top:8px"></div></div>
-<div class="card"><div class="dashboard-section-head"><div><h3 style="margin-bottom:3px">Expense Sheet</h3><small>All recorded business spending.</small></div><button class="btn" type="button" onclick="exportExpensesCsv()">⬇ Export CSV</button></div>
-<div class="row" style="margin-bottom:10px"><div><label>From</label><input id="expenseFrom" type="date" onchange="renderExpenses()"></div><div><label>To</label><input id="expenseTo" type="date" onchange="renderExpenses()"></div></div>
-<div class="row" style="margin-bottom:12px"><div><label>Category</label><select id="expenseFilterCategory" onchange="renderExpenses()"><option value="">All Categories</option></select></div><div><label>Search</label><input id="expenseSearch" placeholder="Description, staff, project..." oninput="renderExpenses()"></div></div>
-<div id="expenseList" class="receipt-list"></div></div></div></section>
+<section class="view" id="view-receipts"><div class="card"><div class="dashboard-section-head"><div><h3 style="margin-bottom:3px">Official Payment Receipts</h3><small>Print a professional receipt for every payment recorded against an invoice.</small></div><button class="btn" onclick="show('saved')">View Invoices →</button></div><div id="receiptList" class="receipt-list"></div></div></section>
 
 <section class="view" id="view-clients">
   <div class="grid2">
