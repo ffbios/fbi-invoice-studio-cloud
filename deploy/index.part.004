@@ -266,7 +266,7 @@
 </head>
 <body>
 <aside class="side" id="side">
-  <div class="brand"><img class="brand-logo-exact" src="/assets/fbi-logo-background.jpg" alt="Film Beyond Imagination"></div>
+  <div class="brand"><span class="dot"></span><div>Invoice Studio<small>Professional invoicing system</small></div></div>
   <div class="nav">
     <button type="button" class="nav-link active" data-v="dashboard" onclick="show('dashboard')">📊 Overview</button>
     <button type="button" class="nav-link" data-v="calendar" onclick="show('calendar')">📅 Calendar</button>
