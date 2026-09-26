@@ -438,7 +438,35 @@ function paymentTotals(x){
   const paid=Math.max(0,paymentHistory(x).reduce((s,p)=>s+Number(p.amount||0),0));
   return {total,paid,balance:Math.max(0,total-paid)};
 }
-function updatePaymentBalancePreview(totalOverride){const el=$("paymentBalancePreview");if(!el)return;let total=Number(totalOverride);if(!Number.isFinite(total)){let sub=0;document.querySelectorAll(".item").forEach(r=>{let q=+r.querySelector(".qty").value||0,p=+r.querySelector(".rate").value||0;sub+=q*p});let dis=+$("discount").value||0,tax=Math.max(0,sub-dis)*(+$("tax").value||0)/100;total=Math.max(0,sub-dis)+tax}const paid=Math.max(0,Number($("amountPaid")?.value||0));el.textContent=fmtMoney(Math.max(0,total-paid),$("cur")?.value||"GHS")}
+function renderPaymentHistory(){
+  const el=$("paymentHistoryPanel");if(!el)return;
+  const records=paymentHistory(current);
+  if(!records.length){el.innerHTML='<div style="color:#727b89;font-size:9px">No payments recorded yet. The first payment will generate the first receipt.</div>';return}
+  const total=Number(current?.total||calc().total||0);
+  const paid=records.reduce((s,p)=>s+Math.max(0,Number(p.amount||0)),0);
+  const balance=Math.max(0,total-paid);
+  el.innerHTML='<div style="font-size:9px;color:#858e9f;text-transform:uppercase;letter-spacing:.7px;font-weight:800;margin-bottom:7px">Payment History · '+records.length+' Receipt'+(records.length===1?'':'s')+'</div>'+
+    records.map(function(p,i){
+      return '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 0;border-top:1px solid #252b35;font-size:9px">'+
+        '<div><b>'+esc(p.receiptNo||('Payment '+(i+1)))+'</b><div style="color:#747d8b;margin-top:2px">'+esc(p.date||'')+' · '+esc(p.method||'Payment')+(p.transactionRef?' · Ref '+esc(p.transactionRef):'')+'</div></div>'+
+        '<div style="text-align:right"><b>'+esc(fmtMoney(Number(p.amount||0),current?.cur||$("cur")?.value||"GHS"))+'</b><div style="color:#747d8b;margin-top:2px">Bal. '+esc(fmtMoney(Number(p.balanceAfter||0),current?.cur||$("cur")?.value||"GHS"))+'</div></div>'+
+      '</div>';
+    }).join('')+
+    '<div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid #3a414c;margin-top:4px;padding-top:8px;font-size:10px"><b>Total Received</b><b>'+esc(fmtMoney(paid,current?.cur||$("cur")?.value||"GHS"))+'</b></div>'+
+    '<div style="display:flex;justify-content:space-between;gap:8px;margin-top:4px;font-size:10px"><b>Remaining Balance</b><b>'+esc(fmtMoney(balance,current?.cur||$("cur")?.value||"GHS"))+'</b></div>';
+}
+function updatePaymentBalancePreview(totalOverride){
+  const el=$("paymentBalancePreview");if(!el)return;
+  let total=Number(totalOverride);
+  if(!Number.isFinite(total)){
+    let sub=0;document.querySelectorAll(".item").forEach(r=>{let q=+r.querySelector(".qty").value||0,p=+r.querySelector(".rate").value||0;sub+=q*p});
+    let dis=+$("discount").value||0,tax=Math.max(0,sub-dis)*(+$("tax").value||0)/100;total=Math.max(0,sub-dis)+tax;
+  }
+  const historical=paymentHistory(current).reduce((s,p)=>s+Math.max(0,Number(p.amount||0)),0);
+  const entered=Math.max(0,Number($("amountPaid")?.value||0));
+  el.textContent=fmtMoney(Math.max(0,total-historical-entered),$("cur")?.value||"GHS");
+  renderPaymentHistory();
+}
 function renderReceipts(){
   const el=$("receiptList");if(!el)return;
   const list=allReceiptRecords();
@@ -596,7 +624,21 @@ function loadInvoice(id){
   $("eventDate").value=x.eventDate||"";$("eventEndDate").value=x.eventEndDate||x.eventDate||"";$("rentalStart").value=x.rentalStart||"";$("rentalEnd").value=x.rentalEnd||"";$("jobLocation").value=x.jobLocation||"";$("rentalRef").value=x.rentalRef||"";$("rentalUnit").value=x.rentalUnit||"Per Day";$("deposit").value=x.deposit||0;
   if($("payment") && !String(x.payment||"").trim())$("payment").value=settings.defaultPay||"";
   setTemplate($("template").value);$("items").innerHTML="";(x.items||[]).forEach(a=>addItem(a.desc,a.qty,a.rate));initTemplates();$("template").value=String(Number(x.template)||100);
-  restoreServiceSelection(x);show("create");populateClientSelect();if($("clientSelect"))$("clientSelect").value=(clients.find(c=>c.name===x.client)||{}).id||"";updatePaymentBalancePreview();
+  restoreServiceSelection(x);show("create");populateClientSelect();if($("clientSelect"))$("clientSelect").value=(clients.find(c=>c.name===x.client)||{}).id||"";updatePaymentBalancePreview();renderPaymentHistory();
+}
+function openInvoicePayment(id){
+  loadInvoice(id);
+  if(!current)return;
+  $("amountPaid").value="0";
+  $("paymentDate").value=new Date().toISOString().slice(0,10);
+  $("paymentMethod").value=current.paymentMethod||"Mobile Money";
+  $("transactionRef").value="";
+  $("receivedBy").value=current.receivedBy||"";
+  $("receiptNo").value="";
+  updatePaymentBalancePreview();
+  const card=$("paymentReceivedCard");
+  if(card){card.scrollIntoView({behavior:"smooth",block:"start"});}
+  toast("Invoice "+(current.no||"")+" loaded. Enter the NEW payment amount and record it to generate a new receipt.");
 }
 function populateClientSelect(){const sel=$("clientSelect");if(!sel)return;const current=sel.value;sel.innerHTML='<option value="">— New / Manual Client —</option>'+clients.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.phone?" · "+esc(c.phone):""}</option>`).join("");if(current)sel.value=current}
 function applySelectedClient(){const id=$("clientSelect")?.value;if(!id)return;const c=clients.find(x=>x.id===id);if(!c)return;$("client").value=c.name||"";$("clientAddress").value=c.address||"";$("clientPhone").value=c.phone||"";$("clientEmail").value=c.email||""}
@@ -675,6 +717,7 @@ function renderSaved(){
       </label>
       <button type="button" class="btn" data-invoice-action="edit" data-invoice-id="${esc(x.id)}">Edit</button>
       <button type="button" class="btn" data-invoice-action="view" data-invoice-id="${esc(x.id)}">View</button>
+      ${x.status!=="Draft"&&invoiceBalance(x)>0.005?`<button type="button" class="btn primary" data-invoice-action="add-payment" data-invoice-id="${esc(x.id)}">＋ Add Payment</button>`:""}
       ${Number(x.amountPaid||0)>0?`<button type="button" class="btn primary" data-invoice-action="receipt" data-invoice-id="${esc(x.id)}">Receipt</button>`:""}
       <button type="button" class="btn danger" data-invoice-action="delete" data-invoice-id="${esc(x.id)}">Delete</button>
     </div>`;
@@ -687,6 +730,7 @@ function renderSaved(){
     const action=btn.getAttribute("data-invoice-action");
     if(action==="edit")loadInvoice(id);
     else if(action==="view")previewSaved(id);
+    else if(action==="add-payment")openInvoicePayment(id);
     else if(action==="receipt")showReceipt(id);
     else if(action==="delete")del(id);
   };
