@@ -262,17 +262,21 @@ function restoreJobStatusBackup_(){
       const rec=backup[id];
       const item=data.find(function(a){return String(a.id||a.no||"")===String(id)});
       if(!item||!rec||!rec.status)return;
+      const localStamp=Date.parse(String(rec.updatedAt||''))||0;
+      const serverStamp=Date.parse(String(item.jobStatusUpdatedAt||''))||0;
       const current=String(item.jobStatus||"Not Started");
-      if(current!==String(rec.status)){
+      if(current!==String(rec.status)||localStamp>serverStamp){
         item.jobStatus=String(rec.status);
-        if(rec.completedDate)item.jobCompletedDate=rec.completedDate;
+        if(rec.completedDate)item.jobCompletedDate=rec.completedDate;else delete item.jobCompletedDate;
         if(rec.updatedAt)item.jobStatusUpdatedAt=rec.updatedAt;
         changed=true;
       }
     });
     if(changed){
       renderSaved();
+      dashboard();
       if(typeof renderCompletedJobs==="function")renderCompletedJobs();
+      persist();
     }
   }catch(e){console.warn("Job status backup restore failed:",e)}
 }
@@ -596,6 +600,7 @@ window.exportReportExcel=function(){
       x.jobStatus="Completed";
       x.jobCompletedDate=new Date().toISOString();
     }
+    x.jobStatusUpdatedAt=new Date().toISOString();
     const ok=await persist();
     try{
       const key=String(x.id||x.no||"");
