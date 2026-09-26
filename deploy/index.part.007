@@ -305,8 +305,11 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
         <p>Staff, project earnings, payments, payslips and payroll reporting.</p>
       </div>
       <div class="fbi-payroll-actions">
+        <a class="btn" href="/payroll-staff-form.html" target="_blank" rel="noopener">📋 Staff Registration Form</a>
+        <button class="btn" type="button" id="fbiPayrollImportForm">⬆ Import Completed Form</button>
         <button class="btn" type="button" id="fbiPayrollQuickWorker">＋ Add Worker</button>
         <button class="btn primary" type="button" id="fbiPayrollQuickRecord">＋ New Payroll</button>
+        <input id="fbiPayrollImportFile" type="file" accept="application/json,.json" style="display:none">
       </div>
     </div>
 
@@ -406,7 +409,11 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
       <div class="fbi-payroll-panel" data-payroll-panel="workers">
         <div class="fbi-payroll-section-head">
           <div><h3>Staff / Worker Directory</h3><p>Profiles, worker categories and payment details.</p></div>
-          <button class="btn primary" type="button" id="fbiPayrollWorkersAdd">＋ Add Worker</button>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <a class="btn" href="/payroll-staff-form.html" target="_blank" rel="noopener">📋 Staff Registration Form</a>
+            <button class="btn" type="button" id="fbiPayrollImportForm2">⬆ Import Form</button>
+            <button class="btn primary" type="button" id="fbiPayrollWorkersAdd">＋ Add Worker</button>
+          </div>
         </div>
         <div id="fbiPayrollWorkerFormWrap"></div>
         <div class="fbi-payroll-worker-layout">
@@ -1094,6 +1101,85 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     renderReports();
   }
 
+  function openStaffRegistrationForm(){
+    window.open('/payroll-staff-form.html','_blank','noopener');
+  }
+
+  function normalizeImportedWorker(raw){
+    var w=raw&&raw.worker?raw.worker:raw||{};
+    function s(v){return String(v==null?'':v).trim();}
+    return {
+      workerCode:s(w.workerCode),
+      name:s(w.name),
+      phone:s(w.phone),
+      email:s(w.email),
+      address:s(w.address),
+      role:s(w.role),
+      department:s(w.department)||'Other',
+      workerType:s(w.workerType)||'Media Worker',
+      paymentMethod:s(w.paymentMethod)||'Mobile Money',
+      momo:s(w.momo),
+      bank:s(w.bank),
+      accountName:s(w.accountName),
+      accountNumber:s(w.accountNumber),
+      idRef:s(w.idRef),
+      emergency:s(w.emergency),
+      emergencyPhone:s(w.emergencyPhone),
+      status:s(w.status)||'Active',
+      notes:s(w.notes),
+      dateOfBirth:s(w.dateOfBirth),
+      gender:s(w.gender),
+      maritalStatus:s(w.maritalStatus),
+      dateJoined:s(w.dateJoined),
+      tin:s(w.tin),
+      ssnit:s(w.ssnit),
+      nextOfKin:s(w.nextOfKin)
+    };
+  }
+
+  function importStaffFormFile(evt){
+    var file=evt.target.files&&evt.target.files[0];if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(){
+      try{
+        var obj=JSON.parse(String(reader.result||'{}'));
+        if(obj.type!=='fbi-payroll-staff-form' || Number(obj.version)!==1) throw new Error('This is not a valid FBI Payroll Staff Registration Form.');
+        var imported=normalizeImportedWorker(obj);
+        if(!imported.name) throw new Error('The form does not contain a full name.');
+        var existing=null;
+        if(imported.workerCode) existing=STATE.workers.find(function(w){return String(w.workerCode||'').trim().toLowerCase()===imported.workerCode.toLowerCase();})||null;
+        if(!existing&&imported.email) existing=STATE.workers.find(function(w){return String(w.email||'').trim().toLowerCase()===imported.email.toLowerCase();})||null;
+        var importedPhone=imported.phone.replace(/\D/g,'');
+        if(!existing&&importedPhone) existing=STATE.workers.find(function(w){return String(w.phone||'').replace(/\D/g,'')===importedPhone;})||null;
+
+        if(existing){
+          var update=window.confirm('A worker with matching ID, email or phone already exists: '+existing.name+'.\n\nUpdate that existing worker with this completed form?');
+          if(!update){toastLocal('Import cancelled');return;}
+          var keepId=existing.id,keepCreated=existing.createdAt;
+          Object.assign(existing,imported,{id:keepId,createdAt:keepCreated||new Date().toISOString(),updatedAt:new Date().toISOString()});
+          selectedWorkerId=existing.id;
+          if(saveState()){renderAll();toastLocal('Worker information updated from form');}
+          return;
+        }
+
+        var worker=Object.assign({id:uid('worker'),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()},imported);
+        STATE.workers.push(worker);
+        selectedWorkerId=worker.id;
+        if(saveState()){
+          renderAll();
+          toastLocal(worker.name+' imported into Payroll');
+        }
+      }catch(err){
+        console.error('Payroll staff form import failed',err);
+        alert(err.message||'Could not import the completed staff form.');
+      }finally{
+        evt.target.value='';
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  window.__FBI_OPEN_PAYROLL_STAFF_FORM__=openStaffRegistrationForm;
   function printOverview(){
     document.body.classList.add('fbi-payroll-printing');
     window.print();
@@ -1131,6 +1217,9 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     loadState();installNav();
     document.querySelectorAll('[data-payroll-tab]').forEach(function(b){b.onclick=function(){tabs(b.getAttribute('data-payroll-tab'));};});
     q('fbiPayrollQuickWorker').onclick=function(){showWorkerForm();};
+    q('fbiPayrollImportForm').onclick=function(){q('fbiPayrollImportFile').click();};
+    q('fbiPayrollImportForm2').onclick=function(){q('fbiPayrollImportFile').click();};
+    q('fbiPayrollImportFile').addEventListener('change',importStaffFormFile);
     q('fbiPayrollWorkersAdd').onclick=function(){showWorkerForm();};
     q('fbiPayrollQuickRecord').onclick=function(){showRecordForm();};
     q('fbiPayrollRecordsAdd').onclick=function(){showRecordForm();};
