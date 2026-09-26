@@ -1351,6 +1351,12 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     loadState();installNav();
     document.querySelectorAll('[data-payroll-tab]').forEach(function(b){b.onclick=function(){tabs(b.getAttribute('data-payroll-tab'));};});
     q('fbiPayrollQuickWorker').onclick=function(){showWorkerForm();};
+    q('fbiPayrollQAWorker').onclick=function(){showWorkerForm();};
+    q('fbiPayrollQARecord').onclick=function(){showRecordForm();};
+    q('fbiPayrollQAPayslip').onclick=function(){tabs('payslips');};
+    q('fbiPayrollQAReport').onclick=function(){tabs('reports');};
+    q('fbiPayrollViewRecords').onclick=function(){tabs('records');};
+    q('fbiPayrollQuickWorkers').onclick=function(){showWorkerForm();};
     q('fbiPayrollImportForm').onclick=function(){q('fbiPayrollImportFile').click();};
     q('fbiPayrollImportForm2').onclick=function(){q('fbiPayrollImportFile').click();};
     q('fbiPayrollImportFile').addEventListener('change',importStaffFormFile);
