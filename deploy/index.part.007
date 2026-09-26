@@ -1015,7 +1015,6 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     r.lastPaymentReference=ref;
     r.lastPaidBy=by;
     r.updatedAt=new Date().toISOString();
-    saveState();
     const cloudSaved=await saveStateAndWait();
     closePayment();renderAll();
     toastLocal(cloudSaved?(status(r)==='Paid'?'Payroll fully paid':'Partial payroll payment recorded'):'Payment saved locally; cloud sync is retrying');
