@@ -251,12 +251,38 @@ function paintLoadedState_(){
 }
 let cloudStateHydrated=false;
 let cloudDraftRestoredOnStartup=false;
+function restoreJobStatusBackup_(){
+  try{
+    const raw=localStorage.getItem("FBI-INVOICE-JOB-STATUS-BACKUP");
+    if(!raw)return;
+    const backup=JSON.parse(raw);
+    if(!backup||typeof backup!=="object")return;
+    let changed=false;
+    Object.keys(backup).forEach(function(id){
+      const rec=backup[id];
+      const item=data.find(function(a){return String(a.id||a.no||"")===String(id)});
+      if(!item||!rec||!rec.status)return;
+      const current=String(item.jobStatus||"Not Started");
+      if(current!==String(rec.status)){
+        item.jobStatus=String(rec.status);
+        if(rec.completedDate)item.jobCompletedDate=rec.completedDate;
+        if(rec.updatedAt)item.jobStatusUpdatedAt=rec.updatedAt;
+        changed=true;
+      }
+    });
+    if(changed){
+      renderSaved();
+      if(typeof renderCompletedJobs==="function")renderCompletedJobs();
+    }
+  }catch(e){console.warn("Job status backup restore failed:",e)}
+}
 async function hydrateCloudState(){
   const stored=await readPersistentPayload();
   init(true,stored);
   initTemplates();
   initServiceCatalog();
   paintLoadedState_();
+  restoreJobStatusBackup_();
   const restoredLocal=restoreDraft();
   const restoredCloud=restoredLocal?false:await restoreCloudDraft();
   cloudDraftRestoredOnStartup=!!(restoredLocal||restoredCloud);
@@ -529,6 +555,13 @@ window.exportReportExcel=function(){
     if(status==="Completed"){x.jobStatus="Completed";x.jobCompletedDate=x.jobCompletedDate||new Date().toISOString();}
     else{x.jobStatus=status;if(wasDone)delete x.jobCompletedDate;}
     x.jobStatusUpdatedAt=new Date().toISOString();
+    try{
+      const key=String(x.id||x.no||"");
+      const raw=localStorage.getItem("FBI-INVOICE-JOB-STATUS-BACKUP");
+      const backup=raw?JSON.parse(raw):{};
+      backup[key]={status:x.jobStatus||"Not Started",completedDate:x.jobCompletedDate||"",updatedAt:x.jobStatusUpdatedAt};
+      localStorage.setItem("FBI-INVOICE-JOB-STATUS-BACKUP",JSON.stringify(backup));
+    }catch(e){console.warn("Job status backup save failed:",e)}
     const ok=await persist();
     renderSaved();dashboard();if(typeof renderCompletedJobs==="function")renderCompletedJobs();
     toast(ok?"Job status updated":"Job status could not be saved");
@@ -564,6 +597,14 @@ window.exportReportExcel=function(){
       x.jobCompletedDate=new Date().toISOString();
     }
     const ok=await persist();
+    try{
+      const key=String(x.id||x.no||"");
+      const raw=localStorage.getItem("FBI-INVOICE-JOB-STATUS-BACKUP");
+      const backup=raw?JSON.parse(raw):{};
+      if(jobDone(x)) backup[key]={status:x.jobStatus||"Completed",completedDate:x.jobCompletedDate||"",updatedAt:x.jobStatusUpdatedAt||new Date().toISOString()};
+      else delete backup[key];
+      localStorage.setItem("FBI-INVOICE-JOB-STATUS-BACKUP",JSON.stringify(backup));
+    }catch(e){console.warn("Job status backup update failed:",e)}
     renderSaved();
     dashboard();
     if(typeof renderCompletedJobs==="function")renderCompletedJobs();
