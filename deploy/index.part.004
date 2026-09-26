@@ -241,6 +241,7 @@
       try{ if(v==='saved' && typeof window.renderSaved==='function') window.renderSaved(); }catch(e){}
       try{ if(v==='calendar' && typeof window.renderCalendar==='function') window.renderCalendar(); }catch(e){}
       try{ if(v==='receipts' && typeof window.renderReceipts==='function') window.renderReceipts(); }catch(e){}
+      try{ if(v==='expenses' && typeof window.renderExpenses==='function') window.renderExpenses(); }catch(e){}
       try{ if(v==='create' && typeof window.populateClientSelect==='function') window.populateClientSelect(); }catch(e){}
       return false;
     }catch(e){console.error('Navigation error',e);return false;}
