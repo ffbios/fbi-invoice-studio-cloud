@@ -230,7 +230,7 @@
       var target=document.getElementById('view-'+v);
       if(target) target.classList.add('active');
       document.querySelectorAll('.nav button').forEach(function(btn){btn.classList.toggle('active',btn.getAttribute('data-v')===v);});
-      var titles={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Jobs','Manage job status linked to every invoice'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']};
+      var titles={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Jobs','Manage job status linked to every invoice'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],expenses:['Expenses / Petty Cash','Track fuel, feeding and business spending'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']};
       var t=titles[v]||['Invoice Studio',''];
       var title=document.getElementById('title'); if(title) title.textContent=t[0];
       var sub=document.getElementById('subtitle'); if(sub) sub.textContent=t[1];
@@ -251,10 +251,10 @@
 (function(){
  function sync(){
   var id=location.hash.replace(/^#/,'');
-  var valid={dashboard:1,create:1,clients:1,saved:1,calendar:1,receipts:1,settings:1,whatsapp:1,completed:1};
+  var valid={dashboard:1,create:1,clients:1,saved:1,calendar:1,receipts:1,expenses:1,settings:1,whatsapp:1,completed:1};
   var v=id.replace(/^view-/,''); if(!valid[v]) v='dashboard';
   document.querySelectorAll('.nav-link').forEach(function(a){a.classList.toggle('active',a.dataset.v===v);});
-  var title={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Jobs','Manage job status linked to every invoice'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']}[v];
+  var title={dashboard:['Overview','Your invoicing control center'],create:['Create Invoice','Build and print invoices'],clients:['Client Database','Manage your clients and billing contacts'],saved:['Saved Invoices','View and manage saved invoices'],completed:['Jobs','Manage job status linked to every invoice'],calendar:['Calendar','View media event dates and invoice details'],receipts:['Official Receipts','Print professional payment receipts'],expenses:['Expenses / Petty Cash','Track fuel, feeding and business spending'],settings:['Business Settings','Business identity and payment details'],whatsapp:['WhatsApp Alerts','Automatic invoice notifications']}[v];
   if(document.getElementById('title')) document.getElementById('title').textContent=title[0];
   if(document.getElementById('subtitle')) document.getElementById('subtitle').textContent=title[1];
   try{if(v==='create' && typeof initServiceCatalog==='function')initServiceCatalog();}catch(e){}
