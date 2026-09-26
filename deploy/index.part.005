@@ -60,7 +60,7 @@ function printOverviewReport(){
 }
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("reportModal")?.classList.contains("show"))closeReportModal()});
 
-function show(v){document.body.classList.remove("receipt-print-mode");document.querySelectorAll(".view").forEach(x=>x.classList.remove("active","print-view"));$("view-"+v).classList.add("active");document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.v===v));let t={dashboard:["Overview","Your invoicing control center"],create:["Create Invoice","Build and print invoices"],clients:["Client Database","Manage your clients and billing contacts"],saved:["Saved Invoices","View and manage saved invoices"],calendar:["Calendar","View media event dates and invoice details"],receipts:["Official Receipts","Print professional payment receipts"],expenses:["Expenses / Petty Cash","Track fuel, feeding and business spending"],settings:["Business Settings","Business identity and payment details"],whatsapp:["WhatsApp Alerts","Automatic invoice notifications"],preview:["Invoice Preview","Preview and print your invoice"],"receipt-preview":["Official Receipt","Preview and print your receipt"]}[v]||["Invoice Studio",""];$("title").textContent=t[0];$("subtitle").textContent=t[1];if(v==="saved")renderSaved();if(v==="calendar")renderCalendar();if(v==="receipts")renderReceipts();if(v==="expenses")renderExpenses();if(v==="clients")renderClients();if(v==="dashboard")dashboard();if(v==="create"){populateClientSelect();initServiceCatalog();}$("side").classList.remove("open")}
+function show(v){document.body.classList.remove("receipt-print-mode");document.querySelectorAll(".view").forEach(x=>x.classList.remove("active","print-view"));$("view-"+v).classList.add("active");document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.v===v));let t={dashboard:["Overview","Your invoicing control center"],create:["Create Invoice","Build and print invoices"],clients:["Client Database","Manage your clients and billing contacts"],saved:["Saved Invoices","View and manage saved invoices"],calendar:["Calendar","View media event dates and invoice details"],receipts:["Official Receipts","Print professional payment receipts"],settings:["Business Settings","Business identity and payment details"],whatsapp:["WhatsApp Alerts","Automatic invoice notifications"],preview:["Invoice Preview","Preview and print your invoice"],"receipt-preview":["Official Receipt","Preview and print your receipt"]}[v]||["Invoice Studio",""];$("title").textContent=t[0];$("subtitle").textContent=t[1];if(v==="saved")renderSaved();if(v==="calendar")renderCalendar();if(v==="receipts")renderReceipts();if(v==="clients")renderClients();if(v==="dashboard")dashboard();if(v==="create"){populateClientSelect();initServiceCatalog();}$("side").classList.remove("open")}
 document.querySelectorAll(".nav button").forEach(b=>{b.addEventListener("click",function(e){e.preventDefault();if(window.__FBI_NAV__)window.__FBI_NAV__(b.dataset.v);else show(b.dataset.v);});});$("template").onchange=()=>setTemplate($("template").value);["amountPaid","paymentDate","paymentMethod","transactionRef","receivedBy"].forEach(id=>$(id)?.addEventListener("input",()=>{if(id==="amountPaid")updatePaymentBalancePreview()}));
 function toast(x){let t=$("toast");t.textContent=x;t.classList.add("show");clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove("show"),2000)}
 const DRAFT_KEY=KEY+":draft-v3";
@@ -130,62 +130,7 @@ let lastServerPersistAt=0;
 let pendingInvoiceDeletes=[];
 let pendingClientDeletes=[];
 
-
-// ===== EXPENSES / PETTY CASH =====
-const EXPENSE_CATEGORIES=["Fuel","Feeding","Transport","Parking / Tolls","Data / Airtime","Equipment / Consumables","Accommodation","Petty Cash","Miscellaneous","Other"];
-function expenseRecords(){if(!settings||typeof settings!=="object")settings={};if(!Array.isArray(settings.expenseRecords))settings.expenseRecords=[];return settings.expenseRecords}
-function expenseMoney(n,c="GHS"){return String(c||"GHS")+"₵"+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
-function expenseToday(){return new Date().toISOString().slice(0,10)}
-function clearExpenseForm(){try{if($("expenseId"))$("expenseId").value="";if($("expenseDate"))$("expenseDate").value=expenseToday();if($("expenseAmount"))$("expenseAmount").value="";if($("expenseCategory"))$("expenseCategory").value="Fuel";if($("expenseMethod"))$("expenseMethod").value="Cash";["expenseDescription","expenseSpentBy","expenseProject","expenseReference","expenseNotes"].forEach(id=>{if($(id))$(id).value=""});if($("expenseFormStatus"))$("expenseFormStatus").textContent=""}catch(e){console.warn("Expense form reset:",e)}}
-function filteredExpenses(){const from=$("expenseFrom")?.value||"",to=$("expenseTo")?.value||"",cat=$("expenseFilterCategory")?.value||"",q=String($("expenseSearch")?.value||"").trim().toLowerCase();return expenseRecords().filter(x=>{const d=String(x.date||"");if(from&&d<from)return false;if(to&&d>to)return false;if(cat&&String(x.category||"")!==cat)return false;if(q&&!([x.description,x.spentBy,x.project,x.reference,x.notes,x.category].join(" ").toLowerCase().includes(q)))return false;return true}).sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))||String(b.createdAt||"").localeCompare(String(a.createdAt||"")))}
-function populateExpenseCategoryFilter(){const el=$("expenseFilterCategory");if(!el)return;const old=el.value;el.innerHTML='<option value="">All Categories</option>'+EXPENSE_CATEGORIES.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");if([...el.options].some(o=>o.value===old))el.value=old}
-function updateExpenseSummary(){const all=expenseRecords(),total=all.reduce((s,x)=>s+Number(x.amount||0),0),ym=new Date().toISOString().slice(0,7),month=all.filter(x=>String(x.date||"").slice(0,7)===ym).reduce((s,x)=>s+Number(x.amount||0),0),cat=n=>all.filter(x=>String(x.category||"")===n).reduce((s,x)=>s+Number(x.amount||0),0);[["expenseTotal",total],["expenseMonthTotal",month],["expenseFuelTotal",cat("Fuel")],["expenseFeedingTotal",cat("Feeding")],["expenseMiscTotal",cat("Miscellaneous")]].forEach(([id,v])=>{if($(id))$(id).textContent=expenseMoney(v)});if($("expenseCount"))$("expenseCount").textContent=all.length}
-function renderExpenses(){
-  try{
-    const st=(typeof settings==="object" && settings)?settings:{};
-    if(typeof settings!=="object" || !settings) settings=st;
-    if(!Array.isArray(st.expenseRecords)) st.expenseRecords=[];
-    const el=$("expenseList");
-    if(!el)return;
-    populateExpenseCategoryFilter();
-    updateExpenseSummary();
-    const rows=filteredExpenses();
-    if(!rows.length){
-      el.innerHTML='<div class="receipt-empty">No expense records match the selected filters.</div>';
-      return;
-    }
-    el.innerHTML=rows.map(function(x){
-      const id=esc(String(x.id||""));
-      return '<div class="receipt-row" data-expense-row="'+id+'">'+
-        '<div class="grow"><div class="main">'+esc(String(x.description||"Expense"))+'</div>'+
-        '<div class="meta">'+esc(String(x.date||"—"))+' · '+esc(String(x.category||"Other"))+' · '+esc(String(x.spentBy||"No name"))+
-        (x.project?" · "+esc(String(x.project)):"")+(x.method?" · "+esc(String(x.method)):"")+'</div>'+
-        (x.reference?'<div class="meta">Ref: '+esc(String(x.reference))+'</div>':"")+
-        '</div><div class="amount">'+esc(expenseMoney(x.amount,x.currency||"GHS"))+'</div>'+
-        '<button type="button" class="btn" data-expense-action="edit" data-expense-id="'+id+'">Edit</button>'+
-        '<button type="button" class="btn danger" data-expense-action="delete" data-expense-id="'+id+'">Delete</button>'+
-        '</div>';
-    }).join("");
-    el.onclick=function(e){
-      const btn=e.target.closest("button[data-expense-action][data-expense-id]");
-      if(!btn)return;
-      e.preventDefault();
-      e.stopPropagation();
-      const id=btn.getAttribute("data-expense-id");
-      if(btn.getAttribute("data-expense-action")==="edit") editExpense(id);
-      else if(btn.getAttribute("data-expense-action")==="delete") deleteExpense(id);
-    };
-  }catch(e){
-    console.error("Expenses renderer error:",e);
-    const el=$("expenseList");
-    if(el)el.innerHTML='<div class="receipt-empty">Unable to load the expense list. You can still record a new expense.</div>';
-  }
-}
-function saveExpense(){const amount=Math.max(0,Number($("expenseAmount")?.value||0)),description=String($("expenseDescription")?.value||"").trim(),date=$("expenseDate")?.value||expenseToday();if(!description){toast("Enter an expense description.");return}if(!(amount>0)){toast("Enter an expense amount.");return}const records=expenseRecords(),id=$("expenseId")?.value||("exp-"+Date.now()+"-"+Math.random().toString(36).slice(2,9)),item={id,date,category:$("expenseCategory")?.value||"Other",description,amount,currency:"GHS",method:$("expenseMethod")?.value||"Cash",spentBy:String($("expenseSpentBy")?.value||"").trim(),project:String($("expenseProject")?.value||"").trim(),reference:String($("expenseReference")?.value||"").trim(),notes:String($("expenseNotes")?.value||"").trim(),createdAt:(records.find(x=>x.id===id)||{}).createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()},idx=records.findIndex(x=>x.id===id);if(idx>=0)records[idx]=item;else records.unshift(item);persist();renderExpenses();clearExpenseForm();toast(idx>=0?"Expense updated":"Expense saved")}
-function editExpense(id){const x=expenseRecords().find(a=>a.id===id);if(!x)return;$("expenseId").value=x.id;$("expenseDate").value=x.date||expenseToday();$("expenseAmount").value=x.amount||"";$("expenseCategory").value=x.category||"Other";$("expenseMethod").value=x.method||"Cash";$("expenseDescription").value=x.description||"";$("expenseSpentBy").value=x.spentBy||"";$("expenseProject").value=x.project||"";$("expenseReference").value=x.reference||"";$("expenseNotes").value=x.notes||"";if($("expenseFormStatus"))$("expenseFormStatus").textContent="Editing expense record.";$("expenseDescription")?.scrollIntoView({behavior:"smooth",block:"center"})}
-function deleteExpense(id){if(!expenseRecords().some(a=>a.id===id))return;if(!confirm("Delete this expense record?"))return;settings.expenseRecords=expenseRecords().filter(a=>a.id!==id);persist();renderExpenses();toast("Expense deleted")}
-function exportExpensesCsv(){const rows=filteredExpenses();if(!rows.length){toast("No expense records to export.");return}const head=["Date","Category","Description","Amount","Currency","Payment Method","Spent By","Project / Job / Invoice","Reference","Notes"],lines=[head,...rows.map(x=>[x.date,x.category,x.description,Number(x.amount||0).toFixed(2),x.currency||"GHS",x.method,x.spentBy,x.project,x.reference,x.notes])].map(r=>r.map(csvCell).join(",")).join("\r\n"),blob=new Blob([lines],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="FBI-Expenses-"+expenseToday()+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast("Expenses CSV exported")}
-\nfunction persist(){
+function persist(){
   const deleteIds=pendingInvoiceDeletes.slice();
   const clientDeleteIds=pendingClientDeletes.slice();
   const payload={data,clients,settings};
@@ -386,7 +331,6 @@ Account Name: Jerbel Mark Addeh`,
     ...(d.settings||{})
   };
   if(!settings.logo)settings.logo=DEFAULT_FBI_LOGO;
-  if(!Array.isArray(settings.expenseRecords))settings.expenseRecords=[];
   normalizePaymentSettings();
   ["biz","owner","baddr","bphone","bemail","bnum","defaultPay"].forEach(k=>{if($(k))$(k).value=settings[k]||""});
   if($("waEnabled"))$("waEnabled").value=settings.waEnabled||"yes";
