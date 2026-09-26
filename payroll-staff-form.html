@@ -138,7 +138,12 @@ document.getElementById('printBtn').addEventListener('click',function(){
     return;
   }
   buildMachinePdfData();
+  const oldTitle=document.title;
+  document.title='FBI-Payroll-Staff-'+safeName('name');
+  const restoreTitle=()=>{document.title=oldTitle;window.removeEventListener('afterprint',restoreTitle);};
+  window.addEventListener('afterprint',restoreTitle,{once:true});
   window.print();
+  setTimeout(restoreTitle,3000);
 });
 })();
 </script>
