@@ -13,6 +13,16 @@
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.field{min-width:0}.field.full{grid-column:1/-1}.field label{display:block;color:#8f99a8;font-size:8px;text-transform:uppercase;letter-spacing:.7px;font-weight:850;margin:0 0 5px}.field input,.field select,.field textarea{width:100%;border:1px solid #303a48;background:#0b1016;color:#eef2f7;border-radius:9px;padding:10px 11px;font-size:11px;outline:none}.field textarea{min-height:82px;resize:vertical}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(215,177,90,.08)}.required{color:#ef6f8f}
 .actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}.btn{border:1px solid #354050;background:#161c25;color:#eef2f7;border-radius:9px;padding:10px 14px;font-size:10px;font-weight:850;cursor:pointer;text-decoration:none}.btn.primary{background:#82103f;border-color:#ae1b5b}.btn:hover{transform:translateY(-1px)}
 .success{display:none;margin-top:12px;padding:12px 13px;border:1px solid #2d5b47;background:#10241c;color:#91e5bc;border-radius:10px;font-size:10px;line-height:1.5}.success.show{display:block}
+.machine-pdf-data{display:none}
+@media print{
+  body{background:#fff;color:#111;padding:0}
+  .hero,.card{background:#fff;color:#111;border-color:#bbb;box-shadow:none}
+  .actions,.success,.footer{display:none!important}
+  .machine-pdf-data{display:block!important;page-break-before:always;padding:16px;border-top:1px solid #999;font-family:Arial,Helvetica,sans-serif;color:#111;font-size:9pt;line-height:1.45}
+  .machine-pdf-data .pdf-title{font-size:12pt;font-weight:800;margin-bottom:10px}
+  .machine-pdf-data .pdf-row{margin:0 0 6px}
+  .machine-pdf-data .pdf-label{font-weight:700}
+}
 .footer{color:#707b8b;font-size:8px;text-align:center;padding:8px 0 18px}
 @media(max-width:680px){body{padding:10px}.hero,.card{border-radius:13px;padding:14px}.hero h1{font-size:21px}.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.actions .btn{flex:1}}
 </style>
@@ -79,9 +89,10 @@
 <section class="card">
 <div class="head"><div><h2>6. Confirmation</h2><p>Review the information before generating your completed form.</p></div></div>
 <div class="note">By generating the completed form, you confirm that the information you entered is intended for your FBI Payroll worker profile and should be checked by the Payroll administrator before final entry.</div>
-<div class="actions"><button class="btn" type="button" id="printBtn">🖨 Print / Save as PDF</button><button class="btn primary" type="submit">⬇ Download Completed Form</button></div>
+<div class="actions"><button class="btn" type="button" id="printBtn">🖨 Generate Completed PDF</button><button class="btn primary" type="submit">⬇ Download JSON Backup</button></div>
 <div class="success" id="successBox"></div>
 </section>
+<div class="machine-pdf-data" id="machinePdfData" aria-hidden="true"></div>
 </form>
 <div class="footer">FBI Payroll · Staff Registration · Keep the completed file private and send it only to the Payroll administrator.</div>
 </div>
@@ -95,12 +106,40 @@ e.preventDefault();
 if(!document.getElementById('name').value.trim()){document.getElementById('name').focus();return;}
 if(!document.getElementById('phone').value.trim()){document.getElementById('phone').focus();return;}
 const worker={};ids.forEach(id=>worker[id]=val(id));
+buildMachinePdfData();
 const payload={type:'fbi-payroll-staff-form',version:1,formName:'FBI Payroll Staff Registration Form',submittedAt:new Date().toISOString(),worker};
 const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
 const a=document.createElement('a');const url=URL.createObjectURL(blob);a.href=url;a.download='FBI-Payroll-Staff-'+safeName('name')+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 const box=document.getElementById('successBox');box.innerHTML='✅ <b>Completed form generated.</b><br>Send the downloaded JSON file to the Payroll administrator. It can be imported directly into the FBI Payroll system.';box.classList.add('show');
 });
-document.getElementById('printBtn').addEventListener('click',function(){window.print();});
+function buildMachinePdfData(){
+  const dataEl=document.getElementById('machinePdfData');
+  if(!dataEl)return;
+  const labels=[
+    ['Full Name','name'],['Staff / Worker ID','workerCode'],['Phone Number','phone'],['Email','email'],
+    ['Residential Address','address'],['Date of Birth','dateOfBirth'],['Gender','gender'],['Marital Status','maritalStatus'],
+    ['Ghana Card / ID Reference','idRef'],['Role / Job Title','role'],['Department','department'],['Worker Type','workerType'],
+    ['Date Joined','dateJoined'],['TIN','tin'],['SSNIT Number','ssnit'],['Preferred Payment Method','paymentMethod'],
+    ['MoMo Number','momo'],['Bank Name','bank'],['Account Name','accountName'],['Account Number','accountNumber'],
+    ['Emergency / Contact Person','emergency'],['Emergency Phone','emergencyPhone'],['Next of Kin','nextOfKin'],
+    ['Current Status','status'],['Notes','notes']
+  ];
+  dataEl.innerHTML='<div class="pdf-title">FBI PAYROLL IMPORT DATA • DO NOT REMOVE THIS PAGE</div>'+
+    '<div class="pdf-row"><span class="pdf-label">Form Type:</span> FBI Payroll Staff Registration Form</div>'+
+    '<div class="pdf-row"><span class="pdf-label">Import Format:</span> FBI-PAYROLL-PDF-V1</div>'+
+    labels.map(function(pair){
+      const value=val(pair[1]);
+      return '<div class="pdf-row"><span class="pdf-label">'+pair[0]+':</span><br>'+ (value||'') .replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];})+'</div>';
+    }).join('');
+}
+document.getElementById('printBtn').addEventListener('click',function(){
+  if(!document.getElementById('name').value.trim()||!document.getElementById('phone').value.trim()){
+    alert('Enter the Full Name and Phone Number before generating the PDF.');
+    return;
+  }
+  buildMachinePdfData();
+  window.print();
+});
 })();
 </script>
 </body>
