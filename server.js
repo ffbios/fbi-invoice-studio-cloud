@@ -523,7 +523,7 @@ async function reserveSequence(kind) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    await client.query('SELECT pg_advisory_xact_lock($1)', [492022]);
+    await client.query('SELECT pg_advisory_xact_lock($1)', [kind === 'invoice' ? 492020 : 492021]);
     const r = await client.query('SELECT state_json FROM app_state WHERE id=1 FOR UPDATE');
     if (!r.rows[0]) throw new Error('Central invoice database is not initialized.');
     let state = r.rows[0].state_json;
@@ -543,8 +543,12 @@ async function reserveSequence(kind) {
     for (const x of state.data.data) for (const p of (Array.isArray(x.payments) ? x.payments : [])) {
       const m = String(p.receiptNo || '').match(/(\\d+)$/); if (m) max = Math.max(max, Number(m[1]) || 0);
     }
+    const n = Math.max(Number(state.data.settings.receiptSequence) || 1, max + 1);
+    state.data.settings.receiptSequence = n + 1;
+    state.savedAt = Date.now();
+    await client.query('UPDATE app_state SET version=$1,saved_at=$2,state_json=$3::jsonb WHERE id=1',[Math.max(Number(state.version)||1,4),state.savedAt,JSON.stringify(state)]);
     await client.query('COMMIT');
-    return { number: 'REC' + String(max + 1).padStart(4,'0') };
+    return { number: 'REC' + String(n).padStart(4,'0') };
   } catch (e) {
     try { await client.query('ROLLBACK'); } catch {}
     throw e;
@@ -655,7 +659,12 @@ function mergeInvoiceStates(existingState, incomingState) {
     data: {
       data: Array.from(invoiceMap.values()),
       clients: Array.from(clientMap.values()),
-      settings: { ...existingSettings, ...incomingState.data.settings }
+      settings: {
+        ...existingSettings,
+        ...incomingState.data.settings,
+        invoiceSequence: Math.max(Number(existingSettings.invoiceSequence)||1, Number(incomingState.data.settings.invoiceSequence)||1),
+        receiptSequence: Math.max(Number(existingSettings.receiptSequence)||1, Number(incomingState.data.settings.receiptSequence)||1)
+      }
     }
   };
 }
