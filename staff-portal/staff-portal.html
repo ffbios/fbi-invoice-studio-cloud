@@ -26,9 +26,40 @@ function login(){api('/api/portal/login',{method:'POST',body:JSON.stringify({use
 function register(){api('/api/portal/register',{method:'POST',body:JSON.stringify({name:$('rn').value,username:$('ru').value,password:$('rp').value})}).then(start).catch(function(e){$('loginMsg').textContent=e.message})}
 async function start(b){$('login').classList.add('hidden');$('app').classList.remove('hidden');$('who').textContent='Signed in as '+b.user.display_name;showTab('invoice');try{var d=await api('/api/portal/catalog');if(d&&d.catalog){CATEGORIES=d.categories||CATEGORIES;CATALOG=d.catalog||CATALOG;window.CATEGORIES=CATEGORIES;window.CATALOG=CATALOG;window.SERVICE_CATALOG=CATALOG}}catch(e){}initCatalog();addItem();$('invoiceDate').value=new Date().toISOString().slice(0,10);$('paymentDate').value=new Date().toISOString().slice(0,10);api('/api/portal/data').then(function(d){$('clientSelect').innerHTML='<option value="">New Client</option>'+(d.clients||[]).map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>'}).join('')}).catch(function(){})}
 function logout(){api('/api/portal/logout',{method:'POST'}).then(function(){location.reload()})}
-function initCatalog(){var cats=window.CATEGORIES||[];$('serviceCategory').innerHTML=cats.map(function(x){return '<option>'+esc(x)+'</option>'}).join('');catalogCategory()}
-function catalogCategory(){var c=$('serviceCategory').value,arr=(window.CATALOG&&CATALOG[c])||[];var brands=[];arr.forEach(function(x){var u=String(x).toUpperCase(),p=['SONY','CANON','BLACKMAGIC','PANASONIC','FUJIFILM','NIKON','RED','ARRI','DJI','SIGMA','TAMRON','APUTURE','GODOX','ASTERA','NANLITE','SENNHEISER','SHURE','RODE','ZOOM','TASCAM','HOLLYLAND','ATOMOS','TERADEK','DATAVIDEO','EPSON','BENQ','OPTOMA','MANFROTTO','SACHTLER','MILLER','AVENGER','KUPO','ZHIYUN','GOOGLE MEET','TEAMS'].find(function(p){return u===p||u.indexOf(p+' ')===0||u.indexOf(p+'-')===0});if(p&&brands.indexOf(p)<0)brands.push(p)});$('brandModelFilter').innerHTML='<option value="">All Brands / Models</option>'+brands.map(function(x){return '<option>'+esc(x)+'</option>'}).join('');$('itemSearch').value='';catalogRefresh()}
-function catalogRefresh(){var c=$('serviceCategory').value,b=$('brandModelFilter').value,q=$('itemSearch').value.toLowerCase(),arr=((window.CATALOG&&CATALOG[c])||[]).slice();if(b){var bu=b.toLowerCase();arr=arr.filter(function(x){var y=String(x).toLowerCase();return y===bu||y.indexOf(bu+' ')===0||y.indexOf(bu+'-')===0})}if(q)arr=arr.filter(function(x){return String(x).toLowerCase().indexOf(q)>=0});$('catalogItemSelect').innerHTML=arr.length?arr.map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>'}).join(''):'<option value="">No matching items</option>';$('catalogCount').textContent=arr.length+' available items'}
+function initCatalog(){var cats=window.CATEGORIES||CATEGORIES||[];$('serviceCategory').innerHTML=cats.map(function(x){return '<option>'+esc(x)+'</option>'}).join('');catalogCategory()}
+function catalogCategory(){
+  var c=$('serviceCategory').value,items=((window.CATALOG&&window.CATALOG[c])||[]).slice();
+  var prefixes=['SONY','CANON','BLACKMAGIC','PANASONIC','FUJIFILM','NIKON','RED','ARRI','DJI','SIGMA','TAMRON','APUTURE','GODOX','ASTERA','NANLITE','SENNHEISER','SHURE','RODE','ZOOM','TASCAM','HOLLYLAND','ATOMOS','TERADEK','DATAVIDEO','EPSON','BENQ','OPTOMA','MANFROTTO','SACHTLER','MILLER','AVENGER','KUPO','ZHIYUN','OSEE','SYNCO','ROLAND','ROSS','NEWTEK','AVMATRIX','KILOVIEW','UBIQUITI','MIKROTIK','CISCO','TP-LINK','HIKVISION','DAHUA','UNIVIEW','AXIS','SMALLRIG','TILTA','ZACUTO','FEELWORLD','DESVIEW','LILLIPUT','MARSHALL','DEITY','SARAMONIC','COMICA','ACCSOON','VAXIS','AJA','DECIMATOR','VIZRT'];
+  var groups=[];
+  var allGroups=Object.keys(window.CATALOG||{});
+  if(allGroups.indexOf(c)>=0&&c!=='Equipment Rentals')groups.push(c);
+  items.forEach(function(item){
+    var u=String(item).toUpperCase();
+    var p=prefixes.find(function(x){return u===x||u.indexOf(x+' ')===0||u.indexOf(x+'-')===0});
+    if(p&&groups.indexOf(p)<0)groups.push(p);
+  });
+  $('brandModelFilter').innerHTML='<option value="">All Brands / Models</option>'+groups.map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>'}).join('');
+  $('itemSearch').value='';
+  catalogRefresh();
+}
+function catalogRefresh(){
+  var c=$('serviceCategory').value,b=$('brandModelFilter').value,q=$('itemSearch').value.trim().toLowerCase();
+  var catalog=window.CATALOG||{};
+  var arr=[];
+  if(b){
+    var categoryItems=(catalog[c]||[]),bu=b.toUpperCase();
+    arr=categoryItems.filter(function(x){var y=String(x).toUpperCase();return y===bu||y.indexOf(bu+' ')===0||y.indexOf(bu+'-')===0});
+    if(!arr.length&&catalog[b])arr=catalog[b].slice();
+    if(!arr.length){
+      for(var key of Object.keys(catalog)){if(key.toUpperCase().indexOf(bu)>=0){arr=catalog[key].slice();break}}
+    }
+  }else{
+    arr=(catalog[c]||[]).slice();
+  }
+  if(q)arr=arr.filter(function(x){return String(x).toLowerCase().indexOf(q)>=0});
+  $('catalogItemSelect').innerHTML=arr.length?arr.map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>'}).join(''):'<option value="">No matching items</option>';
+  $('catalogCount').textContent=arr.length+' available items';
+}
 function addSelectedCatalogItem(){var n=$('catalogItemSelect').value;if(n)addItem(n,1,0,1)}
 function addCatalogItems(){var opts=[].slice.call($('catalogItemSelect').options).slice(0,25);opts.forEach(function(o){if(o.value)addItem(o.value,1,0,1)})}
 function showTab(t){$('invoicePanel').classList.toggle('hidden',t!=='invoice');$('receiptPanel').classList.toggle('hidden',t!=='receipt');$('invoiceTab').classList.toggle('active',t==='invoice');$('receiptTab').classList.toggle('active',t==='receipt')}
