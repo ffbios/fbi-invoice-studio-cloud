@@ -198,7 +198,22 @@ function initServiceCatalog(){
   cat.onchange=function(){buildBrands();search.value="";refresh();toggleRentalDetails();toggleEventDate();};
   brand.onchange=function(){search.value="";refresh();toggleRentalDetails();};
   search.oninput=refresh;
-  itemSelect.ondblclick=function(){addSelectedCatalogItem();};
+  // Use a reliable double-click detector for the native item selector.
+  // Some browsers do not consistently fire dblclick on <select> controls.
+  let lastCatalogClickAt=0,lastCatalogClickValue="";
+  itemSelect.ondblclick=null;
+  itemSelect.onclick=function(){
+    const now=Date.now();
+    const value=String(itemSelect.value||"");
+    if(value && value===lastCatalogClickValue && now-lastCatalogClickAt<=500){
+      lastCatalogClickAt=0;
+      lastCatalogClickValue="";
+      addSelectedCatalogItem();
+      return;
+    }
+    lastCatalogClickAt=now;
+    lastCatalogClickValue=value;
+  };
   if(addBtn)addBtn.onclick=addSelectedCatalogItem;
   if(add25Btn)add25Btn.onclick=addCategoryItems;
 
