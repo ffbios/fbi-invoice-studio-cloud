@@ -10,6 +10,7 @@ const ROOT = __dirname;
 const INDEX_FILE = path.join(ROOT, 'index.html');
 const SEED_FILE = path.join(ROOT, 'seed-state.json');
 const ARCHIVE_IMPORT_FILE = path.join(ROOT, 'archive-import.json');
+const INVOICE_CATALOG_FILE = path.join(ROOT, 'invoice-catalog.json');
 const STATIC_FILES = {
   '/manifest.json': { file: path.join(ROOT, 'manifest.json'), type: 'application/manifest+json; charset=utf-8' },
   '/payroll-staff-form.html': { file: path.join(ROOT, 'payroll-staff-form.html'), type: 'text/html; charset=utf-8' },
@@ -205,6 +206,17 @@ async function initDb() {
   await pool.query('ALTER TABLE app_state ADD COLUMN IF NOT EXISTS draft_saved_at BIGINT');
   await pool.query('ALTER TABLE app_state ADD COLUMN IF NOT EXISTS draft_json JSONB');
 
+  await pool.query(`CREATE TABLE IF NOT EXISTS invoice_catalog_state (id INTEGER PRIMARY KEY CHECK (id=1), version INTEGER NOT NULL DEFAULT 1, saved_at BIGINT NOT NULL, state_json JSONB NOT NULL)`);
+  const catalogState = await pool.query('SELECT id FROM invoice_catalog_state WHERE id=1');
+  if (catalogState.rowCount === 0 && fs.existsSync(INVOICE_CATALOG_FILE)) {
+    try {
+      const catalog = JSON.parse(fs.readFileSync(INVOICE_CATALOG_FILE, 'utf8'));
+      if (catalog && Array.isArray(catalog.categories) && catalog.catalog && typeof catalog.catalog === 'object') {
+        await pool.query('INSERT INTO invoice_catalog_state (id,version,saved_at,state_json) VALUES (1,1,$1,$2::jsonb) ON CONFLICT(id) DO NOTHING',[Date.now(),JSON.stringify(catalog)]);
+      }
+    } catch (err) { console.warn('Invoice catalog could not be loaded:', err.message); }
+  }
+
   const state = await pool.query('SELECT id FROM app_state WHERE id=1');
   if (state.rowCount === 0 && process.env.SEED_ON_EMPTY !== 'false' && fs.existsSync(SEED_FILE)) {
     try {
@@ -222,6 +234,14 @@ async function initDb() {
   // Load the recovered archive after the empty database has been seeded.
   // This keeps the recovered invoices/clients available on a fresh cloud database.
   await importArchiveState();
+}
+
+async function handleInvoiceCatalogGet(req,res) {
+  const q = await pool.query('SELECT version,saved_at,state_json FROM invoice_catalog_state WHERE id=1');
+  let state = q.rows[0]?.state_json || null;
+  if (typeof state === 'string') { try { state = JSON.parse(state); } catch { state = null; } }
+  if (!state) return json(res,404,{ok:false,error:'Invoice catalog is not initialized.'});
+  return json(res,200,{ok:true,version:q.rows[0].version,savedAt:q.rows[0].saved_at,categories:state.categories||[],catalog:state.catalog||{}});
 }
 
 function json(res, status, body, extraHeaders = {}) {
@@ -1011,6 +1031,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'GET' && sendStatic(res, url.pathname)) return;
     
+    if (url.pathname === '/api/invoice-catalog' && req.method === 'GET') return handleInvoiceCatalogGet(req,res);
     if (url.pathname === '/api/health' && req.method === 'GET') {
       const dbResult = await pool.query('SELECT 1 AS ok');
       const state = await pool.query('SELECT saved_at FROM app_state WHERE id=1');
