@@ -39,7 +39,115 @@ async function findInvoice(req,res){
 }
 async function createInvoice(req,res){const u=await auth(req,res);if(!u)return;const b=await body(req),name=String(b.clientName||'').trim(),items=(b.items||[]).map(x=>({desc:String(x.desc||''),qty:+x.qty||0,days:+x.days||1,rate:+x.rate||0})).filter(x=>x.desc&&x.qty>0);if(!name||!items.length)return json(res,400,{ok:false,error:'Client and at least one item are required.'});const c=await pool.connect();try{await c.query('BEGIN');await c.query('SELECT pg_advisory_xact_lock(492020)');const s=await state(c),n=nextInv(s),no='INV'+String(n).padStart(4,'0');let cl=s.data.clients.find(x=>String(x.id)===String(b.clientId||''));if(!cl){cl={id:iid('client'),name,phone:String(b.phone||''),email:String(b.email||''),address:String(b.address||'')};s.data.clients.push(cl)}const rows=items.map(x=>({...x,total:+(x.rate*x.qty*x.days).toFixed(2)})),subtotal=+rows.reduce((a,x)=>a+x.total,0).toFixed(2),discount=Math.max(0,+b.discount||0),tax=Math.max(0,+b.tax||0),total=Math.max(0,+(subtotal-discount+tax).toFixed(2)),inv={id:iid('inv'),no,date:String(b.date||new Date().toISOString().slice(0,10)),due:String(b.due||'On Receipt'),client:name,clientId:cl.id,clientPhone:cl.phone||'',clientEmail:cl.email||'',cur:String(b.cur||'GHS'),items:rows,subtotal,discount,tax,total,status:'Draft',notes:String(b.notes||''),eventDate:String(b.eventDate||''),eventEndDate:String(b.eventEndDate||''),jobLocation:String(b.jobLocation||''),rentalUnit:String(b.rentalUnit||'Per Day'),payments:[],amountPaid:0,createdBy:u.username,createdByName:u.display_name,createdAt:new Date().toISOString()};s.data.data.unshift(inv);s.data.settings.invoiceSequence=n+1;s.savedAt=Date.now();await c.query('UPDATE app_state SET version=$1,saved_at=$2,state_json=$3::jsonb WHERE id=1',[Math.max(+s.version||1,4),s.savedAt,JSON.stringify(s)]);await c.query('COMMIT');json(res,200,{ok:true,invoice:inv})}catch(e){try{await c.query('ROLLBACK')}catch{}json(res,500,{ok:false,error:e.message})}finally{c.release()}}
 async function pay(req,res){const u=await auth(req,res);if(!u)return;const b=await body(req),amt=+b.amount||0,c=await pool.connect();try{await c.query('BEGIN');await c.query('SELECT pg_advisory_xact_lock(492021)');const s=await state(c),x=s.data.data.find(v=>String(v.id)===String(b.invoiceId||''))||s.data.data.find(v=>String(v.no||'').toUpperCase()===String(b.invoiceNo||'').trim().toUpperCase());if(!x)return json(res,404,{ok:false,error:'Invoice not found.'});const paid=(x.payments||[]).reduce((a,p)=>a+(+p.amount||0),0),bal=Math.max(0,(+x.total||0)-paid);if(amt<=0||amt>bal+.005)return json(res,400,{ok:false,error:'Invalid payment amount.'});const rn=nextRec(s),no='REC'+String(rn).padStart(4,'0'),p={id:iid('pay'),receiptNo:no,amount:amt,date:String(b.date||new Date().toISOString().slice(0,10)),method:String(b.method||'Payment'),transactionRef:String(b.reference||''),receivedBy:u.display_name,balanceAfter:+(bal-amt).toFixed(2),recordedBy:u.username,recordedByName:u.display_name,createdAt:new Date().toISOString()};x.payments=x.payments||[];x.payments.push(p);x.amountPaid=paid+amt;x.receiptNo=no;s.data.settings.receiptSequence=rn+1;x.paymentDate=p.date;x.paymentMethod=p.method;x.transactionRef=p.transactionRef;x.receivedBy=p.receivedBy;x.status=x.amountPaid>=+x.total-.005?'Paid':'Partially Paid';x.updatedAt=new Date().toISOString();s.savedAt=Date.now();await c.query('UPDATE app_state SET version=$1,saved_at=$2,state_json=$3::jsonb WHERE id=1',[Math.max(+s.version||1,4),s.savedAt,JSON.stringify(s)]);await c.query('COMMIT');json(res,200,{ok:true,payment:p,invoice:{id:x.id,no:x.no,client:x.client,total:+x.total||0,paid:+x.amountPaid||0,balance:Math.max(0,(+x.total||0)-(+x.amountPaid||0)),status:x.status||'Draft'}})}catch(e){try{await c.query('ROLLBACK')}catch{}json(res,500,{ok:false,error:e.message})}finally{c.release()}}
+function streamPdf(res,filename,build){
+  const PDFDocument=require('pdfkit');
+  res.writeHead(200,{'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="'+filename+'"','Cache-Control':'no-store'});
+  const doc=new PDFDocument({size:'A4',margin:42});
+  doc.pipe(res);
+  try{build(doc);doc.end()}catch(e){try{doc.end()}catch{}if(!res.headersSent)json(res,500,{ok:false,error:e.message||'PDF generation failed.'});}
+}
+function money(v,cur){return String(cur||'GHS')+' '+(Number(v)||0).toFixed(2)}
+function pdfHeader(doc,title,number){
+  const logo=path.join(ROOT,'assets','fbi-logo.jpg');
+  if(fs.existsSync(logo)) doc.image(logo,42,34,{fit:[125,70]});
+  doc.fontSize(22).font('Helvetica-Bold').text('FBI',200,42,{align:'right'});
+  doc.fontSize(18).font('Helvetica-Bold').text(title,200,70,{align:'right'});
+  doc.fontSize(11).font('Helvetica').text(number,200,94,{align:'right'});
+  doc.moveTo(42,118).lineTo(553,118).stroke();
+}
+function drawInvoicePdf(doc,i){
+  const cur=i.cur||'GHS';
+  pdfHeader(doc,'INVOICE',i.no||'');
+  doc.moveDown(5);
+  doc.fontSize(10).font('Helvetica').text('Bill To:',42);
+  doc.fontSize(13).font('Helvetica-Bold').text(i.client||'');
+  doc.fontSize(10).font('Helvetica').text(i.clientPhone||'');
+  doc.text(i.clientEmail||'');
+  doc.moveDown(.6);
+  doc.text('Invoice Date: '+(i.date||''));
+  doc.text('Due: '+(i.due||'On Receipt'));
+  if(i.eventDate)doc.text('Event: '+i.eventDate+(i.eventEndDate?' to '+i.eventEndDate:''));
+  if(i.jobLocation)doc.text('Job Location: '+i.jobLocation);
+  doc.moveDown(.8);
+  const x=[42,300,355,410,480],w=[258,55,55,70,73],top=doc.y;
+  doc.rect(42,top,511,24).fillAndStroke('#eeeeee','#cccccc');
+  doc.fillColor('#000').font('Helvetica-Bold').fontSize(9);
+  ['Description','Qty','Days','Rate','Amount'].forEach((h,k)=>doc.text(h,x[k]+5,top+7,{width:w[k]-10}));
+  let y=top+24; doc.font('Helvetica').fontSize(9);
+  for(const r of (i.items||[])){
+    if(y>730){doc.addPage();pdfHeader(doc,'INVOICE',i.no||'');y=135;}
+    doc.rect(42,y,511,22).stroke('#dddddd');
+    doc.fillColor('#000').text(r.desc||'',47,y+6,{width:248});
+    doc.text(String(r.qty??''),305,y+6,{width:45,align:'right'});
+    doc.text(String(r.days??''),360,y+6,{width:45,align:'right'});
+    doc.text(money(r.rate,cur),415,y+6,{width:60,align:'right'});
+    doc.text(money(r.total,cur),485,y+6,{width:63,align:'right'});
+    y+=22;
+  }
+  doc.moveDown(1);
+  doc.font('Helvetica').fontSize(10);
+  const right=400;
+  doc.text('Subtotal:',right,Math.max(y+10,doc.y),{width:75,align:'left'});doc.text(money(i.subtotal,cur),475,Math.max(y+10,doc.y),{width:78,align:'right'});
+  let sy=Math.max(y+28,doc.y+28);
+  if(Number(i.discount)>0){doc.text('Discount:',right,sy,{width:75});doc.text('-'+money(i.discount,cur),475,sy,{width:78,align:'right'});sy+=18;}
+  if(Number(i.tax)>0){doc.text('Tax:',right,sy,{width:75});doc.text(money(i.tax,cur),475,sy,{width:78,align:'right'});sy+=18;}
+  doc.font('Helvetica-Bold').fontSize(13);doc.text('TOTAL:',right,sy+6,{width:75});doc.text(money(i.total,cur),455,sy+6,{width:98,align:'right'});
+  sy+=34;
+  const paid=(i.payments||[]).reduce((a,p)=>a+(Number(p.amount)||0),0),balance=Math.max(0,(Number(i.total)||0)-paid);
+  doc.font('Helvetica').fontSize(10);doc.text('Amount Paid: '+money(paid,cur),right,sy);doc.text('Balance: '+money(balance,cur),right,sy+16);
+  if(i.notes){doc.font('Helvetica').fontSize(10).text('\nNotes: '+String(i.notes),42,sy+46,{width:511});}
+  doc.fontSize(9).fillColor('#555').text('Created by: '+(i.createdByName||i.createdBy||''),42,780,{width:511,align:'right'});
+}
+function drawReceiptPdf(invoice,p){
+  const cur=invoice.cur||'GHS';
+  pdfHeader(doc='__DOC__','OFFICIAL RECEIPT',p.receiptNo||'');
+}
+async function handleInvoicePdf(req,res){
+  const u=await auth(req,res);if(!u)return;
+  try{
+    const no=String(new URL(req.url,'http://localhost').searchParams.get('no')||'').trim().toUpperCase();
+    if(!no)return json(res,400,{ok:false,error:'Enter an invoice number.'});
+    const s=await state(pool),i=s.data.data.find(v=>String(v.no||'').toUpperCase()===no);
+    if(!i)return json(res,404,{ok:false,error:'Invoice not found.'});
+    streamPdf(res,'FBI-'+(i.no||'INVOICE')+'.pdf',doc=>drawInvoicePdf(doc,i));
+  }catch(e){if(!res.headersSent)json(res,500,{ok:false,error:e.message||'Could not create invoice PDF.'});}
+}
+function drawReceiptDocument(doc,invoice,p){
+  const cur=invoice.cur||'GHS';
+  pdfHeader(doc,'OFFICIAL RECEIPT',p.receiptNo||'');
+  doc.moveDown(5);
+  doc.fontSize(11).font('Helvetica').text('Receipt No: '+(p.receiptNo||''));
+  doc.text('Invoice No: '+(invoice.no||''));
+  doc.moveDown(.8);
+  doc.fontSize(12).font('Helvetica-Bold').text('Received from');
+  doc.fontSize(15).text(invoice.client||'');
+  doc.fontSize(10).font('Helvetica').text(invoice.clientPhone||'');
+  doc.text(invoice.clientEmail||'');
+  doc.moveDown(1);
+  doc.font('Helvetica').fontSize(11);
+  doc.text('Amount Received: '+money(p.amount,cur));
+  doc.text('Payment Method: '+(p.method||''));
+  doc.text('Transaction Reference: '+(p.transactionRef||''));
+  doc.text('Payment Date: '+(p.date||''));
+  doc.text('Balance After Payment: '+money(p.balanceAfter,cur));
+  doc.moveDown(2);
+  doc.font('Helvetica-Bold').fontSize(14).text('Payment received successfully.');
+  doc.font('Helvetica').fontSize(10).text('Received by: '+(p.recordedByName||p.receivedBy||''));
+  doc.fontSize(9).fillColor('#555').text('FBI Official Receipt',42,780,{width:511,align:'right'});
+}
+async function handleReceiptPdf(req,res){
+  const u=await auth(req,res);if(!u)return;
+  try{
+    const url=new URL(req.url,'http://localhost'),no=String(url.searchParams.get('invoice')||'').trim().toUpperCase(),rn=String(url.searchParams.get('receipt')||'').trim().toUpperCase();
+    if(!no||!rn)return json(res,400,{ok:false,error:'Invoice and receipt numbers are required.'});
+    const s=await state(pool),invoice=s.data.data.find(v=>String(v.no||'').toUpperCase()===no);
+    if(!invoice)return json(res,404,{ok:false,error:'Invoice not found.'});
+    const p=(invoice.payments||[]).find(x=>String(x.receiptNo||'').toUpperCase()===rn);
+    if(!p)return json(res,404,{ok:false,error:'Receipt not found.'});
+    streamPdf(res,'FBI-'+rn+'.pdf',doc=>drawReceiptDocument(doc,invoice,p));
+  }catch(e){if(!res.headersSent)json(res,500,{ok:false,error:e.message||'Could not create receipt PDF.'});}
+}
 function staticFile(res,p){const f=p==='/staff-portal.html'?path.join(__dirname,'staff-portal.html'):p==='/invoice-catalog.js'?path.join(__dirname,'invoice-catalog.js'):p==='/assets/fbi-logo.jpg'?path.join(ROOT,'assets/fbi-logo.jpg'):null;if(!f||!fs.existsSync(f))return false;res.writeHead(200,{'Content-Type':p.endsWith('.jpg')?'image/jpeg':p.endsWith('.js')?'application/javascript; charset=utf-8':'text/html; charset=utf-8'});fs.createReadStream(f).pipe(res);return true}
 const server=http.createServer(async(req,res)=>{try{const u=new URL(req.url,'http://localhost');if(req.method==='GET'&&(u.pathname==='/'||u.pathname==='/staff-portal.html')&&staticFile(res,'/staff-portal.html'))return;if(req.method==='GET'&&staticFile(res,u.pathname))return;if(u.pathname==='/api/portal/register'&&req.method==='POST')return register(req,res);if(u.pathname==='/api/portal/login'&&req.method==='POST')return login(req,res);
-if(u.pathname==='/api/portal/logout'&&req.method==='POST'){const t=ck(req).fbi_staff_session;if(t)await pool.query('DELETE FROM portal_sessions WHERE token_hash=$1',[th(t)]);res.setHeader('Set-Cookie','fbi_staff_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0; Secure');return json(res,200,{ok:true})}if(u.pathname==='/api/portal/me'&&req.method==='GET'){const u=await auth(req,res);if(u)return json(res,200,{ok:true,user:u});return}if(u.pathname==='/api/portal/data'&&req.method==='GET')return getData(req,res);if(u.pathname==='/api/portal/catalog'&&req.method==='GET')return catalog(req,res);if(u.pathname==='/api/portal/invoice'&&req.method==='GET')return findInvoice(req,res);if(u.pathname==='/api/portal/invoices'&&req.method==='POST')return createInvoice(req,res);if(u.pathname==='/api/portal/payments'&&req.method==='POST')return pay(req,res);if(u.pathname==='/api/health')return json(res,200,{ok:true,application:'FBI Invoice Portal'});return json(res,404,{ok:false,error:'Not found'})}catch(e){json(res,500,{ok:false,error:e.message})}});
+if(u.pathname==='/api/portal/logout'&&req.method==='POST'){const t=ck(req).fbi_staff_session;if(t)await pool.query('DELETE FROM portal_sessions WHERE token_hash=$1',[th(t)]);res.setHeader('Set-Cookie','fbi_staff_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0; Secure');return json(res,200,{ok:true})}if(u.pathname==='/api/portal/me'&&req.method==='GET'){const u=await auth(req,res);if(u)return json(res,200,{ok:true,user:u});return}if(u.pathname==='/api/portal/data'&&req.method==='GET')return getData(req,res);if(u.pathname==='/api/portal/invoice-pdf'&&req.method==='GET')return handleInvoicePdf(req,res);if(u.pathname==='/api/portal/receipt-pdf'&&req.method==='GET')return handleReceiptPdf(req,res);if(u.pathname==='/api/portal/catalog'&&req.method==='GET')return catalog(req,res);if(u.pathname==='/api/portal/invoice'&&req.method==='GET')return findInvoice(req,res);if(u.pathname==='/api/portal/invoices'&&req.method==='POST')return createInvoice(req,res);if(u.pathname==='/api/portal/payments'&&req.method==='POST')return pay(req,res);if(u.pathname==='/api/health')return json(res,200,{ok:true,application:'FBI Invoice Portal'});return json(res,404,{ok:false,error:'Not found'})}catch(e){json(res,500,{ok:false,error:e.message})}});
 init().then(()=>server.listen(PORT,'0.0.0.0',()=>console.log('FBI Invoice Portal listening on '+PORT))).catch(e=>{console.error(e);process.exit(1)})
