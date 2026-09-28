@@ -493,7 +493,10 @@ async function recordPayment(){
   const balance=Math.max(0,total-alreadyPaid);
   if(paid>balance+0.005){alert("Amount paid cannot be greater than the remaining invoice balance.");return}
   if(!$("paymentDate").value)$("paymentDate").value=new Date().toISOString().slice(0,10);
-  const receiptNo=nextReceiptNumber();
+  const reservation=await fetch("/api/sequence/reserve",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"receipt"}),cache:"no-store"});
+  const reservedBody=await reservation.json().catch(()=>({}));
+  if(!reservation.ok||!reservedBody.number){toast(reservedBody.error||"Could not reserve the central receipt number.");return}
+  const receiptNo=String(reservedBody.number);
   const paymentId="pay-"+Date.now()+"-"+Math.random().toString(36).slice(2,8);
   const newPaid=alreadyPaid+paid;
   const payment={id:paymentId,receiptNo,amount:paid,date:$("paymentDate").value,method:$("paymentMethod").value||"Payment",transactionRef:$("transactionRef").value||"",receivedBy:$("receivedBy").value||"",balanceAfter:Math.max(0,total-newPaid)};
@@ -585,15 +588,12 @@ async function save(){
     if(!validateMediaEventDate(x))return null;
     let i=data.findIndex(a=>a.id===x.id),isNew=i<0;
     if(isNew){
-      let seq=nextInvoiceSequence();
-      let candidate="INV"+String(seq).padStart(4,"0");
-      while(data.some(a=>String(a.no)===candidate)){
-        seq++;
-        settings.invoiceSequence=seq;
-        candidate="INV"+String(seq).padStart(4,"0");
-      }
-      x.no=candidate;
-      settings.invoiceSequence=seq+1;
+      const reservation=await fetch("/api/sequence/reserve",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"invoice"}),cache:"no-store"});
+      const reservedBody=await reservation.json().catch(()=>({}));
+      if(!reservation.ok||!reservedBody.number)throw new Error(reservedBody.error||"Could not reserve the central invoice number.");
+      x.no=String(reservedBody.number);
+      const reservedSeq=(Number(String(x.no).replace(/\\D/g,""))||0)+1;
+      settings.invoiceSequence=Math.max(Number(settings.invoiceSequence)||1,reservedSeq);
     }
     $("no").value=x.no;invoiceNumberReserved=x.no;
     if(i>=0)data[i]=x;else data.unshift(x);
