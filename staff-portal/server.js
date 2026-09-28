@@ -98,10 +98,6 @@ function drawInvoicePdf(doc,i){
   if(i.notes){doc.font('Helvetica').fontSize(10).text('\nNotes: '+String(i.notes),42,sy+46,{width:511});}
   doc.fontSize(9).fillColor('#555').text('Created by: '+(i.createdByName||i.createdBy||''),42,780,{width:511,align:'right'});
 }
-function drawReceiptPdf(invoice,p){
-  const cur=invoice.cur||'GHS';
-  pdfHeader(doc='__DOC__','OFFICIAL RECEIPT',p.receiptNo||'');
-}
 async function handleInvoicePdf(req,res){
   const u=await auth(req,res);if(!u)return;
   try{
