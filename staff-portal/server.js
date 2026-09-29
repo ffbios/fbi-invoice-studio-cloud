@@ -26,7 +26,7 @@ async function login(req,res){const b=await body(req),u=String(b.username||'').t
 async function getData(req,res){
   const u=await auth(req,res); if(!u)return;
   const s=await state(pool);
-  json(res,200,{ok:true,user:u,clients:Array.isArray(s.data.clients)?s.data.clients:[],settings:{biz:s.data.settings.biz,bphone:s.data.settings.bphone,bemail:s.data.settings.bemail,logo:'/assets/fbi-logo.jpg'}});
+  json(res,200,{ok:true,user:u,clients:Array.isArray(s.data.clients)?s.data.clients:[],settings:{biz:s.data.settings.biz,bphone:s.data.settings.bphone,bemail:s.data.settings.bemail,defaultPay:s.data.settings.defaultPay||'',logo:'/assets/fbi-logo.jpg'}});
 }
 async function findInvoice(req,res){
   const u=await auth(req,res); if(!u)return;
@@ -37,7 +37,7 @@ async function findInvoice(req,res){
   const paid=(x.payments||[]).reduce((a,p)=>a+(+p.amount||0),0);
   json(res,200,{ok:true,invoice:{id:x.id,no:x.no,client:x.client,clientPhone:x.clientPhone||'',clientEmail:x.clientEmail||'',date:x.date,total:+x.total||0,paid,balance:Math.max(0,(+x.total||0)-paid),status:x.status||'Draft'}});
 }
-async function createInvoice(req,res){const u=await auth(req,res);if(!u)return;const b=await body(req),name=String(b.clientName||'').trim(),items=(b.items||[]).map(x=>({desc:String(x.desc||''),qty:+x.qty||0,days:+x.days||1,rate:+x.rate||0})).filter(x=>x.desc&&x.qty>0);if(!name||!items.length)return json(res,400,{ok:false,error:'Client and at least one item are required.'});const c=await pool.connect();try{await c.query('BEGIN');await c.query('SELECT pg_advisory_xact_lock(492020)');const s=await state(c),n=nextInv(s),no='INV'+String(n).padStart(4,'0');let cl=s.data.clients.find(x=>String(x.id)===String(b.clientId||''));if(!cl){cl={id:iid('client'),name,phone:String(b.phone||''),email:String(b.email||''),address:String(b.address||'')};s.data.clients.push(cl)}const rows=items.map(x=>({...x,total:+(x.rate*x.qty*x.days).toFixed(2)})),subtotal=+rows.reduce((a,x)=>a+x.total,0).toFixed(2),discount=Math.max(0,+b.discount||0),tax=Math.max(0,+b.tax||0),total=Math.max(0,+(subtotal-discount+tax).toFixed(2)),inv={id:iid('inv'),no,date:String(b.date||new Date().toISOString().slice(0,10)),due:String(b.due||'On Receipt'),client:name,clientId:cl.id,clientPhone:cl.phone||'',clientEmail:cl.email||'',cur:String(b.cur||'GHS'),items:rows,subtotal,discount,tax,total,status:'Draft',notes:String(b.notes||''),eventDate:String(b.eventDate||''),eventEndDate:String(b.eventEndDate||''),jobLocation:String(b.jobLocation||''),rentalUnit:String(b.rentalUnit||'Per Day'),payments:[],amountPaid:0,createdBy:u.username,createdByName:u.display_name,createdAt:new Date().toISOString()};s.data.data.unshift(inv);s.data.settings.invoiceSequence=n+1;s.savedAt=Date.now();await c.query('UPDATE app_state SET version=$1,saved_at=$2,state_json=$3::jsonb WHERE id=1',[Math.max(+s.version||1,4),s.savedAt,JSON.stringify(s)]);await c.query('COMMIT');json(res,200,{ok:true,invoice:inv})}catch(e){try{await c.query('ROLLBACK')}catch{}json(res,500,{ok:false,error:e.message})}finally{c.release()}}
+async function createInvoice(req,res){const u=await auth(req,res);if(!u)return;const b=await body(req),name=String(b.clientName||'').trim(),items=(b.items||[]).map(x=>({desc:String(x.desc||''),qty:+x.qty||0,days:+x.days||1,rate:+x.rate||0})).filter(x=>x.desc&&x.qty>0);if(!name||!items.length)return json(res,400,{ok:false,error:'Client and at least one item are required.'});const c=await pool.connect();try{await c.query('BEGIN');await c.query('SELECT pg_advisory_xact_lock(492020)');const s=await state(c),n=nextInv(s),no='INV'+String(n).padStart(4,'0');let cl=s.data.clients.find(x=>String(x.id)===String(b.clientId||''));if(!cl){cl={id:iid('client'),name,phone:String(b.phone||''),email:String(b.email||''),address:String(b.address||'')};s.data.clients.push(cl)}const rows=items.map(x=>({...x,total:+(x.rate*x.qty*x.days).toFixed(2)})),subtotal=+rows.reduce((a,x)=>a+x.total,0).toFixed(2),discount=Math.max(0,+b.discount||0),tax=Math.max(0,+b.tax||0),total=Math.max(0,+(subtotal-discount+tax).toFixed(2)),inv={id:iid('inv'),no,date:String(b.date||new Date().toISOString().slice(0,10)),due:String(b.due||'On Receipt'),client:name,clientId:cl.id,clientPhone:cl.phone||'',clientEmail:cl.email||'',cur:String(b.cur||'GHS'),items:rows,subtotal,discount,tax,total,status:'Draft',notes:String(b.notes||''),eventDate:String(b.eventDate||''),eventEndDate:String(b.eventEndDate||''),jobLocation:String(b.jobLocation||''),rentalUnit:String(b.rentalUnit||'Per Day'),payment:String(b.payment||s.data.settings.defaultPay||''),payments:[],amountPaid:0,createdBy:u.username,createdByName:u.display_name,createdAt:new Date().toISOString()};s.data.data.unshift(inv);s.data.settings.invoiceSequence=n+1;s.savedAt=Date.now();await c.query('UPDATE app_state SET version=$1,saved_at=$2,state_json=$3::jsonb WHERE id=1',[Math.max(+s.version||1,4),s.savedAt,JSON.stringify(s)]);await c.query('COMMIT');json(res,200,{ok:true,invoice:inv})}catch(e){try{await c.query('ROLLBACK')}catch{}json(res,500,{ok:false,error:e.message})}finally{c.release()}}
 async function pay(req,res){const u=await auth(req,res);if(!u)return;const b=await body(req),amt=+b.amount||0,c=await pool.connect();try{await c.query('BEGIN');await c.query('SELECT pg_advisory_xact_lock(492021)');const s=await state(c),x=s.data.data.find(v=>String(v.id)===String(b.invoiceId||''))||s.data.data.find(v=>String(v.no||'').toUpperCase()===String(b.invoiceNo||'').trim().toUpperCase());if(!x)return json(res,404,{ok:false,error:'Invoice not found.'});const paid=(x.payments||[]).reduce((a,p)=>a+(+p.amount||0),0),bal=Math.max(0,(+x.total||0)-paid);if(amt<=0||amt>bal+.005)return json(res,400,{ok:false,error:'Invalid payment amount.'});const rn=nextRec(s),no='REC'+String(rn).padStart(4,'0'),p={id:iid('pay'),receiptNo:no,amount:amt,date:String(b.date||new Date().toISOString().slice(0,10)),method:String(b.method||'Payment'),transactionRef:String(b.reference||''),receivedBy:u.display_name,balanceAfter:+(bal-amt).toFixed(2),recordedBy:u.username,recordedByName:u.display_name,createdAt:new Date().toISOString()};x.payments=x.payments||[];x.payments.push(p);x.amountPaid=paid+amt;x.receiptNo=no;s.data.settings.receiptSequence=rn+1;x.paymentDate=p.date;x.paymentMethod=p.method;x.transactionRef=p.transactionRef;x.receivedBy=p.receivedBy;x.status=x.amountPaid>=+x.total-.005?'Paid':'Partially Paid';x.updatedAt=new Date().toISOString();s.savedAt=Date.now();await c.query('UPDATE app_state SET version=$1,saved_at=$2,state_json=$3::jsonb WHERE id=1',[Math.max(+s.version||1,4),s.savedAt,JSON.stringify(s)]);await c.query('COMMIT');json(res,200,{ok:true,payment:p,invoice:{id:x.id,no:x.no,client:x.client,total:+x.total||0,paid:+x.amountPaid||0,balance:Math.max(0,(+x.total||0)-(+x.amountPaid||0)),status:x.status||'Draft'}})}catch(e){try{await c.query('ROLLBACK')}catch{}json(res,500,{ok:false,error:e.message})}finally{c.release()}}
 function streamPdf(res,filename,build){
   const PDFDocument=require('pdfkit');
@@ -95,8 +95,22 @@ function drawInvoicePdf(doc,i){
   sy+=34;
   const paid=(i.payments||[]).reduce((a,p)=>a+(Number(p.amount)||0),0),balance=Math.max(0,(Number(i.total)||0)-paid);
   doc.font('Helvetica').fontSize(10);doc.text('Amount Paid: '+money(paid,cur),right,sy);doc.text('Balance: '+money(balance,cur),right,sy+16);
-  if(i.notes){doc.font('Helvetica').fontSize(10).text('\nNotes: '+String(i.notes),42,sy+46,{width:511});}
-  doc.fontSize(9).fillColor('#555').text('Created by: '+(i.createdByName||i.createdBy||''),42,780,{width:511,align:'right'});
+  let contentY=sy+46;
+  if(i.notes){
+    doc.font('Helvetica-Bold').fontSize(10).fillColor('#111').text('Notes',42,contentY,{width:511});
+    contentY+=15;
+    doc.font('Helvetica').fontSize(10).fillColor('#222').text(String(i.notes),42,contentY,{width:511,lineGap:2});
+    contentY=doc.y+12;
+  }
+  if(i.payment){
+    if(contentY>700){doc.addPage();pdfHeader(doc,'INVOICE',i.no||'');contentY=135;}
+    doc.font('Helvetica-Bold').fontSize(10).fillColor('#111').text('Payment Information',42,contentY,{width:511});
+    contentY+=15;
+    doc.font('Helvetica').fontSize(9).fillColor('#222').text(String(i.payment),42,contentY,{width:511,lineGap:3});
+    contentY=doc.y+12;
+  }
+  const footerY=contentY>745?contentY:780;
+  doc.fontSize(9).fillColor('#555').text('Created by: '+(i.createdByName||i.createdBy||''),42,footerY,{width:511,align:'right'});
 }
 async function handleInvoicePdf(req,res){
   const u=await auth(req,res);if(!u)return;
