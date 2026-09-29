@@ -325,6 +325,7 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
       <div class="fbi-payroll-tabs">
         <button class="fbi-payroll-tab active" type="button" data-payroll-tab="overview">Overview</button>
         <button class="fbi-payroll-tab" type="button" data-payroll-tab="workers">Staff / Workers</button>
+        <button class="fbi-payroll-tab" type="button" data-payroll-tab="registrations" id="fbiPayrollRegistrationTab">Staff Verification</button>
         <button class="fbi-payroll-tab" type="button" data-payroll-tab="records">Payroll Records</button>
         <button class="fbi-payroll-tab" type="button" data-payroll-tab="payslips">Payslips</button>
         <button class="fbi-payroll-tab" type="button" data-payroll-tab="reports">Reports</button>
@@ -414,6 +415,20 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
             </div>
             <div id="fbiPayrollOverviewTable" class="fbi-payroll-overview-table-wrap"></div>
           </div>
+        </div>
+      </div>
+
+      <div class="fbi-payroll-panel" data-payroll-panel="registrations">
+        <div class="fbi-payroll-section-head">
+          <div><h3>Staff Verification</h3><p>Review people who registered through the Payroll Staff Portal. Approve and add them to the Payroll Staff Directory, or reject the request.</p></div>
+          <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+            <span class="fbi-payroll-badge pending" id="fbiPayrollRegistrationMainCount">0 pending</span>
+            <a class="btn" href="/payroll-staff-portal.html" target="_blank" rel="noopener">Open Staff Portal</a>
+            <button class="btn" type="button" id="fbiPayrollRegistrationMainRefresh">Refresh</button>
+          </div>
+        </div>
+        <div class="fbi-payroll-widget" style="margin-bottom:12px">
+          <div id="fbiPayrollRegistrationRequestsMain"><div class="fbi-payroll-empty">Loading registration requests...</div></div>
         </div>
       </div>
 
@@ -881,24 +896,34 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
   }
 
   function renderPayrollRegistrationRequests(){
-    var el=q('fbiPayrollRegistrationRequests'),count=q('fbiPayrollRegistrationCount');if(!el)return;
+    var targets=[q('fbiPayrollRegistrationRequests'),q('fbiPayrollRegistrationRequestsMain')].filter(function(x){return !!x;});
+    if(!targets.length)return;
     var rows=payrollRegistrationRequests||[];
-    if(count)count.textContent=rows.length+' pending';
-    if(!rows.length){el.innerHTML='<div class="fbi-payroll-empty">No new staff self-registrations are waiting for approval.</div>';return;}
-    el.innerHTML='<div class="fbi-payroll-table-wrap"><table class="fbi-payroll-table"><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Department</th><th>Submitted</th><th>Actions</th></tr></thead><tbody>'+
-      rows.map(function(r){
-        var p=r.profile||{};
-        var date=r.createdAt?new Date(r.createdAt).toLocaleString():'';
-        return '<tr><td><b>'+esc(p.name||'')+'</b><span class="sub">'+esc(p.workerType||'')+'</span></td>'+
-          '<td>'+esc(r.email||p.email||'')+'</td><td>'+esc(r.phone||p.phone||'')+'</td><td>'+esc(p.role||'Not provided')+'</td>'+
-          '<td>'+esc(p.department||'')+'</td><td>'+esc(date)+'</td><td><div class="fbi-payroll-actions-cell">'+
-          '<button class="fbi-payroll-mini-btn primary" type="button" data-reg-approve="'+esc(r.id)+'">Approve & Add</button>'+
-          '<button class="fbi-payroll-mini-btn danger" type="button" data-reg-reject="'+esc(r.id)+'">Reject</button>'+
-          '</div></td></tr>';
-      }).join('')+'</tbody></table></div>';
-    el.querySelectorAll('[data-reg-approve]').forEach(function(b){b.onclick=function(){approvePayrollRegistration(b.dataset.regApprove);};});
-    el.querySelectorAll('[data-reg-reject]').forEach(function(b){b.onclick=function(){rejectPayrollRegistration(b.dataset.regReject);};});
+    var counts=[q('fbiPayrollRegistrationCount'),q('fbiPayrollRegistrationMainCount')].filter(function(x){return !!x;});
+    counts.forEach(function(count){count.textContent=rows.length+' pending';});
+    if(q('fbiPayrollRegistrationTab'))q('fbiPayrollRegistrationTab').textContent='Staff Verification'+(rows.length?' ('+rows.length+')':'');
+    var html;
+    if(!rows.length){html='<div class="fbi-payroll-empty">No new staff self-registrations are waiting for approval.</div>';}
+    else {
+      html='<div class="fbi-payroll-table-wrap"><table class="fbi-payroll-table"><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Department</th><th>Submitted</th><th>Actions</th></tr></thead><tbody>'+
+        rows.map(function(r){
+          var p=r.profile||{};
+          var date=r.createdAt?new Date(r.createdAt).toLocaleString():'';
+          return '<tr><td><b>'+esc(p.name||'')+'</b><span class="sub">'+esc(p.workerType||'')+'</span></td>'+
+            '<td>'+esc(r.email||p.email||'')+'</td><td>'+esc(r.phone||p.phone||'')+'</td><td>'+esc(p.role||'Not provided')+'</td>'+
+            '<td>'+esc(p.department||'')+'</td><td>'+esc(date)+'</td><td><div class="fbi-payroll-actions-cell">'+
+            '<button class="fbi-payroll-mini-btn primary" type="button" data-reg-approve="'+esc(r.id)+'">Approve & Add</button>'+ 
+            '<button class="fbi-payroll-mini-btn danger" type="button" data-reg-reject="'+esc(r.id)+'">Reject</button>'+ 
+            '</div></td></tr>';
+        }).join('')+'</tbody></table></div>';
+    }
+    targets.forEach(function(el){
+      el.innerHTML=html;
+      el.querySelectorAll('[data-reg-approve]').forEach(function(b){b.onclick=function(){approvePayrollRegistration(b.dataset.regApprove);};});
+      el.querySelectorAll('[data-reg-reject]').forEach(function(b){b.onclick=function(){rejectPayrollRegistration(b.dataset.regReject);};});
+    });
   }
+
   async function approvePayrollRegistration(idv){
     var req=payrollRegistrationRequests.find(function(x){return String(x.id)===String(idv);});if(!req)return;
     var p=req.profile||{};
