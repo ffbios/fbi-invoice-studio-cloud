@@ -10,7 +10,6 @@ const ROOT = __dirname;
 const INDEX_FILE = path.join(ROOT, 'index.html');
 const SEED_FILE = path.join(ROOT, 'seed-state.json');
 const ARCHIVE_IMPORT_FILE = path.join(ROOT, 'archive-import.json');
-const INVOICE_CATALOG_FILE = path.join(ROOT, 'invoice-catalog.json');
 const STATIC_FILES = {
   '/manifest.json': { file: path.join(ROOT, 'manifest.json'), type: 'application/manifest+json; charset=utf-8' },
   '/payroll-staff-form.html': { file: path.join(ROOT, 'payroll-staff-form.html'), type: 'text/html; charset=utf-8' },
@@ -206,17 +205,6 @@ async function initDb() {
   await pool.query('ALTER TABLE app_state ADD COLUMN IF NOT EXISTS draft_saved_at BIGINT');
   await pool.query('ALTER TABLE app_state ADD COLUMN IF NOT EXISTS draft_json JSONB');
 
-  await pool.query(`CREATE TABLE IF NOT EXISTS invoice_catalog_state (id INTEGER PRIMARY KEY CHECK (id=1), version INTEGER NOT NULL DEFAULT 1, saved_at BIGINT NOT NULL, state_json JSONB NOT NULL)`);
-  const catalogState = await pool.query('SELECT id FROM invoice_catalog_state WHERE id=1');
-  if (catalogState.rowCount === 0 && fs.existsSync(INVOICE_CATALOG_FILE)) {
-    try {
-      const catalog = JSON.parse(fs.readFileSync(INVOICE_CATALOG_FILE, 'utf8'));
-      if (catalog && Array.isArray(catalog.categories) && catalog.catalog && typeof catalog.catalog === 'object') {
-        await pool.query('INSERT INTO invoice_catalog_state (id,version,saved_at,state_json) VALUES (1,1,$1,$2::jsonb) ON CONFLICT(id) DO NOTHING',[Date.now(),JSON.stringify(catalog)]);
-      }
-    } catch (err) { console.warn('Invoice catalog could not be loaded:', err.message); }
-  }
-
   const state = await pool.query('SELECT id FROM app_state WHERE id=1');
   if (state.rowCount === 0 && process.env.SEED_ON_EMPTY !== 'false' && fs.existsSync(SEED_FILE)) {
     try {
@@ -234,14 +222,6 @@ async function initDb() {
   // Load the recovered archive after the empty database has been seeded.
   // This keeps the recovered invoices/clients available on a fresh cloud database.
   await importArchiveState();
-}
-
-async function handleInvoiceCatalogGet(req,res) {
-  const q = await pool.query('SELECT version,saved_at,state_json FROM invoice_catalog_state WHERE id=1');
-  let state = q.rows[0]?.state_json || null;
-  if (typeof state === 'string') { try { state = JSON.parse(state); } catch { state = null; } }
-  if (!state) return json(res,404,{ok:false,error:'Invoice catalog is not initialized.'});
-  return json(res,200,{ok:true,version:q.rows[0].version,savedAt:q.rows[0].saved_at,categories:state.categories||[],catalog:state.catalog||{}});
 }
 
 function json(res, status, body, extraHeaders = {}) {
@@ -539,56 +519,6 @@ async function handleAuthReset(req, res) {
   }
 }
 
-async function reserveSequence(kind) {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query('SELECT pg_advisory_xact_lock($1)', [kind === 'invoice' ? 492020 : 492021]);
-    const r = await client.query('SELECT state_json FROM app_state WHERE id=1 FOR UPDATE');
-    if (!r.rows[0]) throw new Error('Central invoice database is not initialized.');
-    let state = r.rows[0].state_json;
-    if (typeof state === 'string') state = JSON.parse(state);
-    if (!state || !state.data || !Array.isArray(state.data.data) || !state.data.settings) throw new Error('Central invoice database is invalid.');
-    if (kind === 'invoice') {
-      let max = 0;
-      for (const x of state.data.data) { const m = String(x.no || '').match(/(\\d+)$/); if (m) max = Math.max(max, Number(m[1]) || 0); }
-      const n = Math.max(Number(state.data.settings.invoiceSequence) || 1, max + 1);
-      state.data.settings.invoiceSequence = n + 1;
-      state.savedAt = Date.now();
-      await client.query('UPDATE app_state SET version=$1,saved_at=$2,state_json=$3::jsonb WHERE id=1',[Math.max(Number(state.version)||1,4),state.savedAt,JSON.stringify(state)]);
-      await client.query('COMMIT');
-      return { number: 'INV' + String(n).padStart(4,'0') };
-    }
-    let max = 0;
-    for (const x of state.data.data) for (const p of (Array.isArray(x.payments) ? x.payments : [])) {
-      const m = String(p.receiptNo || '').match(/(\\d+)$/); if (m) max = Math.max(max, Number(m[1]) || 0);
-    }
-    const n = Math.max(Number(state.data.settings.receiptSequence) || 1, max + 1);
-    state.data.settings.receiptSequence = n + 1;
-    state.savedAt = Date.now();
-    await client.query('UPDATE app_state SET version=$1,saved_at=$2,state_json=$3::jsonb WHERE id=1',[Math.max(Number(state.version)||1,4),state.savedAt,JSON.stringify(state)]);
-    await client.query('COMMIT');
-    return { number: 'REC' + String(n).padStart(4,'0') };
-  } catch (e) {
-    try { await client.query('ROLLBACK'); } catch {}
-    throw e;
-  } finally { client.release(); }
-}
-async function handleSequenceReserve(req,res) {
-  const session = await requireAuth(req,res);
-  if (!session) return;
-  try {
-    const body = await parseJsonBody(req);
-    const kind = String(body.kind || '').toLowerCase();
-    if (kind !== 'invoice' && kind !== 'receipt') return json(res,400,{ok:false,error:'Invalid sequence type.'});
-    const result = await reserveSequence(kind);
-    return json(res,200,{ok:true,kind,number:result.number});
-  } catch (err) {
-    console.error('Sequence reservation failed:',err);
-    return json(res,500,{ok:false,error:err.message || 'Could not reserve number.'});
-  }
-}
-
 async function handleStateGet(req, res) {
   const session = await requireAuth(req, res);
   if (!session) return;
@@ -679,12 +609,7 @@ function mergeInvoiceStates(existingState, incomingState) {
     data: {
       data: Array.from(invoiceMap.values()),
       clients: Array.from(clientMap.values()),
-      settings: {
-        ...existingSettings,
-        ...incomingState.data.settings,
-        invoiceSequence: Math.max(Number(existingSettings.invoiceSequence)||1, Number(incomingState.data.settings.invoiceSequence)||1),
-        receiptSequence: Math.max(Number(existingSettings.receiptSequence)||1, Number(incomingState.data.settings.receiptSequence)||1)
-      }
+      settings: { ...existingSettings, ...incomingState.data.settings }
     }
   };
 }
@@ -1031,7 +956,6 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'GET' && sendStatic(res, url.pathname)) return;
     
-    if (url.pathname === '/api/invoice-catalog' && req.method === 'GET') return handleInvoiceCatalogGet(req,res);
     if (url.pathname === '/api/health' && req.method === 'GET') {
       const dbResult = await pool.query('SELECT 1 AS ok');
       const state = await pool.query('SELECT saved_at FROM app_state WHERE id=1');
@@ -1066,10 +990,6 @@ const server = http.createServer(async (req, res) => {
       if (req.method === 'PUT' || req.method === 'POST') return handleDraftWrite(req, res);
       if (req.method === 'DELETE') return handleDraftDelete(req, res);
       return json(res, 405, { ok: false, error: 'Method not allowed.' });
-    }
-
-    if (url.pathname === '/api/sequence/reserve' && (req.method === 'POST' || req.method === 'PUT')) {
-      return handleSequenceReserve(req,res);
     }
 
     if (url.pathname === '/api/state') {
