@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080a0e">
+<title>FBI Payroll Staff Portal</title>
+<style>
+:root{--bg:#080a0e;--panel:#11151c;--panel2:#0d1016;--line:#2a313b;--text:#f4f6f8;--muted:#8f99a8;--gold:#d4af37;--gold2:#b48b2f;--ok:#67dda1;--warn:#f1c45c;--danger:#ff929e}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(circle at top,#171a20 0,#080a0e 46%);color:var(--text);font:14px Arial,sans-serif}
+button,input,textarea,select{font:inherit}.shell{width:min(1100px,94vw);margin:0 auto;padding:24px 0 50px}.brand{display:flex;gap:13px;align-items:center}.brand img{width:58px;height:58px;border-radius:10px;object-fit:contain;background:#fff}.brand h1{font-size:19px;margin:0}.brand p{margin:4px 0 0;color:var(--muted);font-size:11px}
+.auth{min-height:100vh;display:grid;place-items:center;padding:20px}.auth-card{width:min(760px,95vw);background:linear-gradient(180deg,var(--panel),#0e1218);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:0 24px 80px #0008}
+.auth-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:20px}.auth-head .brand p{max-width:500px}
+.tabs{display:flex;gap:8px;margin-bottom:16px}.tab,.btn{border:1px solid #353c47;background:#171c24;color:#eef1f5;border-radius:9px;padding:10px 13px;font-size:11px;font-weight:800;cursor:pointer}.tab.active,.btn.primary{background:var(--gold);border-color:var(--gold);color:#080a0e}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{margin-bottom:4px}.field.full{grid-column:1/-1}.field label{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.7px;font-weight:800;margin:0 0 5px}.field input,.field select,.field textarea{width:100%;padding:10px 11px;border-radius:9px;border:1px solid #303743;background:#090c11;color:var(--text);outline:none}.field textarea{min-height:78px;resize:vertical}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold2);box-shadow:0 0 0 3px #d4af3716}
+.msg{margin-top:10px;font-size:11px;line-height:1.5}.ok{color:var(--ok)}.err{color:var(--danger)}.muted{color:var(--muted)}
+.hidden{display:none!important}.note{padding:11px 12px;border:1px solid #343a45;border-radius:9px;background:#0d1016;color:#8f98a7;font-size:10px;line-height:1.5;margin:12px 0}.actionbar{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:15px;border-bottom:1px solid var(--line);padding-bottom:15px}.top-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}.user-pill{padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:#0d1016;color:#b6bfcb;font-size:10px}
+.dashboard{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin:18px 0}.stat{background:linear-gradient(180deg,#171b23,#11151c);border:1px solid var(--line);border-radius:13px;padding:14px}.stat span{display:block;color:#808a99;font-size:8px;text-transform:uppercase;letter-spacing:.8px}.stat b{display:block;font-size:18px;margin-top:6px}.card{background:linear-gradient(180deg,#151a22,#11151c);border:1px solid var(--line);border-radius:14px;padding:17px;margin-bottom:14px}.card-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}.card h2{font-size:13px;margin:0}.card p{font-size:9px;color:var(--muted);margin:4px 0 0}
+.payslip{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid #2b323d;background:#0d1016;border-radius:11px;margin-bottom:8px}.payslip .grow{flex:1;min-width:0}.payslip b{font-size:11px}.payslip small{display:block;color:#7f8998;font-size:9px;margin-top:4px}.amount{text-align:right}.amount b{font-size:13px}.status{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:8px;font-weight:900}.paid{background:#163126;color:#68e3a4}.partial{background:#382b13;color:#f2c15d}.pending{background:#17283b;color:#72b8ff}
+.profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.profile-item{padding:10px;border:1px solid #2b323c;background:#0d1016;border-radius:9px}.profile-item span{display:block;color:#7f8997;font-size:8px;text-transform:uppercase;letter-spacing:.6px}.profile-item b{display:block;font-size:10px;margin-top:4px;word-break:break-word}
+.loading{padding:28px;text-align:center;color:#788291;font-size:10px}.portal-footer{padding-top:8px;color:#666f7d;font-size:9px;text-align:center}
+@media(max-width:760px){.grid,.dashboard,.profile-grid{grid-template-columns:1fr}.auth-card{padding:18px}.auth-head{flex-direction:column}.top{align-items:flex-start;flex-direction:column}.top-right{width:100%;justify-content:flex-start}.payslip{align-items:flex-start;flex-direction:column}.amount{text-align:left}.actionbar{justify-content:stretch}.actionbar .btn{flex:1}}
+</style>
+</head>
+<body>
+
+<div id="authView" class="auth">
+  <div class="auth-card">
+    <div class="auth-head">
+      <div class="brand"><img src="/assets/fbi-logo.jpg" alt="FBI"><div><h1>FBI Payroll Staff Portal</h1><p>Register your staff profile, access your payroll records and generate your payslips.</p></div></div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" id="loginTab" type="button">Staff Sign In</button>
+      <button class="tab" id="registerTab" type="button">Register as Staff</button>
+    </div>
+
+    <section id="loginPanel">
+      <div class="field"><label>Email Address</label><input id="loginEmail" type="email" autocomplete="username"></div>
+      <div class="field"><label>Password</label><input id="loginPassword" type="password" autocomplete="current-password"></div>
+      <div class="actionbar"><button class="btn primary" type="button" id="loginBtn">Sign In</button></div>
+      <div id="loginMsg" class="msg"></div>
+      <div class="note">New staff should register first. A registration remains pending until an administrator reviews and approves the profile in the Main Payroll portal.</div>
+    </section>
+
+    <section id="registerPanel" class="hidden">
+      <div class="note">Complete your details carefully. Your registration will be sent to the administrator for approval. Your password is stored securely and is not placed into the Payroll worker record.</div>
+      <div class="grid">
+        <div class="field"><label>Full Name *</label><input id="rName" required></div>
+        <div class="field"><label>Email Address *</label><input id="rEmail" type="email" required></div>
+        <div class="field"><label>Phone Number *</label><input id="rPhone" type="tel" required></div>
+        <div class="field"><label>Role / Job Title</label><input id="rRole"></div>
+        <div class="field"><label>Department</label><select id="rDepartment"><option>Media Production</option><option>IT / Networking</option><option>CCTV / Security</option><option>Smart Home</option><option>Administration</option><option>Other</option></select></div>
+        <div class="field"><label>Worker Type</label><select id="rType"><option>Media Worker</option><option>Staff</option><option>IT Technician</option><option>Network Technician</option><option>CCTV Installer</option><option>Other</option></select></div>
+        <div class="field"><label>Preferred Payment Method</label><select id="rPayment"><option>Mobile Money</option><option>Bank</option><option>Cash</option></select></div>
+        <div class="field"><label>Worker ID (optional)</label><input id="rCode" placeholder="Admin can assign one later"></div>
+        <div class="field full"><label>Address</label><input id="rAddress"></div>
+        <div class="field"><label>MoMo Number</label><input id="rMomo"></div>
+        <div class="field"><label>Bank Name</label><input id="rBank"></div>
+        <div class="field"><label>Account Name</label><input id="rAccountName"></div>
+        <div class="field"><label>Account Number</label><input id="rAccountNumber"></div>
+        <div class="field"><label>Ghana Card / ID Reference</label><input id="rIdRef"></div>
+        <div class="field"><label>Date of Birth</label><input id="rDob" type="date"></div>
+        <div class="field"><label>Gender</label><select id="rGender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select></div>
+        <div class="field"><label>Marital Status</label><input id="rMarital"></div>
+        <div class="field"><label>Date Joined</label><input id="rJoined" type="date"></div>
+        <div class="field"><label>TIN</label><input id="rTin"></div>
+        <div class="field"><label>SSNIT Number</label><input id="rSsnit"></div>
+        <div class="field"><label>Next of Kin</label><input id="rKin"></div>
+        <div class="field"><label>Emergency Contact</label><input id="rEmergency"></div>
+        <div class="field"><label>Emergency Phone</label><input id="rEmergencyPhone"></div>
+        <div class="field full"><label>Notes</label><textarea id="rNotes"></textarea></div>
+        <div class="field"><label>Password *</label><input id="rPassword" type="password" minlength="8" autocomplete="new-password"></div>
+        <div class="field"><label>Confirm Password *</label><input id="rConfirm" type="password" minlength="8" autocomplete="new-password"></div>
+      </div>
+      <div class="actionbar"><button class="btn" type="button" id="backLoginBtn">Back</button><button class="btn primary" type="button" id="registerBtn">Submit Staff Registration</button></div>
+      <div id="registerMsg" class="msg"></div>
+    </section>
+  </div>
+</div>
+
+<div id="appView" class="hidden">
+  <div class="shell">
+    <div class="top">
+      <div class="brand"><img src="/assets/fbi-logo.jpg" alt="FBI"><div><h1>FBI Payroll Staff Portal</h1><p>Personal payroll workspace</p></div></div>
+      <div class="top-right"><span class="user-pill" id="who"></span><button class="btn" id="logoutBtn" type="button">Sign Out</button></div>
+    </div>
+
+    <div class="dashboard">
+      <div class="stat"><span>Payroll Records</span><b id="recordCount">0</b></div>
+      <div class="stat"><span>Payslips Generated</span><b id="payslipCount">0</b></div>
+      <div class="stat"><span>Net Pay</span><b id="netTotal">GHS 0.00</b></div>
+      <div class="stat"><span>Outstanding</span><b id="balanceTotal">GHS 0.00</b></div>
+    </div>
+
+    <section class="card">
+      <div class="card-head"><div><h2>My Payslips</h2><p>Generate and save your payroll payslip from your approved Payroll records.</p></div><button class="btn" id="refreshBtn" type="button">Refresh</button></div>
+      <div id="payslipsList"><div class="loading">Loading payroll records...</div></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><div><h2>My Staff Profile</h2><p>These details come from the central Payroll worker record and reflect administrator updates.</p></div></div>
+      <div class="profile-grid" id="profileGrid"></div>
+    </section>
+
+    <div class="portal-footer">FILM BEYOND IMAGINATION (FBI) · Payroll Staff Portal</div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function money(v){return 'GHS '+Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+async function api(url,opts={}){
+  opts.headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
+  const res=await fetch(url,Object.assign({credentials:'same-origin',cache:'no-store'},opts));
+  const body=await res.json().catch(()=>({}));
+  if(!res.ok||body.ok===false) throw new Error(body.error||'Request failed');
+  return body;
+}
+function setMsg(id,text,cls){const el=$(id);el.textContent=text||'';el.className='msg '+(cls||'');}
+function switchAuth(tab){
+  $('loginPanel').classList.toggle('hidden',tab!=='login');
+  $('registerPanel').classList.toggle('hidden',tab!=='register');
+  $('loginTab').classList.toggle('active',tab==='login');
+  $('registerTab').classList.toggle('active',tab==='register');
+  setMsg('loginMsg','');setMsg('registerMsg','');
+}
+function registerData(){
+  return {
+    name:$('rName').value.trim(),email:$('rEmail').value.trim(),phone:$('rPhone').value.trim(),role:$('rRole').value.trim(),
+    department:$('rDepartment').value,workerType:$('rType').value,paymentMethod:$('rPayment').value,workerCode:$('rCode').value.trim(),
+    address:$('rAddress').value.trim(),momo:$('rMomo').value.trim(),bank:$('rBank').value.trim(),accountName:$('rAccountName').value.trim(),
+    accountNumber:$('rAccountNumber').value.trim(),idRef:$('rIdRef').value.trim(),dateOfBirth:$('rDob').value,gender:$('rGender').value,
+    maritalStatus:$('rMarital').value.trim(),dateJoined:$('rJoined').value,tin:$('rTin').value.trim(),ssnit:$('rSsnit').value.trim(),
+    nextOfKin:$('rKin').value.trim(),emergency:$('rEmergency').value.trim(),emergencyPhone:$('rEmergencyPhone').value.trim(),notes:$('rNotes').value.trim(),
+    password:$('rPassword').value,confirmPassword:$('rConfirm').value
+  };
+}
+async function register(){
+  const d=registerData();
+  if(!d.name||!d.email||!d.phone){setMsg('registerMsg','Full name, email and phone are required.','err');return;}
+  if(d.password.length<8){setMsg('registerMsg','Password must contain at least 8 characters.','err');return;}
+  if(d.password!==d.confirmPassword){setMsg('registerMsg','Passwords do not match.','err');return;}
+  $('registerBtn').disabled=true;
+  try{
+    const b=await api('/api/payroll-staff/register',{method:'POST',body:JSON.stringify(d)});
+    setMsg('registerMsg',b.message||'Registration submitted.','ok');
+    setTimeout(()=>switchAuth('login'),900);
+  }catch(e){setMsg('registerMsg',e.message,'err');}
+  finally{$('registerBtn').disabled=false;}
+}
+async function login(){
+  const email=$('loginEmail').value.trim(),password=$('loginPassword').value;
+  if(!email||!password){setMsg('loginMsg','Enter your email and password.','err');return;}
+  $('loginBtn').disabled=true;
+  try{const b=await api('/api/payroll-staff/login',{method:'POST',body:JSON.stringify({email,password})});openApp(b.user);await refreshAll();}
+  catch(e){setMsg('loginMsg',e.message,'err');}
+  finally{$('loginBtn').disabled=false;}
+}
+function openApp(user){$('authView').classList.add('hidden');$('appView').classList.remove('hidden');$('who').textContent=user?.name||'Staff';}
+async function refreshAll(){
+  try{
+    const me=await api('/api/payroll-staff/me');
+    $('who').textContent=me.user?.name||'Staff';
+    $('recordCount').textContent=String(me.payroll?.recordCount||0);
+    $('payslipCount').textContent=String(me.payroll?.payslipCount||0);
+    renderProfile(me.user||{});
+    await loadPayslips();
+  }catch(e){
+    if(e.message.toLowerCase().includes('sign in')){location.reload();return;}
+    $('payslipsList').innerHTML='<div class="loading">'+esc(e.message)+'</div>';
+  }
+}
+function renderProfile(w){
+  const fields=[
+    ['Worker ID',w.workerCode],['Full Name',w.name],['Phone',w.phone],['Email',w.email],['Role',w.role],['Department',w.department],
+    ['Worker Type',w.workerType],['Payment Method',w.paymentMethod],['MoMo',w.momo],['Bank',w.bank],['Account Name',w.accountName],
+    ['Account Number',w.accountNumber],['ID Reference',w.idRef],['Date of Birth',w.dateOfBirth],['Date Joined',w.dateJoined],
+    ['TIN',w.tin],['SSNIT',w.ssnit],['Next of Kin',w.nextOfKin],['Emergency Contact',w.emergency],['Emergency Phone',w.emergencyPhone],
+    ['Address',w.address],['Status',w.status]
+  ];
+  $('profileGrid').innerHTML=fields.map(x=>'<div class="profile-item"><span>'+esc(x[0])+'</span><b>'+esc(x[1]||'Not provided')+'</b></div>').join('');
+}
+function statusClass(s){return s==='Paid'?'paid':(s==='Partially Paid'?'partial':'pending');}
+async function loadPayslips(){
+  const b=await api('/api/payroll-staff/payslips'),rows=b.payslips||[];
+  let net=0,balance=0,count=0;
+  $('payslipsList').innerHTML=rows.length?rows.map(r=>{
+    net+=Number(r.net||0);balance+=Number(r.balance||0);
+    const p=r.payslip;
+    return '<div class="payslip"><div class="grow"><b>'+(esc(p?.payslipNo||'Not generated yet'))+'</b><small>'+esc(r.workDate||'')+' · '+esc(r.project||r.role||'')+' · '+esc(r.basis||'')+'</small><small><span class="status '+statusClass(r.status)+'">'+esc(r.status)+'</span> · Paid '+esc(money(r.paid))+' · Balance '+esc(money(r.balance))+'</small></div><div class="amount"><b>'+esc(money(r.net))+'</b><div class="actionbar" style="justify-content:flex-end;margin-top:7px">'+(p?'<button class="btn" type="button" data-download="'+esc(r.recordId)+'">Download PDF</button>':'')+'<button class="btn primary" type="button" data-generate="'+esc(r.recordId)+'">'+(p?'Generate Again':'Generate Payslip')+'</button></div></div></div>';
+  }).join(''):'<div class="loading">No payroll records are available yet. Your administrator will publish payroll records here.</div>';
+  $('netTotal').textContent=money(net);$('balanceTotal').textContent=money(balance);
+  $('payslipCount').textContent=String(rows.filter(r=>r.payslip).length);
+  $('payslipsList').querySelectorAll('[data-generate]').forEach(btn=>btn.onclick=()=>generate(btn.dataset.generate));
+  $('payslipsList').querySelectorAll('[data-download]').forEach(btn=>btn.onclick=()=>{window.location.href='/api/payroll-staff/payslip-pdf?recordId='+encodeURIComponent(btn.dataset.download);});
+}
+async function generate(recordId){
+  try{await api('/api/payroll-staff/payslips',{method:'POST',body:JSON.stringify({recordId})});window.location.href='/api/payroll-staff/payslip-pdf?recordId='+encodeURIComponent(recordId);}
+  catch(e){alert(e.message);}
+}
+async function logout(){try{await api('/api/payroll-staff/logout',{method:'POST'});}catch(e){}location.reload();}
+$('loginTab').onclick=()=>switchAuth('login');$('registerTab').onclick=()=>switchAuth('register');$('backLoginBtn').onclick=()=>switchAuth('login');
+$('registerBtn').onclick=register;$('loginBtn').onclick=login;$('logoutBtn').onclick=logout;$('refreshBtn').onclick=refreshAll;
+$('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+$('rConfirm').addEventListener('keydown',e=>{if(e.key==='Enter')register()});
+api('/api/payroll-staff/me').then(b=>{openApp(b.user);return refreshAll();}).catch(()=>{});
+})();
+</script>
+</body>
+</html>
