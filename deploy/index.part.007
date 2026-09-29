@@ -305,7 +305,7 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
         <p>Staff, project earnings, payments, payslips and payroll reporting.</p>
       </div>
       <div class="fbi-payroll-actions">
-        <a class="btn" href="/payroll-staff-form.html" target="_blank" rel="noopener">📋 Staff Registration Form</a>
+        <a class="btn" href="/payroll-staff-form.html" target="_blank" rel="noopener">📋 Staff Registration Form</a><a class="btn primary" href="/payroll-staff-portal.html" target="_blank" rel="noopener">👥 Payroll Staff Portal</a>
         <button class="btn" type="button" id="fbiPayrollImportForm">⬆ Import Completed Form</button>
         <button class="btn" type="button" id="fbiPayrollQuickWorker">＋ Add Worker</button>
         <button class="btn primary" type="button" id="fbiPayrollQuickRecord">＋ New Payroll</button>
@@ -415,7 +415,14 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
             <button class="btn primary" type="button" id="fbiPayrollWorkersAdd">＋ Add Worker</button>
           </div>
         </div>
-        <div id="fbiPayrollWorkerFormWrap"></div>
+        <div class="fbi-payroll-widget" style="margin-bottom:12px" id="fbiPayrollRegistrationWidget">
+  <div class="fbi-payroll-widget-head">
+    <div><h3>Staff Registration Requests</h3><small>Self-registrations from the Payroll Staff Portal. Approve a request to add or link the worker in Payroll.</small></div>
+    <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap"><span class="fbi-payroll-badge pending" id="fbiPayrollRegistrationCount">0 pending</span><a class="fbi-payroll-mini-btn" href="/payroll-staff-portal.html" target="_blank" rel="noopener">Open Staff Portal</a><button class="fbi-payroll-mini-btn" type="button" id="fbiPayrollRegistrationRefresh">Refresh</button></div>
+  </div>
+  <div id="fbiPayrollRegistrationRequests"><div class="fbi-payroll-empty">Loading registration requests...</div></div>
+</div>
+<div id="fbiPayrollWorkerFormWrap"></div>
         <div class="fbi-payroll-worker-layout">
           <div id="fbiPayrollWorkerProfile"></div>
           <div id="fbiPayrollWorkersTable"></div>
@@ -497,6 +504,8 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
   var editingWorkerId='';
   var editingRecordId='';
   var paymentRecordId='';
+  var payrollRegistrationRequests=[];
+  var payrollRegistrationPoll=null;
 
   function q(id){return document.getElementById(id);}
   function num(v){var n=Number(v);return Number.isFinite(n)?n:0;}
@@ -822,6 +831,67 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     q('fbiPayrollProfileEdit').onclick=function(){showWorkerForm(w);};
   }
   function profileRow(k,v){return '<div class="fbi-payroll-profile-row"><span>'+esc(k)+'</span><b>'+esc(v)+'</b></div>';}
+
+
+  async function loadPayrollRegistrationRequests(){
+    var el=q('fbiPayrollRegistrationRequests');if(!el)return;
+    try{
+      var res=await fetch('/api/payroll/registrations?status=pending',{cache:'no-store'});
+      var body=await res.json().catch(function(){return{};});
+      if(!res.ok||body.ok===false)throw new Error(body.error||'Registration requests could not be loaded.');
+      payrollRegistrationRequests=Array.isArray(body.registrations)?body.registrations:[];
+      renderPayrollRegistrationRequests();
+    }catch(err){
+      console.warn('Payroll registration requests load failed:',err);
+      el.innerHTML='<div class="fbi-payroll-empty">Could not load staff registration requests right now.</div>';
+    }
+  }
+  function renderPayrollRegistrationRequests(){
+    var el=q('fbiPayrollRegistrationRequests'),count=q('fbiPayrollRegistrationCount');if(!el)return;
+    var rows=payrollRegistrationRequests||[];
+    if(count)count.textContent=rows.length+' pending';
+    if(!rows.length){el.innerHTML='<div class="fbi-payroll-empty">No new staff self-registrations are waiting for approval.</div>';return;}
+    el.innerHTML='<div class="fbi-payroll-table-wrap"><table class="fbi-payroll-table"><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Department</th><th>Submitted</th><th>Actions</th></tr></thead><tbody>'+
+      rows.map(function(r){
+        var p=r.profile||{};
+        var date=r.createdAt?new Date(r.createdAt).toLocaleString():'';
+        return '<tr><td><b>'+esc(p.name||'')+'</b><span class="sub">'+esc(p.workerType||'')+'</span></td>'+
+          '<td>'+esc(r.email||p.email||'')+'</td><td>'+esc(r.phone||p.phone||'')+'</td><td>'+esc(p.role||'Not provided')+'</td>'+
+          '<td>'+esc(p.department||'')+'</td><td>'+esc(date)+'</td><td><div class="fbi-payroll-actions-cell">'+
+          '<button class="fbi-payroll-mini-btn primary" type="button" data-reg-approve="'+esc(r.id)+'">Approve & Add</button>'+
+          '<button class="fbi-payroll-mini-btn danger" type="button" data-reg-reject="'+esc(r.id)+'">Reject</button>'+
+          '</div></td></tr>';
+      }).join('')+'</tbody></table></div>';
+    el.querySelectorAll('[data-reg-approve]').forEach(function(b){b.onclick=function(){approvePayrollRegistration(b.dataset.regApprove);};});
+    el.querySelectorAll('[data-reg-reject]').forEach(function(b){b.onclick=function(){rejectPayrollRegistration(b.dataset.regReject);};});
+  }
+  async function approvePayrollRegistration(idv){
+    var req=payrollRegistrationRequests.find(function(x){return String(x.id)===String(idv);});if(!req)return;
+    var p=req.profile||{};
+    if(!confirm('Approve '+(p.name||req.email)+' and add/link this person to the Payroll Staff Directory?'))return;
+    try{
+      var res=await fetch('/api/payroll/registrations/'+encodeURIComponent(idv)+'/approve',{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store'});
+      var body=await res.json().catch(function(){return{};});
+      if(!res.ok||body.ok===false)throw new Error(body.error||'Registration approval failed.');
+      await hydratePayrollCloud();
+      await loadPayrollRegistrationRequests();
+      if(body.worker&&body.worker.id)selectedWorkerId=body.worker.id;
+      renderAll();
+      toastLocal((p.name||'Staff member')+' was added to Payroll.');
+    }catch(err){alert(err.message||'Could not approve this registration.');}
+  }
+  async function rejectPayrollRegistration(idv){
+    var req=payrollRegistrationRequests.find(function(x){return String(x.id)===String(idv);});if(!req)return;
+    var p=req.profile||{};
+    if(!confirm('Reject the staff registration for '+(p.name||req.email)+'?'))return;
+    try{
+      var res=await fetch('/api/payroll/registrations/'+encodeURIComponent(idv)+'/reject',{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store'});
+      var body=await res.json().catch(function(){return{};});
+      if(!res.ok||body.ok===false)throw new Error(body.error||'Registration rejection failed.');
+      await loadPayrollRegistrationRequests();
+      toastLocal('Staff registration rejected.');
+    }catch(err){alert(err.message||'Could not reject this registration.');}
+  }
 
   function renderWorkers(){
     var el=q('fbiPayrollWorkersTable');if(!el)return;
@@ -1336,6 +1406,7 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     q('title').textContent='Payroll';q('subtitle').textContent='Staff, earnings, payments and payslips';
     if(q('side'))q('side').classList.remove('open');
     renderAll();
+    loadPayrollRegistrationRequests();
   }
   function installNav(){
     var nav=document.querySelector('.nav');
@@ -1372,6 +1443,9 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     q('fbiPayrollPaymentModal').addEventListener('click',function(e){if(e.target===this)closePayment();});
     renderAll();
     hydratePayrollCloud();
+    loadPayrollRegistrationRequests();
+    if(q('fbiPayrollRegistrationRefresh')) q('fbiPayrollRegistrationRefresh').onclick=function(){loadPayrollRegistrationRequests();};
+    if(!payrollRegistrationPoll) payrollRegistrationPoll=setInterval(function(){if(document.visibilityState!=='hidden')loadPayrollRegistrationRequests();},30000);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
   window.FBIPayrollModule={open:activate,close:deactivate,reload:function(){loadState();renderAll();hydratePayrollCloud();}};
