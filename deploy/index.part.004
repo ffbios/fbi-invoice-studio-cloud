@@ -641,9 +641,10 @@ Name: (FBI) FILM BEYOND IMAGINATION</textarea><button class="btn primary" onclic
     </div>
     <div class="no-print" style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap">
       <button class="btn primary" onclick="saveWhatsAppSettings()">Save WhatsApp Settings</button>
+      <button class="btn" onclick="connectWhatsAppBusinessApp()">Connect WhatsApp Business App</button>
       <button class="btn" onclick="testWhatsApp()">📱 Send Test Alert</button> <button class="btn" onclick="window.open('http://127.0.0.1:3000/health','_blank')">🔎 Server Health</button>
     </div>
-    <div id="waStatus" style="margin-top:10px;color:#777;font-size:11px;white-space:pre-wrap"></div>
+    <div id="waStatus" style="margin-top:10px;color:#777;font-size:11px;white-space:pre-wrap">WhatsApp Business App connection is managed through Meta Embedded Signup.</div>
     <div style="margin-top:12px;padding:12px;border:1px solid #343a46;background:#0b0e13;border-radius:8px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="color:#fff">WhatsApp Debug Log</b><button class="btn" onclick="refreshWhatsAppDebug()">↻ Refresh Log</button></div>
       <pre id="waDebug" style="max-height:260px;overflow:auto;white-space:pre-wrap;color:#aab1bd;font-size:10px;margin:10px 0 0">No log yet.</pre>
