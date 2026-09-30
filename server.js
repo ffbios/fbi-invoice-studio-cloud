@@ -1104,9 +1104,43 @@ async function notifyInvoiceStateChanges(previousState, mergedState, source) {
 
 async function handleWhatsAppTest(req, res) {
   if (!whatsappConfigured()) return json(res, 503, {ok:false,error:'WhatsApp is not configured. Set META_WHATSAPP_ENABLED=true, META_WHATSAPP_TOKEN, META_WHATSAPP_PHONE_NUMBER_ID and META_WHATSAPP_RECIPIENT in Railway.'});
+
+  // First verify that the configured Phone Number ID is visible to the configured token.
+  // This keeps Meta's generic "Unsupported post request" error from being mistaken for a template problem.
+  let resourceCheck = null;
+  try {
+    const checkResponse = await fetch(
+      `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${encodeURIComponent(WHATSAPP_PHONE_NUMBER_ID)}?fields=id,display_phone_number,verified_name`,
+      {headers:{Authorization:'Bearer '+WHATSAPP_TOKEN}}
+    );
+    const checkBody = await checkResponse.json().catch(()=>({}));
+    resourceCheck = {
+      httpStatus: checkResponse.status,
+      ok: checkResponse.ok,
+      id: checkBody?.id || null,
+      displayPhoneNumber: checkBody?.display_phone_number || null,
+      verifiedName: checkBody?.verified_name || null,
+      error: checkBody?.error ? {
+        message: checkBody.error.message || null,
+        type: checkBody.error.type || null,
+        code: checkBody.error.code || null
+      } : null
+    };
+    if (!checkResponse.ok) {
+      return json(res, 502, {
+        ok:false,
+        stage:'phone-number-access',
+        error:checkBody?.error?.message || 'Meta rejected access to the configured Phone Number ID.',
+        resourceCheck
+      });
+    }
+  } catch (err) {
+    return json(res, 502, {ok:false,stage:'phone-number-access',error:err.message||'Unable to reach Meta',resourceCheck});
+  }
+
   const fake = {id:'test-'+Date.now(),no:'TEST',clientName:'FBI WhatsApp Test',total:0,status:'Test'};
   const out = await sendWhatsAppInvoiceAlert('invoice-created', fake, 'Admin Test');
-  return json(res, out.ok ? 200 : 502, {...out, messageId: out.providerId || null});
+  return json(res, out.ok ? 200 : 502, {...out, messageId: out.providerId || null, stage: out.ok ? 'send' : 'send-message', resourceCheck});
 }
 
 async function handleWhatsAppDebugLog(req, res) {
