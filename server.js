@@ -256,6 +256,37 @@ function sendStatic(res, pathname) {
   return true;
 }
 
+function sendPublicBusinessPage(res, kind) {
+  const pages = {
+    business: {
+      title: 'Film Beyond Imagination | Business Information',
+      body: `
+        <main>
+          <h1>Film Beyond Imagination</h1>
+          <p class="lead">Creative media, live production, streaming and technology services in Accra, Ghana.</p>
+          <section><h2>Services</h2><p>Photography, Videography, Live Production, Live Streaming, IT Services, Computer Networking and CCTV/Smart Security Solutions.</p></section>
+          <section><h2>Business Contact</h2><p>Phone: <a href="tel:+233257407350">+233 25 740 7350</a><br>Email: <a href="mailto:filmbyfbi@gmail.com">filmbyfbi@gmail.com</a><br>Location: Accra, Ghana</p></section>
+          <section><h2>WhatsApp</h2><p>Business WhatsApp: +233 25 740 7350</p></section>
+        </main>`
+    },
+    privacy: {
+      title: 'Film Beyond Imagination | Privacy Policy',
+      body: `
+        <main><h1>Privacy Policy</h1><p>Film Beyond Imagination uses information provided by customers and authorized business users to deliver invoicing, communications and related business services.</p><p>For the WhatsApp integration, business and invoice information may be processed to deliver authorized transactional notifications. Access tokens and other authentication secrets are stored server-side and are not intentionally exposed in the public application interface.</p><p>Contact: <a href="mailto:filmbyfbi@gmail.com">filmbyfbi@gmail.com</a></p></main>`
+    },
+    terms: {
+      title: 'Film Beyond Imagination | Terms of Service',
+      body: `
+        <main><h1>Terms of Service</h1><p>Use of Film Beyond Imagination's online services is subject to lawful and authorized business use. Users are responsible for the accuracy of information they enter and for keeping their account credentials secure.</p><p>Services may include invoicing, client records, business communications and related media/technology workflows.</p><p>Contact: <a href="mailto:filmbyfbi@gmail.com">filmbyfbi@gmail.com</a></p></main>`
+    }
+  };
+  const page=pages[kind]||pages.business;
+  const html='<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Film Beyond Imagination business information, services and contact details."><title>'+page.title+'</title><style>body{font-family:Arial,Helvetica,sans-serif;margin:0;background:#0b0b0d;color:#f6f6f6;line-height:1.6}header{padding:28px 20px;border-bottom:1px solid #29292d}header strong{font-size:20px;color:#d8b44a}main{max-width:820px;margin:0 auto;padding:44px 20px}h1{font-size:38px;margin:0 0 12px;color:#fff}h2{margin-top:34px;color:#d8b44a}.lead{font-size:20px;color:#cfcfd4}section{padding:4px 0}a{color:#e1bd58;text-decoration:none}footer{max-width:820px;margin:0 auto;padding:25px 20px 50px;color:#92929a;font-size:13px}</style></head><body><header><strong>FILM BEYOND IMAGINATION</strong></header>'+page.body+'<footer>© '+new Date().getFullYear()+' Film Beyond Imagination · Accra, Ghana · <a href="/business">Business</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></footer></body></html>';
+  const raw=Buffer.from(html,'utf8');
+  res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Content-Length':raw.length,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+  res.end(raw);
+}
+
 async function sendIndex(res) {
   try {
     // Inject the authoritative PostgreSQL state into the initial HTML.
@@ -1195,6 +1226,9 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && sendStatic(res, url.pathname)) return;
+    if (req.method === 'GET' && url.pathname === '/business') return sendPublicBusinessPage(res, 'business');
+    if (req.method === 'GET' && url.pathname === '/privacy') return sendPublicBusinessPage(res, 'privacy');
+    if (req.method === 'GET' && url.pathname === '/terms') return sendPublicBusinessPage(res, 'terms');
     
     if (url.pathname === '/api/health' && req.method === 'GET') {
       const dbResult = await pool.query('SELECT 1 AS ok');
