@@ -311,7 +311,7 @@ Name: (FBI) FILM BEYOND IMAGINATION`;
   }
 }
 const LEGACY_FBI_LOGO="data:image/svg+xml,%3Csvg xmlns='http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' viewBox='0 0 240 90'%3E%3Crect width='240' height='90' rx='14' fill='%2308090c'/%3E%3Ctext x='120' y='57' text-anchor='middle' font-family='Arial' font-size='48' font-weight='900' fill='white'%3EFBI%3C%2Ftext%3E%3C%2Fsvg%3E";
-const DEFAULT_FBI_LOGO="/assets/fbi-logo.jpg";
+const DEFAULT_FBI_LOGO="/assets/fbi-brand-logo.svg";
 
 function init(skipNewInvoice=false,preloaded=null){
   const d=preloaded||readPersistentPayloadSync()||{};
@@ -331,7 +331,7 @@ Account Name: Jerbel Mark Addeh`,
     waEnabled:"yes",waRecipient:"233257407350",waApiUrl:"/api/whatsapp/invoice-created",waTemplate:"hello_world",waLanguage:"en_US",waEvent:"created",
     ...(d.settings||{})
   };
-  if(!settings.logo || settings.logo===LEGACY_FBI_LOGO)settings.logo=DEFAULT_FBI_LOGO;
+  if(!settings.logo || settings.logo===LEGACY_FBI_LOGO || settings.logo==="/assets/fbi-logo.jpg")settings.logo=DEFAULT_FBI_LOGO;
   normalizePaymentSettings();
   ["biz","owner","baddr","bphone","bemail","bnum","defaultPay"].forEach(k=>{if($(k))$(k).value=settings[k]||""});
   if($("waEnabled"))$("waEnabled").value=settings.waEnabled||"yes";
