@@ -1025,7 +1025,9 @@ async function sendWhatsAppInvoiceAlert(eventType, invoice, source) {
 
   const clientName = invoiceRecipientText(invoice.client || invoice.clientName || invoice.customer || invoice.billTo || invoice.name);
   const amount = invoice.total ?? invoice.grandTotal ?? invoice.amount ?? invoice.netTotal ?? invoice.balance ?? '';
-  const amountText = amount === '' ? '' : 'GHS ' + Number(amount || 0).toLocaleString('en-GH', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const amountNumber = amount === '' ? '' : Number(amount || 0).toLocaleString('en-GH', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const currency = String(invoice.currency || invoice.curr || 'GHS').trim() || 'GHS';
+  const amountText = amountNumber ? currency + ' ' + amountNumber : '';
   const status = String(invoice.status || invoice.invoiceStatus || (eventType === 'invoice-sent' ? 'Sent' : 'Created'));
   const creator = String(invoice.createdBy || invoice.staffName || invoice.user || source || 'Invoice Studio');
   const textBody = [
@@ -1049,11 +1051,12 @@ async function sendWhatsAppInvoiceAlert(eventType, invoice, source) {
       components: [{
         type: 'body',
         parameters: [
-          { type: 'text', parameter_name: 'event', text: eventType === 'invoice-sent' ? 'Invoice sent to client' : 'New invoice created' },
-          { type: 'text', parameter_name: 'invoice_no', text: invoiceNo || '-' },
-          { type: 'text', parameter_name: 'client', text: clientName },
-          { type: 'text', parameter_name: 'amount', text: amountText || '-' },
-          { type: 'text', parameter_name: 'status', text: status }
+          { type: 'text', text: invoiceNo || '-' },
+          { type: 'text', text: eventType === 'invoice-sent' ? 'Invoice sent to client' : 'New invoice created' },
+          { type: 'text', text: clientName },
+          { type: 'text', text: amountNumber || '-' },
+          { type: 'text', text: currency },
+          { type: 'text', text: status }
         ]
       }]
     }
