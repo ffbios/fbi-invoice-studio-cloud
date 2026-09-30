@@ -26,7 +26,7 @@ async function login(req,res){const b=await body(req),u=String(b.username||'').t
 async function getData(req,res){
   const u=await auth(req,res); if(!u)return;
   const s=await state(pool);
-  json(res,200,{ok:true,user:u,clients:Array.isArray(s.data.clients)?s.data.clients:[],settings:{biz:s.data.settings.biz,bphone:s.data.settings.bphone,bemail:s.data.settings.bemail,defaultPay:s.data.settings.defaultPay||'',logo:'/assets/fbi-logo.jpg'}});
+  json(res,200,{ok:true,user:u,clients:Array.isArray(s.data.clients)?s.data.clients:[],settings:{biz:s.data.settings.biz,bphone:s.data.settings.bphone,bemail:s.data.settings.bemail,defaultPay:s.data.settings.defaultPay||'',logo:'/assets/fbi-brand-logo.svg'}});
 }
 async function findInvoice(req,res){
   const u=await auth(req,res); if(!u)return;
@@ -48,7 +48,7 @@ function streamPdf(res,filename,build){
 }
 function money(v,cur){return String(cur||'GHS')+' '+(Number(v)||0).toFixed(2)}
 function pdfHeader(doc,title,number){
-  const logo=path.join(ROOT,'assets','fbi-logo.jpg');
+  const logo=path.join(ROOT,'assets','fbi-brand-logo.svg');
   if(fs.existsSync(logo)) doc.image(logo,42,34,{fit:[125,70]});
   doc.fontSize(22).font('Helvetica-Bold').text('FBI',200,42,{align:'right'});
   doc.fontSize(18).font('Helvetica-Bold').text(title,200,70,{align:'right'});
@@ -160,7 +160,7 @@ async function handleReceiptPdf(req,res){
     streamPdf(res,'FBI-'+rn+'.pdf',doc=>drawReceiptDocument(doc,invoice,p));
   }catch(e){if(!res.headersSent)json(res,500,{ok:false,error:e.message||'Could not create receipt PDF.'});}
 }
-function staticFile(res,p){const f=p==='/staff-portal.html'?path.join(__dirname,'staff-portal.html'):p==='/invoice-catalog.js'?path.join(__dirname,'invoice-catalog.js'):p==='/assets/fbi-logo.jpg'?path.join(ROOT,'assets/fbi-logo.jpg'):null;if(!f||!fs.existsSync(f))return false;res.writeHead(200,{'Content-Type':p.endsWith('.jpg')?'image/jpeg':p.endsWith('.js')?'application/javascript; charset=utf-8':'text/html; charset=utf-8'});fs.createReadStream(f).pipe(res);return true}
+function staticFile(res,p){const f=p==='/staff-portal.html'?path.join(__dirname,'staff-portal.html'):p==='/invoice-catalog.js'?path.join(__dirname,'invoice-catalog.js'):p==='/assets/fbi-logo.jpg'?path.join(ROOT,'assets/fbi-logo.jpg'):null;if(!f||!fs.existsSync(f))return false;res.writeHead(200,{'Content-Type':p.endsWith('.jpg')?'image/jpeg':p.endsWith('.svg')?'image/svg+xml':p.endsWith('.js')?'application/javascript; charset=utf-8':'text/html; charset=utf-8'});fs.createReadStream(f).pipe(res);return true}
 const server=http.createServer(async(req,res)=>{try{const u=new URL(req.url,'http://localhost');if(req.method==='GET'&&(u.pathname==='/'||u.pathname==='/staff-portal.html')&&staticFile(res,'/staff-portal.html'))return;if(req.method==='GET'&&staticFile(res,u.pathname))return;if(u.pathname==='/api/portal/register'&&req.method==='POST')return register(req,res);if(u.pathname==='/api/portal/login'&&req.method==='POST')return login(req,res);
 if(u.pathname==='/api/portal/logout'&&req.method==='POST'){const t=ck(req).fbi_staff_session;if(t)await pool.query('DELETE FROM portal_sessions WHERE token_hash=$1',[th(t)]);res.setHeader('Set-Cookie','fbi_staff_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0; Secure');return json(res,200,{ok:true})}if(u.pathname==='/api/portal/me'&&req.method==='GET'){const u=await auth(req,res);if(u)return json(res,200,{ok:true,user:u});return}if(u.pathname==='/api/portal/data'&&req.method==='GET')return getData(req,res);if(u.pathname==='/api/portal/invoice-pdf'&&req.method==='GET')return handleInvoicePdf(req,res);if(u.pathname==='/api/portal/receipt-pdf'&&req.method==='GET')return handleReceiptPdf(req,res);if(u.pathname==='/api/portal/catalog'&&req.method==='GET')return catalog(req,res);if(u.pathname==='/api/portal/invoice'&&req.method==='GET')return findInvoice(req,res);if(u.pathname==='/api/portal/invoices'&&req.method==='POST')return createInvoice(req,res);if(u.pathname==='/api/portal/payments'&&req.method==='POST')return pay(req,res);if(u.pathname==='/api/health')return json(res,200,{ok:true,application:'FBI Invoice Portal'});return json(res,404,{ok:false,error:'Not found'})}catch(e){json(res,500,{ok:false,error:e.message})}});
 init().then(()=>server.listen(PORT,'0.0.0.0',()=>console.log('FBI Invoice Portal listening on '+PORT))).catch(e=>{console.error(e);process.exit(1)})
