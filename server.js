@@ -986,6 +986,8 @@ const WHATSAPP_RECIPIENT = String(process.env.META_WHATSAPP_RECIPIENT || '').tri
 const WHATSAPP_TEMPLATE = String(process.env.META_WHATSAPP_TEMPLATE || 'fbi_invoice_alert').trim();
 const WHATSAPP_TEMPLATE_LANGUAGE = String(process.env.META_WHATSAPP_TEMPLATE_LANGUAGE || 'en_US').trim();
 const WHATSAPP_ENABLED = String(process.env.META_WHATSAPP_ENABLED || 'false').toLowerCase() === 'true';
+const WHATSAPP_APP_ID = String(process.env.META_WHATSAPP_APP_ID || '').trim();
+const WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID = String(process.env.META_WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID || '').trim();
 
 async function ensureWhatsAppTables() {
   await pool.query(`
@@ -1247,6 +1249,7 @@ const server = http.createServer(async (req, res) => {
       return json(res, 405, { ok: false, error: 'Method not allowed.' });
     }
 
+    if (url.pathname === '/api/whatsapp/embedded-config' && req.method === 'GET') return json(res, 200, {ok:true, appId:WHATSAPP_APP_ID, configId:WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID, featureType:'whatsapp_business_app_onboarding'});
     if (url.pathname === '/api/whatsapp/test' && req.method === 'GET') return handleWhatsAppTest(req, res);
     if (url.pathname === '/api/whatsapp/invoice-created' && req.method === 'POST') { const b = await parseJsonBody(req); const out = await sendWhatsAppInvoiceAlert(String(b.eventType || 'invoice-created'), b.invoice || {}, String(b.source || 'API')); return json(res, out.ok ? 200 : 502, out); }
     if (url.pathname === '/api/whatsapp/debug-log' && req.method === 'GET') return handleWhatsAppDebugLog(req, res);
