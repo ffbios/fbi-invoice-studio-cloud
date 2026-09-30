@@ -1103,12 +1103,12 @@ async function handleWhatsAppTest(req, res) {
   if (!whatsappConfigured()) return json(res, 503, {ok:false,error:'WhatsApp is not configured. Set META_WHATSAPP_ENABLED=true, META_WHATSAPP_TOKEN, META_WHATSAPP_PHONE_NUMBER_ID and META_WHATSAPP_RECIPIENT in Railway.'});
   const fake = {id:'test-'+Date.now(),no:'TEST',clientName:'FBI WhatsApp Test',total:0,status:'Test'};
   const out = await sendWhatsAppInvoiceAlert('invoice-created', fake, 'Admin Test');
-  return json(res, out.ok ? 200 : 502, out);
+  return json(res, out.ok ? 200 : 502, {...out, messageId: out.providerId || null});
 }
 
 async function handleWhatsAppDebugLog(req, res) {
   const q = await pool.query('SELECT id,event_type,invoice_id,invoice_no,status,error_message,created_at FROM whatsapp_notification_log ORDER BY created_at DESC LIMIT 50');
-  return json(res,200,{ok:true,configured:whatsappConfigured(),recipientConfigured:!!WHATSAPP_RECIPIENT,log:q.rows});
+  return json(res,200,{ok:true,configured:whatsappConfigured(),recipientConfigured:!!WHATSAPP_RECIPIENT,log:q.rows,logText:q.rows.map(r=>[new Date(Number(r.created_at)).toLocaleString('en-GH',{timeZone:'Africa/Accra'}),r.event_type,r.invoice_no||'-',r.status,r.error_message||''].join(' · ')).join('\\n')||'No WhatsApp notifications yet.'});
 }
 
 
