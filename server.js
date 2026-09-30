@@ -981,6 +981,7 @@ async function handleDraftDelete(req, res) {
 const WHATSAPP_API_VERSION = process.env.META_WHATSAPP_API_VERSION || 'v23.0';
 const WHATSAPP_TOKEN = String(process.env.META_WHATSAPP_TOKEN || '').trim();
 const WHATSAPP_PHONE_NUMBER_ID = String(process.env.META_WHATSAPP_PHONE_NUMBER_ID || '').trim();
+const WHATSAPP_BUSINESS_ACCOUNT_ID = String(process.env.META_WHATSAPP_BUSINESS_ACCOUNT_ID || '').trim();
 const WHATSAPP_RECIPIENT = String(process.env.META_WHATSAPP_RECIPIENT || '').trim();
 const WHATSAPP_TEMPLATE = String(process.env.META_WHATSAPP_TEMPLATE || 'fbi_invoice_alert').trim();
 const WHATSAPP_TEMPLATE_LANGUAGE = String(process.env.META_WHATSAPP_TEMPLATE_LANGUAGE || 'en_US').trim();
@@ -1104,6 +1105,33 @@ async function notifyInvoiceStateChanges(previousState, mergedState, source) {
 
 async function handleWhatsAppTest(req, res) {
   if (!whatsappConfigured()) return json(res, 503, {ok:false,error:'WhatsApp is not configured. Set META_WHATSAPP_ENABLED=true, META_WHATSAPP_TOKEN, META_WHATSAPP_PHONE_NUMBER_ID and META_WHATSAPP_RECIPIENT in Railway.'});
+
+  // First verify that the token can access the configured WhatsApp Business Account and enumerate its phone numbers.
+  let businessAccountCheck = null;
+  if (WHATSAPP_BUSINESS_ACCOUNT_ID) {
+    try {
+      const wabaResponse = await fetch(
+        `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${encodeURIComponent(WHATSAPP_BUSINESS_ACCOUNT_ID)}/phone_numbers?fields=id,display_phone_number,verified_name`,
+        {headers:{Authorization:'Bearer '+WHATSAPP_TOKEN}}
+      );
+      const wabaBody = await wabaResponse.json().catch(()=>({}));
+      businessAccountCheck = {
+        httpStatus:wabaResponse.status,
+        ok:wabaResponse.ok,
+        phoneNumbers:Array.isArray(wabaBody?.data) ? wabaBody.data.map(x=>({id:x.id||null,displayPhoneNumber:x.display_phone_number||null,verifiedName:x.verified_name||null})) : [],
+        error:wabaBody?.error ? {message:wabaBody.error.message||null,type:wabaBody.error.type||null,code:wabaBody.error.code||null} : null
+      };
+      if (!wabaResponse.ok) {
+        return json(res, 502, {ok:false,stage:'business-account-access',error:wabaBody?.error?.message||'Meta rejected access to the configured WhatsApp Business Account.',businessAccountCheck});
+      }
+      const match = businessAccountCheck.phoneNumbers.find(x=>String(x.id)===WHATSAPP_PHONE_NUMBER_ID);
+      if (!match) {
+        return json(res, 502, {ok:false,stage:'phone-number-mismatch',error:'The configured Phone Number ID is not present in the WhatsApp Business Account returned by Meta.',configuredPhoneNumberId:WHATSAPP_PHONE_NUMBER_ID,businessAccountCheck});
+      }
+    } catch (err) {
+      return json(res, 502, {ok:false,stage:'business-account-access',error:err.message||'Unable to reach Meta',businessAccountCheck});
+    }
+  }
 
   // First verify that the configured Phone Number ID is visible to the configured token.
   // This keeps Meta's generic "Unsupported post request" error from being mistaken for a template problem.
