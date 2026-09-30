@@ -1111,7 +1111,7 @@ async function handleWhatsAppTest(req, res) {
   if (WHATSAPP_BUSINESS_ACCOUNT_ID) {
     try {
       const wabaResponse = await fetch(
-        `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${encodeURIComponent(WHATSAPP_BUSINESS_ACCOUNT_ID)}/phone_numbers?fields=id,display_phone_number,verified_name`,
+        `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${encodeURIComponent(WHATSAPP_BUSINESS_ACCOUNT_ID)}/phone_numbers?fields=id,display_phone_number,verified_name,is_on_biz_app,platform_type`,
         {headers:{Authorization:'Bearer '+WHATSAPP_TOKEN}}
       );
       const wabaBody = await wabaResponse.json().catch(()=>({}));
@@ -1148,6 +1148,8 @@ async function handleWhatsAppTest(req, res) {
       id: checkBody?.id || null,
       displayPhoneNumber: checkBody?.display_phone_number || null,
       verifiedName: checkBody?.verified_name || null,
+      isOnBizApp: typeof checkBody?.is_on_biz_app === 'boolean' ? checkBody.is_on_biz_app : null,
+      platformType: checkBody?.platform_type || null,
       error: checkBody?.error ? {
         message: checkBody.error.message || null,
         type: checkBody.error.type || null,
