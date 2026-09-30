@@ -175,6 +175,7 @@ async function importArchiveState() {
 }
 
 async function initDb() {
+  await ensureWhatsAppTables();
   await pool.query(`
     CREATE TABLE IF NOT EXISTS app_state (
       id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -629,6 +630,10 @@ async function handleStateWrite(req, res) {
       return json(res, 400, { ok: false, error: 'Invalid Invoice Studio state.' });
     }
 
+    const previousResult = await pool.query('SELECT state_json FROM app_state WHERE id=1');
+    let previousState = previousResult.rows[0]?.state_json || null;
+    if (typeof previousState === 'string') { try { previousState = JSON.parse(previousState); } catch { previousState = null; } }
+
     const currentResult = await pool.query('SELECT version,saved_at,state_json FROM app_state WHERE id=1');
     let merged = incoming;
     if (currentResult.rows[0]) {
@@ -644,6 +649,8 @@ async function handleStateWrite(req, res) {
        ON CONFLICT(id) DO UPDATE SET version=EXCLUDED.version,saved_at=EXCLUDED.saved_at,state_json=EXCLUDED.state_json`,
       [Number(merged.version) || 1, Number(merged.savedAt) || Date.now(), JSON.stringify(merged)]
     );
+
+    await notifyInvoiceStateChanges(previousState, merged, 'Admin/Portal state sync');
 
     return json(res, 200, {
       ok: true,
@@ -971,13 +978,139 @@ async function handleDraftDelete(req, res) {
   return json(res, 200, { ok: true });
 }
 
-async function handleWhatsAppNotConfigured(req, res) {
-  return json(res, 503, {
-    ok: false,
-    error: 'WhatsApp server integration is not configured in the cloud deployment yet.',
-    meta: { configure: ['META_WHATSAPP_TOKEN', 'META_WHATSAPP_PHONE_NUMBER_ID'] }
-  });
+const WHATSAPP_API_VERSION = process.env.META_WHATSAPP_API_VERSION || 'v23.0';
+const WHATSAPP_TOKEN = String(process.env.META_WHATSAPP_TOKEN || '').trim();
+const WHATSAPP_PHONE_NUMBER_ID = String(process.env.META_WHATSAPP_PHONE_NUMBER_ID || '').trim();
+const WHATSAPP_RECIPIENT = String(process.env.META_WHATSAPP_RECIPIENT || '').trim();
+const WHATSAPP_TEMPLATE = String(process.env.META_WHATSAPP_TEMPLATE || 'fbi_invoice_alert').trim();
+const WHATSAPP_TEMPLATE_LANGUAGE = String(process.env.META_WHATSAPP_TEMPLATE_LANGUAGE || 'en_US').trim();
+const WHATSAPP_ENABLED = String(process.env.META_WHATSAPP_ENABLED || 'false').toLowerCase() === 'true';
+
+async function ensureWhatsAppTables() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS whatsapp_notification_log (
+      id BIGSERIAL PRIMARY KEY,
+      event_key TEXT NOT NULL UNIQUE,
+      event_type TEXT NOT NULL,
+      invoice_id TEXT,
+      invoice_no TEXT,
+      recipient TEXT,
+      status TEXT NOT NULL,
+      provider_message_id TEXT,
+      error_message TEXT,
+      payload_json JSONB,
+      created_at BIGINT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_whatsapp_notification_log_created_at ON whatsapp_notification_log(created_at DESC);
+  `);
 }
+
+function whatsappConfigured() {
+  return WHATSAPP_ENABLED && !!WHATSAPP_TOKEN && !!WHATSAPP_PHONE_NUMBER_ID && !!WHATSAPP_RECIPIENT;
+}
+
+function invoiceRecipientText(v) {
+  const s = String(v || '').replace(/\\s+/g, ' ').trim();
+  return s || 'Client';
+}
+
+async function sendWhatsAppInvoiceAlert(eventType, invoice, source) {
+  if (!whatsappConfigured() || !invoice || typeof invoice !== 'object') return { skipped: true, reason: 'not-configured' };
+
+  const invoiceId = String(invoice.id || invoice.no || '').trim();
+  const invoiceNo = String(invoice.no || invoice.invoiceNo || invoice.number || invoiceId || '').trim();
+  const eventKey = eventType + ':' + (invoiceId || invoiceNo);
+  const existing = await pool.query('SELECT id,status,provider_message_id FROM whatsapp_notification_log WHERE event_key=$1', [eventKey]);
+  if (existing.rows[0]) return { skipped: true, reason: 'already-sent', log: existing.rows[0] };
+
+  const clientName = invoiceRecipientText(invoice.client || invoice.clientName || invoice.customer || invoice.billTo || invoice.name);
+  const amount = invoice.total ?? invoice.grandTotal ?? invoice.amount ?? invoice.netTotal ?? invoice.balance ?? '';
+  const amountText = amount === '' ? '' : 'GHS ' + Number(amount || 0).toLocaleString('en-GH', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const status = String(invoice.status || invoice.invoiceStatus || (eventType === 'invoice-sent' ? 'Sent' : 'Created'));
+  const creator = String(invoice.createdBy || invoice.staffName || invoice.user || source || 'Invoice Studio');
+  const textBody = [
+    'FBI INVOICE ALERT',
+    eventType === 'invoice-sent' ? 'Invoice sent to client' : 'New invoice created',
+    'Invoice: ' + invoiceNo,
+    'Client: ' + clientName,
+    amountText ? 'Amount: ' + amountText : '',
+    'Status: ' + status,
+    'Created by: ' + creator,
+    'Time: ' + new Date().toLocaleString('en-GH', { timeZone: 'Africa/Accra' })
+  ].filter(Boolean).join('\\n');
+
+  const payload = {
+    messaging_product: 'whatsapp',
+    to: WHATSAPP_RECIPIENT,
+    type: 'template',
+    template: {
+      name: WHATSAPP_TEMPLATE,
+      language: { code: WHATSAPP_TEMPLATE_LANGUAGE },
+      components: [{
+        type: 'body',
+        parameters: [
+          { type: 'text', parameter_name: 'event', text: eventType === 'invoice-sent' ? 'Invoice sent to client' : 'New invoice created' },
+          { type: 'text', parameter_name: 'invoice_no', text: invoiceNo || '-' },
+          { type: 'text', parameter_name: 'client', text: clientName },
+          { type: 'text', parameter_name: 'amount', text: amountText || '-' },
+          { type: 'text', parameter_name: 'status', text: status }
+        ]
+      }]
+    }
+  };
+
+  try {
+    const response = await fetch(`https://graph.facebook.com/${WHATSAPP_API_VERSION}/${encodeURIComponent(WHATSAPP_PHONE_NUMBER_ID)}/messages`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + WHATSAPP_TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const body = await response.json().catch(() => ({}));
+    const providerId = body?.messages?.[0]?.id || null;
+    const ok = response.ok && !!providerId;
+    await pool.query(
+      'INSERT INTO whatsapp_notification_log(event_key,event_type,invoice_id,invoice_no,recipient,status,provider_message_id,error_message,payload_json,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10) ON CONFLICT(event_key) DO NOTHING',
+      [eventKey,eventType,invoiceId,invoiceNo,WHATSAPP_RECIPIENT,ok?'sent':'failed',providerId,ok?null:(body?.error?.message||'WhatsApp API request failed'),JSON.stringify({textBody,payload,source}),Date.now()]
+    );
+    if (!ok) console.warn('WhatsApp notification failed:', body);
+    return { ok, providerId, error: ok ? null : (body?.error?.message || 'WhatsApp API request failed') };
+  } catch (err) {
+    await pool.query(
+      'INSERT INTO whatsapp_notification_log(event_key,event_type,invoice_id,invoice_no,recipient,status,error_message,payload_json,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9) ON CONFLICT(event_key) DO NOTHING',
+      [eventKey,eventType,invoiceId,invoiceNo,WHATSAPP_RECIPIENT,'failed',err.message||'Request failed',JSON.stringify({textBody,payload,source}),Date.now()]
+    );
+    return { ok:false, error:err.message||'WhatsApp request failed' };
+  }
+}
+
+async function notifyInvoiceStateChanges(previousState, mergedState, source) {
+  const before = new Map((previousState?.data?.data || []).map(x => [String(x.id || x.no || ''), x]));
+  const after = Array.isArray(mergedState?.data?.data) ? mergedState.data.data : [];
+  const jobs = [];
+  for (const invoice of after) {
+    const key = String(invoice.id || invoice.no || '');
+    if (!key) continue;
+    const prior = before.get(key);
+    if (!prior) jobs.push(sendWhatsAppInvoiceAlert('invoice-created', invoice, source));
+    const priorSent = String(prior?.status || prior?.invoiceStatus || '').toLowerCase() === 'sent' || !!prior?.sentAt || !!prior?.sent;
+    const nowSent = String(invoice.status || invoice.invoiceStatus || '').toLowerCase() === 'sent' || !!invoice.sentAt || !!invoice.sent;
+    if (nowSent && !priorSent) jobs.push(sendWhatsAppInvoiceAlert('invoice-sent', invoice, source));
+  }
+  if (jobs.length) await Promise.allSettled(jobs);
+}
+
+async function handleWhatsAppTest(req, res) {
+  if (!whatsappConfigured()) return json(res, 503, {ok:false,error:'WhatsApp is not configured. Set META_WHATSAPP_ENABLED=true, META_WHATSAPP_TOKEN, META_WHATSAPP_PHONE_NUMBER_ID and META_WHATSAPP_RECIPIENT in Railway.'});
+  const fake = {id:'test-'+Date.now(),no:'TEST',clientName:'FBI WhatsApp Test',total:0,status:'Test'};
+  const out = await sendWhatsAppInvoiceAlert('invoice-created', fake, 'Admin Test');
+  return json(res, out.ok ? 200 : 502, out);
+}
+
+async function handleWhatsAppDebugLog(req, res) {
+  const q = await pool.query('SELECT id,event_type,invoice_id,invoice_no,status,error_message,created_at FROM whatsapp_notification_log ORDER BY created_at DESC LIMIT 50');
+  return json(res,200,{ok:true,configured:whatsappConfigured(),recipientConfigured:!!WHATSAPP_RECIPIENT,log:q.rows});
+}
+
 
 const server = http.createServer(async (req, res) => {
   try {
@@ -1047,9 +1180,9 @@ const server = http.createServer(async (req, res) => {
       return json(res, 405, { ok: false, error: 'Method not allowed.' });
     }
 
-    if (url.pathname === '/api/whatsapp/test' && req.method === 'GET') return handleWhatsAppNotConfigured(req, res);
-    if (url.pathname === '/api/whatsapp/invoice-created' && req.method === 'POST') return handleWhatsAppNotConfigured(req, res);
-    if (url.pathname === '/api/whatsapp/debug-log' && req.method === 'GET') return json(res, 200, { ok: true, log: 'Cloud WhatsApp integration is not configured.' });
+    if (url.pathname === '/api/whatsapp/test' && req.method === 'GET') return handleWhatsAppTest(req, res);
+    if (url.pathname === '/api/whatsapp/invoice-created' && req.method === 'POST') { const b = await parseJsonBody(req); const out = await sendWhatsAppInvoiceAlert(String(b.eventType || 'invoice-created'), b.invoice || {}, String(b.source || 'API')); return json(res, out.ok ? 200 : 502, out); }
+    if (url.pathname === '/api/whatsapp/debug-log' && req.method === 'GET') return handleWhatsAppDebugLog(req, res);
 
     if (req.method === 'GET') return await sendIndex(res);
     return json(res, 404, { ok: false, error: 'Not found.' });
