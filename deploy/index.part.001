@@ -8,9 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FBI Studio">
-<script>(function(){try{var k="fbi-invoice-theme-v1",p=localStorage.getItem(k),r=p==="light"||p==="dark"?p:"light";document.documentElement.dataset.theme=r;document.documentElement.style.colorScheme=r}catch(e){}})();</script><link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/assets/fbi-brand-logo.svg?v=20261001">
-<title>Invoice Studio | FBI</title>
+<script>(function(){try{var k="fbi-invoice-theme-v1",p=localStorage.getItem(k),r=p==="light"||p==="dark"?p:"light";document.documentElement.dataset.theme=r;document.documentElement.style.colorScheme=r}catch(e){}})();</script><link rel="manifest" href="/manifest.json?v=20261001-logo2">
+<link rel="apple-touch-icon" href="/assets/fbi-brand-logo.svg?v=20261001-logo2">
+<link rel="icon" type="image/svg+xml" href="/assets/fbi-brand-logo.svg?v=20261001-logo2"><title>Invoice Studio | FBI</title>
 <style>
 :root{--bg:#08090c;--panel:#11141b;--panel2:#171b23;--border:#2b303c;--muted:#858e9f;--text:#f7f8fb;--accent:#bd1b63;--green:#43d18b}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
