@@ -1287,6 +1287,33 @@ async function handleWhatsAppDebugLog(req, res) {
 }
 
 
+
+function adminApiAuthorized(req) {
+  const expected = String(process.env.FBI_ADMIN_SHARED_TOKEN || '').trim();
+  const supplied = String(req.headers['x-fbi-admin-token'] || '').trim();
+  return !!expected && !!supplied && crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected));
+}
+
+async function handleAdminSnapshot(req, res) {
+  if (!adminApiAuthorized(req)) return json(res, 401, { ok: false, error: 'Unauthorized.' });
+  try {
+    const stateResult = await pool.query('SELECT version,saved_at,state_json,draft_saved_at,draft_json FROM app_state WHERE id=1');
+    let state = stateResult.rows[0]?.state_json || null;
+    if (typeof state === 'string') { try { state = JSON.parse(state); } catch { state = null; } }
+    return json(res, 200, {
+      ok: true,
+      source: 'FBI Invoice Studio Cloud',
+      savedAt: Number(stateResult.rows[0]?.saved_at) || null,
+      version: Number(stateResult.rows[0]?.version) || null,
+      state,
+      draftSavedAt: Number(stateResult.rows[0]?.draft_saved_at) || null,
+      hasDraft: !!stateResult.rows[0]?.draft_json
+    });
+  } catch (err) {
+    return json(res, 500, { ok: false, error: err.message || 'Unable to load invoice data.' });
+  }
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
