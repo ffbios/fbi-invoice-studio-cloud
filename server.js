@@ -1380,6 +1380,8 @@ const server = http.createServer(async (req, res) => {
       return json(res, 405, { ok: false, error: 'Method not allowed.' });
     }
 
+    if (url.pathname === '/api/admin/snapshot' && req.method === 'GET') return handleAdminSnapshot(req, res);
+
     if (url.pathname === '/api/state') {
       if (req.method === 'GET') return handleStateGet(req, res);
       if (req.method === 'PUT' || req.method === 'POST') return handleStateWrite(req, res);
