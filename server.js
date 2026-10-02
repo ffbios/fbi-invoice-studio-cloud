@@ -190,6 +190,12 @@ async function initDb() {
       password_salt TEXT NOT NULL,
       password_hash TEXT NOT NULL,
       recovery_hash TEXT NOT NULL,
+      security_q1 TEXT,
+      security_a1_salt TEXT,
+      security_a1_hash TEXT,
+      security_q2 TEXT,
+      security_a2_salt TEXT,
+      security_a2_hash TEXT,
       created_at TIMESTAMPTZ NOT NULL,
       updated_at TIMESTAMPTZ NOT NULL
     );
@@ -210,6 +216,12 @@ async function initDb() {
   await pool.query('CREATE INDEX IF NOT EXISTS idx_payroll_staff_sessions_expires_at ON payroll_staff_sessions(expires_at)');
   await pool.query('ALTER TABLE app_state ADD COLUMN IF NOT EXISTS draft_saved_at BIGINT');
   await pool.query('ALTER TABLE app_state ADD COLUMN IF NOT EXISTS draft_json JSONB');
+  await pool.query('ALTER TABLE auth_account ADD COLUMN IF NOT EXISTS security_q1 TEXT');
+  await pool.query('ALTER TABLE auth_account ADD COLUMN IF NOT EXISTS security_a1_salt TEXT');
+  await pool.query('ALTER TABLE auth_account ADD COLUMN IF NOT EXISTS security_a1_hash TEXT');
+  await pool.query('ALTER TABLE auth_account ADD COLUMN IF NOT EXISTS security_q2 TEXT');
+  await pool.query('ALTER TABLE auth_account ADD COLUMN IF NOT EXISTS security_a2_salt TEXT');
+  await pool.query('ALTER TABLE auth_account ADD COLUMN IF NOT EXISTS security_a2_hash TEXT');
 
   const state = await pool.query('SELECT id FROM app_state WHERE id=1');
   if (state.rowCount === 0 && process.env.SEED_ON_EMPTY !== 'false' && fs.existsSync(SEED_FILE)) {
@@ -299,6 +311,7 @@ async function sendIndex(res) {
     }
 
     let html = fs.readFileSync(INDEX_FILE, 'utf8');
+    html = html.replace('</head>', "<style id=\"fbi-auth-style\">\nbody.fbi-auth-pending{overflow:hidden}\n#fbiAuthGate{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 50% 10%,#202634 0%,#08090c 60%);font-family:Inter,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Arial,sans-serif;color:#f7f8fb}\n#fbiAuthGate[hidden]{display:none}\n.fbi-auth-card{width:min(430px,100%);max-height:calc(100vh - 40px);overflow:auto;background:linear-gradient(180deg,#151a23,#0d1016);border:1px solid #303746;border-radius:24px;box-shadow:0 30px 80px #0009;padding:28px}\n.fbi-auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}.fbi-auth-brand img{width:46px;height:46px;object-fit:contain}.fbi-auth-brand strong{display:block;font-size:15px;letter-spacing:1.5px}.fbi-auth-brand span{display:block;color:#9099a9;font-size:11px;margin-top:3px;letter-spacing:1px}\n.fbi-auth-card h1{margin:0 0 7px;font-size:27px}.fbi-auth-card p{color:#9ba4b3;font-size:13px;line-height:1.5;margin:0 0 20px}\n.fbi-auth-form{display:grid;gap:12px}.fbi-auth-label{display:grid;gap:6px;color:#b4bdcb;font-size:12px;font-weight:700}.fbi-auth-label input,.fbi-auth-label select{width:100%;border:1px solid #323a49;background:#0b0e14;color:#f7f8fb;border-radius:12px;padding:13px 14px;outline:none}.fbi-auth-label input:focus,.fbi-auth-label select:focus{border-color:#c71954;box-shadow:0 0 0 3px #c7195422}\n.fbi-auth-primary{border:0;border-radius:12px;padding:13px 16px;background:#c71954;color:#fff;font-weight:800}.fbi-auth-primary:disabled{opacity:.6}.fbi-auth-secondary{border:1px solid #343b49;border-radius:12px;padding:12px 16px;background:#151a22;color:#e8ebf1;font-weight:700}.fbi-auth-links{display:flex;justify-content:flex-end;margin-top:2px}.fbi-auth-link{border:0;background:none;color:#d6dbe4;padding:4px 0;font-size:12px;text-decoration:underline}.fbi-auth-error{min-height:18px;color:#ff8aa9;font-size:12px}.fbi-auth-note{padding:11px 12px;border-radius:11px;background:#111722;border:1px solid #293141;color:#8f99aa;font-size:11px;line-height:1.5}\n@media(max-width:480px){.fbi-auth-card{padding:22px;border-radius:20px}}\n</style>\n<div id=\"fbiAuthGate\">\n<div class=\"fbi-auth-card\">\n<div class=\"fbi-auth-brand\"><img src=\"/assets/fbi-brand-logo.svg\" alt=\"FBI\"><div><strong>FBI INVOICE STUDIO</strong><span>ADMINISTRATOR ACCESS</span></div></div>\n<div id=\"fbiAuthContent\"></div>\n</div>\n</div>\n<script>\n(function(){\ndocument.body.classList.add('fbi-auth-pending');\nvar gate=document.getElementById('fbiAuthGate'),root=document.getElementById('fbiAuthContent');\nvar questions=[\"What was the name of your first school?\",\"What is the middle name of your mother?\",\"What was the name of your childhood best friend?\",\"What city were you born in?\",\"What was the name of your first pet?\",\"What was your childhood nickname?\",\"What was the first car you or your family owned?\",\"What is the name of the street where you grew up?\"];\nfunction esc(s){return String(s==null?'':s).replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#039;'}[c];});}\nasync function api(path,options){var o=options||{};var r=await fetch(path,Object.assign({credentials:'same-origin',headers:Object.assign({'Content-Type':'application/json'},o.headers||{})},o));var d={};try{d=await r.json();}catch(e){}if(!r.ok)throw new Error(d.error||'Request failed');return d;}\nfunction finish(){gate.hidden=true;document.body.classList.remove('fbi-auth-pending');window.dispatchEvent(new CustomEvent('fbi-authenticated'));}\nfunction showLogin(message){\nroot.innerHTML='<h1>Administrator Sign In</h1><p>Sign in to access your invoices, clients, receipts, payroll and business records.</p><form id=\"fbiLogin\" class=\"fbi-auth-form\"><label class=\"fbi-auth-label\">Username<input name=\"username\" autocomplete=\"username\" required></label><label class=\"fbi-auth-label\">Password<input type=\"password\" name=\"password\" autocomplete=\"current-password\" required></label><div class=\"fbi-auth-error\">'+esc(message||'')+'</div><button type=\"submit\" class=\"fbi-auth-primary\">Sign in</button><div class=\"fbi-auth-links\"><button type=\"button\" class=\"fbi-auth-link\" id=\"fbiForgot\">Forgot password?</button></div></form>';\ndocument.getElementById('fbiLogin').onsubmit=async function(e){e.preventDefault();var f=new FormData(e.currentTarget),btn=e.currentTarget.querySelector('button[type=\"submit\"]');btn.disabled=true;try{await api('/api/auth/login',{method:'POST',body:JSON.stringify({username:f.get('username'),password:f.get('password')})});finish();}catch(err){showLogin(err.message);}};\ndocument.getElementById('fbiForgot').onclick=showResetStart;\n}\nfunction showSetup(message){\nroot.innerHTML='<h1>Create Administrator Account</h1><p>Create the administrator account that will control FBI Invoice Studio. This is a one-time setup.</p><form id=\"fbiSetup\" class=\"fbi-auth-form\"><label class=\"fbi-auth-label\">Administrator username<input name=\"username\" autocomplete=\"username\" minlength=\"3\" required></label><label class=\"fbi-auth-label\">Password<input type=\"password\" name=\"password\" autocomplete=\"new-password\" minlength=\"8\" required></label><label class=\"fbi-auth-label\">Confirm password<input type=\"password\" name=\"confirmPassword\" autocomplete=\"new-password\" minlength=\"8\" required></label><div class=\"fbi-auth-note\">Choose two different security questions and answers you will remember. Avoid answers that other people can easily guess.</div><label class=\"fbi-auth-label\">Security question 1<select name=\"securityQuestion1\" required>'+questions.map(function(q){return '<option>'+esc(q)+'</option>';}).join('')+'</select></label><label class=\"fbi-auth-label\">Answer 1<input name=\"securityAnswer1\" autocomplete=\"off\" required></label><label class=\"fbi-auth-label\">Security question 2<select name=\"securityQuestion2\" required>'+questions.map(function(q,i){return '<option '+(i===1?'selected':'')+'>'+esc(q)+'</option>';}).join('')+'</select></label><label class=\"fbi-auth-label\">Answer 2<input name=\"securityAnswer2\" autocomplete=\"off\" required></label><div class=\"fbi-auth-error\">'+esc(message||'')+'</div><button type=\"submit\" class=\"fbi-auth-primary\">Create administrator account</button></form>';\ndocument.getElementById('fbiSetup').onsubmit=async function(e){e.preventDefault();var f=new FormData(e.currentTarget),btn=e.currentTarget.querySelector('button[type=\"submit\"]');btn.disabled=true;try{await api('/api/auth/setup',{method:'POST',body:JSON.stringify(Object.fromEntries(f.entries()))});finish();}catch(err){showSetup(err.message);}};\n}\nasync function showResetStart(){\nroot.innerHTML='<h1>Reset Administrator Password</h1><p>Enter your administrator username. Your saved security questions will then appear.</p><form id=\"fbiResetStart\" class=\"fbi-auth-form\"><label class=\"fbi-auth-label\">Username<input name=\"username\" autocomplete=\"username\" required></label><div class=\"fbi-auth-error\"></div><button type=\"submit\" class=\"fbi-auth-primary\">Continue</button><button type=\"button\" class=\"fbi-auth-secondary\" id=\"fbiBackLogin\">Back to sign in</button></form>';\ndocument.getElementById('fbiBackLogin').onclick=function(){showLogin('');};\ndocument.getElementById('fbiResetStart').onsubmit=async function(e){e.preventDefault();var f=new FormData(e.currentTarget),box=e.currentTarget.querySelector('.fbi-auth-error');try{var d=await api('/api/auth/recovery-questions?username='+encodeURIComponent(f.get('username')));showResetForm(String(f.get('username')),d.questions);}catch(err){box.textContent=err.message;}};\n}\nfunction showResetForm(username,qs){\nroot.innerHTML='<h1>Verify Your Identity</h1><p>Answer both security questions, then choose a new password.</p><form id=\"fbiReset\" class=\"fbi-auth-form\"><label class=\"fbi-auth-label\">Username<input name=\"username\" value=\"'+esc(username)+'\" readonly></label><label class=\"fbi-auth-label\">'+esc(qs[0])+'<input name=\"securityAnswer1\" autocomplete=\"off\" required></label><label class=\"fbi-auth-label\">'+esc(qs[1])+'<input name=\"securityAnswer2\" autocomplete=\"off\" required></label><label class=\"fbi-auth-label\">New password<input type=\"password\" name=\"newPassword\" autocomplete=\"new-password\" minlength=\"8\" required></label><label class=\"fbi-auth-label\">Confirm new password<input type=\"password\" name=\"confirmPassword\" autocomplete=\"new-password\" minlength=\"8\" required></label><div class=\"fbi-auth-error\"></div><button type=\"submit\" class=\"fbi-auth-primary\">Reset password</button><button type=\"button\" class=\"fbi-auth-secondary\" id=\"fbiBackLogin\">Back to sign in</button></form>';\ndocument.getElementById('fbiBackLogin').onclick=function(){showLogin('');};\ndocument.getElementById('fbiReset').onsubmit=async function(e){e.preventDefault();var f=new FormData(e.currentTarget),box=e.currentTarget.querySelector('.fbi-auth-error');if(f.get('newPassword')!==f.get('confirmPassword')){box.textContent='Passwords do not match.';return;}try{await api('/api/auth/reset',{method:'POST',body:JSON.stringify({username:f.get('username'),securityAnswer1:f.get('securityAnswer1'),securityAnswer2:f.get('securityAnswer2'),newPassword:f.get('newPassword')})});finish();}catch(err){box.textContent=err.message;}};\n}\nasync function boot(){\ntry{var d=await api('/api/auth/status');if(d.authenticated){finish();return;}if(!d.accountExists){showSetup('');}else{showLogin('');}}\ncatch(err){root.innerHTML='<h1>Authentication unavailable</h1><p>FBI Invoice Studio could not verify the administrator session. Please refresh and try again.</p><div class=\"fbi-auth-error\">'+esc(err.message)+'</div>';}\n}\nboot();\n})();\n</script>" + '</head>');
     if (state && state.data && Array.isArray(state.data.data) && Array.isArray(state.data.clients)) {
       const safeState = JSON.stringify(state)
         .replace(/</g, '\\u003c')
@@ -371,6 +384,32 @@ function hashRecovery(code) {
     .digest('base64');
 }
 
+const SECURITY_QUESTIONS = [
+  'What was the name of your first school?',
+  'What is the middle name of your mother?',
+  'What was the name of your childhood best friend?',
+  'What city were you born in?',
+  'What was the name of your first pet?',
+  'What was your childhood nickname?',
+  'What was the first car you or your family owned?',
+  'What is the name of the street where you grew up?'
+];
+
+function normalizeSecurityAnswer(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function hashSecurityAnswer(answer, saltB64) {
+  const salt = saltB64 ? Buffer.from(saltB64, 'base64') : crypto.randomBytes(16);
+  const hash = crypto.scryptSync(normalizeSecurityAnswer(answer), salt, 64);
+  return { salt: salt.toString('base64'), hash: hash.toString('base64') };
+}
+
+function verifySecurityAnswer(answer, saltB64, expectedHash) {
+  if (!saltB64 || !expectedHash) return false;
+  return safeEqualB64(hashSecurityAnswer(answer, saltB64).hash, expectedHash);
+}
+
 function safeEqualB64(a, b) {
   try {
     const aa = Buffer.from(String(a || ''), 'base64');
@@ -441,25 +480,36 @@ function validateCredentials(username, password) {
 }
 
 async function getAccount() {
-  const { rows } = await pool.query('SELECT username,password_salt,password_hash,recovery_hash,created_at,updated_at FROM auth_account WHERE id=1');
+  const { rows } = await pool.query('SELECT username,password_salt,password_hash,recovery_hash,security_q1,security_a1_salt,security_a1_hash,security_q2,security_a2_salt,security_a2_hash,created_at,updated_at FROM auth_account WHERE id=1');
   return rows[0] || null;
 }
 
 async function requireAuth(req, res) {
-  // Invoice Studio is intentionally configured as a login-free private app.
-  // Keep the legacy authentication tables/endpoints for compatibility, but do
-  // not block the cloud state/draft APIs behind a session.
-  return { username: 'local-user', tokenHash: null };
+  const session = await currentSession(req);
+  if (!session) {
+    json(res, 401, { ok: false, error: 'Administrator authentication required.' });
+    return null;
+  }
+  return session;
 }
 
-async function handleAuthStatus(res) {
-  // Login is disabled for this Invoice Studio deployment.
-  return json(res, 200, { ok: true, accountExists: false, loginRequired: false });
+async function handleAuthStatus(req, res) {
+  const account = await getAccount();
+  const session = await currentSession(req);
+  return json(res, 200, {
+    ok: true,
+    accountExists: !!account,
+    loginRequired: true,
+    authenticated: !!session,
+    username: session?.username || null,
+    securityQuestionsConfigured: !!(account?.security_q1 && account?.security_a1_hash && account?.security_q2 && account?.security_a2_hash)
+  });
 }
 
 async function handleAuthMe(req, res) {
-  // Login is disabled; the cloud app is available directly.
-  return json(res, 200, { ok: true, authenticated: true, username: 'local-user' });
+  const session = await currentSession(req);
+  if (!session) return json(res, 401, { ok: false, authenticated: false });
+  return json(res, 200, { ok: true, authenticated: true, username: session.username });
 }
 
 async function handleAuthSetup(req, res) {
@@ -485,16 +535,29 @@ async function handleAuthSetup(req, res) {
       await client.query('ROLLBACK');
       return json(res, 400, { ok: false, error: 'Passwords do not match.' });
     }
+    const securityQ1 = String(body.securityQuestion1 || '').trim();
+    const securityA1 = String(body.securityAnswer1 || '');
+    const securityQ2 = String(body.securityQuestion2 || '').trim();
+    const securityA2 = String(body.securityAnswer2 || '');
+    if (!SECURITY_QUESTIONS.includes(securityQ1) || !SECURITY_QUESTIONS.includes(securityQ2) || securityQ1 === securityQ2) {
+      await client.query('ROLLBACK');
+      return json(res, 400, { ok: false, error: 'Choose two different security questions.' });
+    }
+    if (normalizeSecurityAnswer(securityA1).length < 2 || normalizeSecurityAnswer(securityA2).length < 2) {
+      await client.query('ROLLBACK');
+      return json(res, 400, { ok: false, error: 'Both security answers are required.' });
+    }
     const hp = hashPassword(password);
-    const recoveryCode = generateRecoveryCode();
+    const ha1 = hashSecurityAnswer(securityA1);
+    const ha2 = hashSecurityAnswer(securityA2);
     const now = new Date().toISOString();
     await client.query(
-      'INSERT INTO auth_account (id,username,password_salt,password_hash,recovery_hash,created_at,updated_at) VALUES (1,$1,$2,$3,$4,$5,$5)',
-      [username, hp.salt, hp.hash, hashRecovery(recoveryCode), now]
+      'INSERT INTO auth_account (id,username,password_salt,password_hash,recovery_hash,security_q1,security_a1_salt,security_a1_hash,security_q2,security_a2_salt,security_a2_hash,created_at,updated_at) VALUES (1,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)',
+      [username, hp.salt, hp.hash, hashRecovery(generateRecoveryCode()), securityQ1, ha1.salt, ha1.hash, securityQ2, ha2.salt, ha2.hash, now, now]
     );
     await client.query('COMMIT');
     await createLoginSession(username, res);
-    return json(res, 200, { ok: true, username, recoveryCode });
+    return json(res, 200, { ok: true, username });
   } catch (err) {
     try { await client.query('ROLLBACK'); } catch {}
     console.error('Account setup failed:', err);
@@ -530,26 +593,38 @@ async function handleAuthLogout(req, res) {
   return json(res, 200, { ok: true });
 }
 
+async function handleAuthRecoveryQuestions(res) {
+  const account = await getAccount();
+  if (!account) return json(res, 404, { ok: false, error: 'No administrator account exists yet.' });
+  if (!account.security_q1 || !account.security_q2 || !account.security_a1_hash || !account.security_a2_hash) {
+    return json(res, 409, { ok: false, error: 'Security questions have not been configured for this administrator account.' });
+  }
+  return json(res, 200, { ok: true, questions: [account.security_q1, account.security_q2] });
+}
+
 async function handleAuthReset(req, res) {
   try {
     const account = await getAccount();
     if (!account) return json(res, 404, { ok: false, error: 'No administrator account exists.' });
     const body = await parseJsonBody(req);
     const username = normalizeUsername(body.username);
-    const code = String(body.recoveryCode || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    const answer1 = String(body.securityAnswer1 || '');
+    const answer2 = String(body.securityAnswer2 || '');
     const newPassword = String(body.newPassword || '');
-    if (username.toLowerCase() !== String(account.username).toLowerCase() || hashRecovery(code) !== account.recovery_hash) {
-      return json(res, 401, { ok: false, error: 'The username or recovery code is incorrect.' });
+    if (username.toLowerCase() !== String(account.username).toLowerCase() ||
+        !verifySecurityAnswer(answer1, account.security_a1_salt, account.security_a1_hash) ||
+        !verifySecurityAnswer(answer2, account.security_a2_salt, account.security_a2_hash)) {
+      return json(res, 401, { ok: false, error: 'The username or security answers are incorrect.' });
     }
     if (newPassword.length < 8) return json(res, 400, { ok: false, error: 'Password must contain at least 8 characters.' });
     const hp = hashPassword(newPassword);
-    const newRecoveryCode = generateRecoveryCode();
     await pool.query(
-      'UPDATE auth_account SET password_salt=$1,password_hash=$2,recovery_hash=$3,updated_at=$4 WHERE id=1',
-      [hp.salt, hp.hash, hashRecovery(newRecoveryCode), new Date().toISOString()]
+      'UPDATE auth_account SET password_salt=$1,password_hash=$2,updated_at=$3 WHERE id=1',
+      [hp.salt, hp.hash, new Date().toISOString()]
     );
+    await pool.query('DELETE FROM auth_sessions WHERE username=$1', [account.username]);
     await createLoginSession(account.username, res);
-    return json(res, 200, { ok: true, recoveryCode: newRecoveryCode });
+    return json(res, 200, { ok: true, username: account.username });
   } catch (err) {
     console.error('Password reset failed:', err);
     return json(res, 500, { ok: false, error: err.message || 'Password reset failed.' });
@@ -1242,8 +1317,9 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    if (url.pathname === '/api/auth/status' && req.method === 'GET') return handleAuthStatus(res);
+    if (url.pathname === '/api/auth/status' && req.method === 'GET') return handleAuthStatus(req, res);
     if (url.pathname === '/api/auth/me' && req.method === 'GET') return handleAuthMe(req, res);
+    if (url.pathname === '/api/auth/recovery-questions' && req.method === 'GET') return handleAuthRecoveryQuestions(res);
     if (url.pathname === '/api/auth/setup' && req.method === 'POST') return handleAuthSetup(req, res);
     if (url.pathname === '/api/auth/login' && req.method === 'POST') return handleAuthLogin(req, res);
     if (url.pathname === '/api/auth/logout' && req.method === 'POST') return handleAuthLogout(req, res);
