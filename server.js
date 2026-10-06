@@ -1108,9 +1108,20 @@ async function ensureSmsTables() {
   await pool.query('ALTER TABLE sms_message_log ADD COLUMN IF NOT EXISTS gateway_attempts INTEGER NOT NULL DEFAULT 0');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_sms_message_log_gateway_queue ON sms_message_log(status,gateway_claimed_at,created_at)');
   await pool.query('CREATE TABLE IF NOT EXISTS sms_gateway_state (id INTEGER PRIMARY KEY CHECK (id=1),gateway_id TEXT NOT NULL,gateway_name TEXT NOT NULL,sim_line TEXT,port_label TEXT,modem_status TEXT NOT NULL DEFAULT \'unknown\',last_seen BIGINT NOT NULL,updated_at BIGINT NOT NULL,detail TEXT)');
-  await pool.query('CREATE TABLE IF NOT EXISTS sms_gateway_devices (id UUID PRIMARY KEY,gateway_id TEXT NOT NULL UNIQUE,gateway_name TEXT NOT NULL,token_hash TEXT NOT NULL UNIQUE,created_at BIGINT NOT NULL,last_seen BIGINT,revoked_at BIGINT)');
+  await pool.query('CREATE TABLE IF NOT EXISTS sms_gateway_devices (id UUID PRIMARY KEY,gateway_id TEXT NOT NULL,gateway_name TEXT NOT NULL,token_hash TEXT NOT NULL,created_at BIGINT NOT NULL,last_seen BIGINT,revoked_at BIGINT)');
+  await pool.query('ALTER TABLE sms_gateway_devices ADD COLUMN IF NOT EXISTS gateway_id TEXT');
+  await pool.query('ALTER TABLE sms_gateway_devices ADD COLUMN IF NOT EXISTS gateway_name TEXT');
+  await pool.query('ALTER TABLE sms_gateway_devices ADD COLUMN IF NOT EXISTS token_hash TEXT');
+  await pool.query('ALTER TABLE sms_gateway_devices ADD COLUMN IF NOT EXISTS created_at BIGINT');
+  await pool.query('ALTER TABLE sms_gateway_devices ADD COLUMN IF NOT EXISTS last_seen BIGINT');
+  await pool.query('ALTER TABLE sms_gateway_devices ADD COLUMN IF NOT EXISTS revoked_at BIGINT');
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_sms_gateway_devices_gateway_id ON sms_gateway_devices(gateway_id)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_sms_gateway_devices_last_seen ON sms_gateway_devices(last_seen)');
   await pool.query('CREATE TABLE IF NOT EXISTS sms_gateway_pairings (id UUID PRIMARY KEY,code_hash TEXT NOT NULL UNIQUE,attempts INTEGER NOT NULL DEFAULT 0,created_at BIGINT NOT NULL,expires_at BIGINT NOT NULL,used_at BIGINT)');
+  await pool.query('ALTER TABLE sms_gateway_pairings ADD COLUMN IF NOT EXISTS attempts INTEGER NOT NULL DEFAULT 0');
+  await pool.query('ALTER TABLE sms_gateway_pairings ADD COLUMN IF NOT EXISTS created_at BIGINT');
+  await pool.query('ALTER TABLE sms_gateway_pairings ADD COLUMN IF NOT EXISTS expires_at BIGINT');
+  await pool.query('ALTER TABLE sms_gateway_pairings ADD COLUMN IF NOT EXISTS used_at BIGINT');
 }
 
 function smsConfigured() {
@@ -1161,31 +1172,65 @@ async function handleSmsGatewayPairPage(req,res) {
 }
 
 async function handleSmsGatewayPair(req,res){
+  let client=null;
   try{
     const body=await parseJsonBody(req);
     const code=String(body?.code||'').replace(/\D/g,'').slice(0,6);
     const gatewayId=String(body?.gatewayId||'').trim().slice(0,120);
     const gatewayName=String(body?.gatewayName||'FBI Android SMS Gateway').trim().slice(0,120)||'FBI Android SMS Gateway';
     if(!/^\d{6}$/.test(code)||!gatewayId)return json(res,400,{ok:false,error:'A valid 6-digit pairing code and gateway ID are required.'});
+
     const codeHash=crypto.createHash('sha256').update(code).digest('hex');
     const q=await pool.query('SELECT id,attempts,expires_at,used_at FROM sms_gateway_pairings WHERE code_hash=$1 LIMIT 1',[codeHash]);
     const row=q.rows[0];
     if(!row||row.used_at||Number(row.expires_at)<=Date.now()){
       return json(res,401,{ok:false,error:'Pairing code is invalid or expired.'});
     }
+
     const attempts=Number(row.attempts||0)+1;
     if(attempts>10){
       await pool.query('UPDATE sms_gateway_pairings SET attempts=$2 WHERE id=$1',[row.id,attempts]);
       return json(res,429,{ok:false,error:'Pairing code has been locked. Generate a new code.'});
     }
-    await pool.query('UPDATE sms_gateway_pairings SET attempts=$2 WHERE id=$1',[row.id,attempts]);
+
     const token=crypto.randomBytes(32).toString('base64url');
     const tokenHash=crypto.createHash('sha256').update(token).digest('hex');
     const now=Date.now();
-    await pool.query('INSERT INTO sms_gateway_devices(id,gateway_id,gateway_name,token_hash,created_at,last_seen,revoked_at) VALUES($1,$2,$3,$4,$5,$5,NULL) ON CONFLICT(gateway_id) DO UPDATE SET gateway_name=EXCLUDED.gateway_name,token_hash=EXCLUDED.token_hash,last_seen=EXCLUDED.last_seen,revoked_at=NULL',[crypto.randomUUID(),gatewayId,gatewayName,tokenHash,now]);
-    await pool.query('UPDATE sms_gateway_pairings SET used_at=$2 WHERE id=$1',[row.id,now]);
+
+    client=await pool.connect();
+    await client.query('BEGIN');
+
+    const existing=await client.query('SELECT id FROM sms_gateway_devices WHERE gateway_id=$1 LIMIT 1',[gatewayId]);
+    if(existing.rows[0]){
+      await client.query(
+        'UPDATE sms_gateway_devices SET gateway_name=$2,token_hash=$3,last_seen=$4,revoked_at=NULL WHERE gateway_id=$1',
+        [gatewayId,gatewayName,tokenHash,now]
+      );
+    }else{
+      await client.query(
+        'INSERT INTO sms_gateway_devices(id,gateway_id,gateway_name,token_hash,created_at,last_seen,revoked_at) VALUES($1,$2,$3,$4,$5,$5,NULL)',
+        [crypto.randomUUID(),gatewayId,gatewayName,tokenHash,now]
+      );
+    }
+
+    const marked=await client.query(
+      'UPDATE sms_gateway_pairings SET attempts=$2,used_at=$3 WHERE id=$1 AND used_at IS NULL AND expires_at>$3 RETURNING id',
+      [row.id,attempts,now]
+    );
+    if(!marked.rows[0]){
+      await client.query('ROLLBACK');
+      return json(res,409,{ok:false,error:'This pairing code was already used or expired. Generate a new code.'});
+    }
+
+    await client.query('COMMIT');
     return json(res,200,{ok:true,token,gatewayId,gatewayName,serverTime:now});
-  }catch(err){return json(res,500,{ok:false,error:err.message||'Gateway pairing failed.'});}
+  }catch(err){
+    if(client){try{await client.query('ROLLBACK');}catch{}}
+    console.error('SMS gateway pairing failed:',err);
+    return json(res,500,{ok:false,error:'Gateway pairing failed. Please generate a new code and try again.',code:'PAIRING_SERVER_ERROR'});
+  }finally{
+    if(client)client.release();
+  }
 }
 
 function normalizeSmsPhone(value) {
