@@ -1,5 +1,5 @@
 name: Build FBI SMS Gateway APK
-# Pairing v9 verification pipeline
+# Pairing v10 verification pipeline
 
 on:
   workflow_dispatch:
@@ -28,51 +28,41 @@ jobs:
       - name: Build debug APK
         working-directory: sms-android
         run: gradle assembleDebug --stacktrace
-      - name: Verify pairing endpoint is reachable
+      - name: Verify pairing endpoint from GitHub runner
         run: |
           set -euo pipefail
-          for i in 1 2 3; do
-            code=$(curl -sS --connect-timeout 15 --max-time 30 \
-              -o /tmp/pair-response.txt \
-              -w "%{http_code}" \
-              "https://invoice.fbigh.com/sms-gateway-pair" \
-              -H "X-FBI-Pair-Code: 000000" \
-              -H "X-FBI-Gateway-Id: ci-smoke-gateway" \
-              -H "X-FBI-Gateway-Name: CI Smoke Test" \
-              -H "User-Agent: FBI-SMS-Gateway-CI/9" \
-              -H "Accept: application/json")
-            echo "pairing smoke HTTP $code"
+          endpoints=(
+            "https://fbi-invoice-studio-production.up.railway.app/api/sms/gateway/pair-v2"
+            "https://fbi-invoice-studio-production.up.railway.app/sms-gateway-pair"
+            "https://invoice.fbigh.com/sms-gateway-pair"
+          )
+          for endpoint in "${endpoints[@]}"; do
+            echo "Testing pairing endpoint: $endpoint"
+            code=$(curl -sS --connect-timeout 15 --max-time 30               -o /tmp/pair-response.txt               -w "%{http_code}"               "$endpoint"               -H "X-FBI-Pair-Code: 000000"               -H "X-FBI-Gateway-Id: ci-smoke-gateway"               -H "X-FBI-Gateway-Name: CI Smoke Test"               -H "User-Agent: FBI-SMS-Gateway-CI/10"               -H "Accept: application/json")
+            echo "HTTP $code"
             cat /tmp/pair-response.txt || true
-            # 401 proves the request reached the application and the test code
-            # is simply invalid. 429 means the edge rate-limit is still in play.
             if [ "$code" = "401" ] || [ "$code" = "400" ]; then
+              echo "Application reached successfully through $endpoint"
               exit 0
             fi
-            if [ "$code" = "429" ] || [ "$code" = "000" ]; then
-              sleep 10
-              continue
-            fi
-            echo "Unexpected pairing response: HTTP $code"
-            exit 1
           done
-          echo "Pairing endpoint is still returning 429/unreachable."
+          echo "No pairing endpoint reached the application without an edge 429/unreachable response."
           exit 1
       - name: Upload APK artifact
         uses: actions/upload-artifact@v6
         with:
-          name: fbi-sms-gateway-apk-v9
+          name: fbi-sms-gateway-apk-v10
           path: sms-android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
       - name: Publish GitHub pre-release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: fbi-sms-gateway-v9
-          name: FBI SMS Gateway v9
+          tag_name: fbi-sms-gateway-v10
+          name: FBI SMS Gateway v10
           prerelease: true
           make_latest: false
           files: sms-android/app/build/outputs/apk/debug/app-debug.apk
           body: |
-            FBI SMS Gateway Android installer.
-            Improved permission guidance and redesigned mobile UI.
-            Secure paired-device authentication.
-            Pairing uses GET with private headers to avoid the Railway edge POST rate-limit path.
+            FBI SMS Gateway Android installer v10.
+            Pairing now tests the Railway-generated service domain as well as the custom domain.
+            The Android client uses the same endpoint fallback strategy.
