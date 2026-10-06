@@ -26,9 +26,12 @@ import org.json.JSONObject;
 
 public class MainActivity extends Activity {
     private static final int SMS_PERMISSION = 1001;
+    // Try the public custom domain first, then both live Railway domains.
+    // Pairing succeeds only when the response is a valid {ok:true,token:...} object.
     private static final String[] BASE_URLS = {
+            "https://invoice.fbigh.com",
             "https://fbi-invoice-studio-production.up.railway.app",
-            "https://invoice.fbigh.com"
+            "https://fbi-invoice-studio-production-bcd2.up.railway.app"
     };
     private static final String PREFS = "fbi_sms_gateway";
     private static final String KEY_TOKEN = "gateway_token";
