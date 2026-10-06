@@ -27,8 +27,8 @@ import org.json.JSONObject;
 public class MainActivity extends Activity {
     private static final int SMS_PERMISSION = 1001;
     private static final String[] BASE_URLS = {
-            "https://invoice.fbigh.com",
-            "https://czo1a4qo.up.railway.app"
+            "https://fbi-invoice-studio-production.up.railway.app",
+            "https://invoice.fbigh.com"
     };
     private static final String PREFS = "fbi_sms_gateway";
     private static final String KEY_TOKEN = "gateway_token";
