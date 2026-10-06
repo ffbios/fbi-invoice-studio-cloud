@@ -2,6 +2,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const zlib = require('node:zlib');
 const { Pool } = require('pg');
 
 const HOST = process.env.HOST || '0.0.0.0';
@@ -1701,6 +1702,34 @@ async function handleAdminSnapshot(req, res) {
   }
 }
 
+async function importCompressedClientContactsFromEnv(){
+  const parts=Object.keys(process.env).filter(k=>/^TEMP_CLIENT_CONTACTS_B64_\d+$/.test(k)).sort((a,b)=>Number(a.split('_').pop())-Number(b.split('_').pop())).map(k=>String(process.env[k]||'')).filter(Boolean);
+  if(!parts.length)return;
+  try{
+    const payload=JSON.parse(zlib.gunzipSync(Buffer.from(parts.join(''),'base64url')).toString('utf8'));
+    if(!Array.isArray(payload)||!payload.length)return;
+    const currentResult=await pool.query('SELECT state_json FROM app_state WHERE id=1');
+    let state=currentResult.rows[0]?.state_json||null;
+    if(typeof state==='string')state=JSON.parse(state);
+    state=state||{version:4,savedAt:0,data:{data:[],clients:[],settings:{}}};
+    state.data=state.data||{data:[],clients:[],settings:{}};
+    state.data.clients=Array.isArray(state.data.clients)?state.data.clients:[];
+    let added=0,updated=0;
+    for(const item of payload){
+      const name=String(item?.name||'').trim(),phone=String(item?.phone||'').trim(),email=String(item?.email||'').trim();
+      if(!name||!phone)continue;
+      const cp=phone.replace(/\D/g,''),ce=email.toLowerCase();
+      let existing=state.data.clients.find(x=>(cp&&String(x?.phone||'').replace(/\D/g,'')===cp)||(ce&&String(x?.email||'').trim().toLowerCase()===ce)||String(x?.name||'').trim().toLowerCase()===name.toLowerCase());
+      if(!existing){existing={id:'av-'+Date.now()+'-'+Math.random().toString(36).slice(2,10),createdAt:new Date().toISOString()};state.data.clients.unshift(existing);added++;}else updated++;
+      Object.assign(existing,{name,phone,email,address:String(item?.address||'').trim(),notes:String(item?.notes||'').trim(),updatedAt:new Date().toISOString()});
+    }
+    state.version=Math.max(Number(state.version)||1,4);
+    state.savedAt=Date.now();
+    await pool.query('INSERT INTO app_state(id,version,saved_at,state_json) VALUES(1,$1,$2,$3::jsonb) ON CONFLICT(id) DO UPDATE SET version=EXCLUDED.version,saved_at=EXCLUDED.saved_at,state_json=EXCLUDED.state_json',[state.version,state.savedAt,JSON.stringify(state)]);
+    console.log('Google Contacts bulk phone import completed:',{added,updated,total:state.data.clients.length});
+  }catch(e){console.error('Google Contacts bulk phone import failed:',e.message||e)}
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
@@ -1802,7 +1831,8 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-initDb().then(() => {
+initDb().then(async () => {
+  await importCompressedClientContactsFromEnv();
   server.listen(PORT, HOST, () => {
     console.log('FBI Invoice Studio Cloud server');
     console.log(`Local: http://127.0.0.1:${PORT}`);
