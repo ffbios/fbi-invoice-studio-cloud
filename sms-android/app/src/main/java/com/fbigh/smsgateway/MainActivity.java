@@ -28,10 +28,10 @@ public class MainActivity extends Activity {
     private static final int SMS_PERMISSION = 1001;
     // Pairing uses GET + private headers to avoid the Railway edge POST 429.
     // Keep the Railway service domain first, with the custom domain as fallback.
-    private static final String PAIR_PATH = "/sms-gateway-pair";
+    private static final String[] PAIR_PATHS = {"/api/sms/gateway/pair-v2", "/sms-gateway-pair"};
     private static final String[] BASE_URLS = {
-            "https://invoice.fbigh.com",
-            "https://fbi-invoice-studio-production.up.railway.app"
+            "https://fbi-invoice-studio-production.up.railway.app",
+            "https://invoice.fbigh.com"
     };
     private static final String PREFS = "fbi_sms_gateway";
     private static final String KEY_TOKEN = "gateway_token";
@@ -305,53 +305,60 @@ public class MainActivity extends Activity {
             String lastDetail = "Unable to reach the SMS gateway.";
             final String gatewayId = getSharedPreferences(PREFS, MODE_PRIVATE)
                     .getString(KEY_GATEWAY_ID, "");
-            // Use GET with private headers. This avoids the Railway edge POST 429
-            // that was occurring before the request reached the Node server.
+            // Try the Railway-generated host first, then the custom domain,
+            // and try both supported GET pairing paths.
+            boolean paired = false;
+            outer:
             for (String base : BASE_URLS) {
-                HttpURLConnection c = null;
-                try {
-                    c = (HttpURLConnection) new URL(base + PAIR_PATH).openConnection();
-                    c.setRequestMethod("GET");
-                    c.setConnectTimeout(15000);
-                    c.setReadTimeout(15000);
-                    c.setDoInput(true);
-                    c.setUseCaches(false);
-                    c.setRequestProperty("Accept", "application/json");
-                    c.setRequestProperty("Cache-Control", "no-cache");
-                    c.setRequestProperty("X-FBI-Pair-Code", code);
-                    c.setRequestProperty("X-FBI-Gateway-Id", gatewayId);
-                    c.setRequestProperty("X-FBI-Gateway-Name", "FBI Android SMS Gateway");
-                    c.setRequestProperty("User-Agent", "FBI-SMS-Gateway-Android/8");
+                for (String pairPath : PAIR_PATHS) {
+                    HttpURLConnection c = null;
+                    try {
+                        c = (HttpURLConnection) new URL(base + pairPath).openConnection();
+                        c.setRequestMethod("GET");
+                        c.setConnectTimeout(15000);
+                        c.setReadTimeout(15000);
+                        c.setDoInput(true);
+                        c.setUseCaches(false);
+                        c.setRequestProperty("Accept", "application/json");
+                        c.setRequestProperty("Cache-Control", "no-cache");
+                        c.setRequestProperty("X-FBI-Pair-Code", code);
+                        c.setRequestProperty("X-FBI-Gateway-Id", gatewayId);
+                        c.setRequestProperty("X-FBI-Gateway-Name", "FBI Android SMS Gateway");
+                        c.setRequestProperty("User-Agent", "FBI-SMS-Gateway-Android/10");
 
-                    int response = c.getResponseCode();
-                    java.io.InputStream in = response >= 200 && response < 400
-                            ? c.getInputStream() : c.getErrorStream();
-                    String raw = in == null ? "" : new java.io.BufferedReader(
-                            new java.io.InputStreamReader(in, StandardCharsets.UTF_8))
-                            .lines().collect(java.util.stream.Collectors.joining());
-                    JSONObject result = parsePairResponse(raw);
+                        int response = c.getResponseCode();
+                        java.io.InputStream in = response >= 200 && response < 400
+                                ? c.getInputStream() : c.getErrorStream();
+                        String raw = in == null ? "" : new java.io.BufferedReader(
+                                new java.io.InputStreamReader(in, StandardCharsets.UTF_8))
+                                .lines().collect(java.util.stream.Collectors.joining());
+                        JSONObject result = parsePairResponse(raw);
 
-                    if (response == 200 && result.optBoolean("ok")
-                            && result.optString("token").length() > 20) {
-                        getSharedPreferences(PREFS, MODE_PRIVATE).edit()
-                                .putString(KEY_TOKEN, result.getString("token")).apply();
-                        runOnUiThread(() -> {
-                            status.setText("PAIRED • READY");
-                            refreshUi();
-                        });
-                        return;
+                        if (response == 200 && result.optBoolean("ok")
+                                && result.optString("token").length() > 20) {
+                            getSharedPreferences(PREFS, MODE_PRIVATE).edit()
+                                    .putString(KEY_TOKEN, result.getString("token")).apply();
+                            paired = true;
+                            runOnUiThread(() -> {
+                                status.setText("PAIRED • READY");
+                                refreshUi();
+                            });
+                            break outer;
+                        }
+
+                        String serverError = result.optString("error", "").trim();
+                        if (serverError.isEmpty()) serverError = raw.trim();
+                        if (serverError.isEmpty()) serverError = "Empty response.";
+                        lastDetail = base + pairPath + " → HTTP " + response + " → " + serverError;
+                    } catch (Throwable t) {
+                        lastDetail = base + pairPath + " → " + String.valueOf(t.getMessage());
+                    } finally {
+                        if (c != null) c.disconnect();
                     }
-
-                    String serverError = result.optString("error", "").trim();
-                    if (serverError.isEmpty()) serverError = raw.trim();
-                    if (serverError.isEmpty()) serverError = "Empty response.";
-                    lastDetail = base + " → HTTP " + response + " → " + serverError;
-                } catch (Throwable t) {
-                    lastDetail = base + " → " + String.valueOf(t.getMessage());
-                } finally {
-                    if (c != null) c.disconnect();
                 }
             }
+
+            if (paired) return;
 
             final String detail = lastDetail;
             runOnUiThread(() -> {
