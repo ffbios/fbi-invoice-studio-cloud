@@ -26,13 +26,12 @@ import org.json.JSONObject;
 
 public class MainActivity extends Activity {
     private static final int SMS_PERMISSION = 1001;
-    // Try the public custom domain first, then both live Railway domains.
-    // Pairing succeeds only when the response is a valid {ok:true,token:...} object.
+    // Pairing uses GET + private headers to avoid the Railway edge POST 429.
+    // Keep the Railway service domain first, with the custom domain as fallback.
     private static final String PAIR_PATH = "/api/sms/gateway/pair-v2";
     private static final String[] BASE_URLS = {
-            "https://invoice.fbigh.com",
             "https://fbi-invoice-studio-production.up.railway.app",
-            "https://fbi-invoice-studio-production-bcd2.up.railway.app"
+            "https://invoice.fbigh.com"
     };
     private static final String PREFS = "fbi_sms_gateway";
     private static final String KEY_TOKEN = "gateway_token";
@@ -304,55 +303,56 @@ public class MainActivity extends Activity {
         status.setText("PAIRING…");
         new Thread(() -> {
             String lastDetail = "Unable to reach the SMS gateway.";
+            final String gatewayId = getSharedPreferences(PREFS, MODE_PRIVATE)
+                    .getString(KEY_GATEWAY_ID, "");
+            // Use GET with private headers. This avoids the Railway edge POST 429
+            // that was occurring before the request reached the Node server.
             for (String base : BASE_URLS) {
                 HttpURLConnection c = null;
                 try {
-                    JSONObject body = new JSONObject();
-                    body.put("code", code);
-                    body.put("gatewayId", getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_GATEWAY_ID, ""));
-                    body.put("gatewayName", "FBI Android SMS Gateway");
                     c = (HttpURLConnection) new URL(base + PAIR_PATH).openConnection();
-                    c.setRequestMethod("POST");
+                    c.setRequestMethod("GET");
                     c.setConnectTimeout(15000);
                     c.setReadTimeout(15000);
-                    c.setDoOutput(true);
+                    c.setDoInput(true);
                     c.setUseCaches(false);
-                    c.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
                     c.setRequestProperty("Accept", "application/json");
                     c.setRequestProperty("Cache-Control", "no-cache");
-                    c.setRequestProperty("User-Agent", "FBI-SMS-Gateway-Android/7");
-                    byte[] bytes = body.toString().getBytes(StandardCharsets.UTF_8);
-                    try (OutputStream out = c.getOutputStream()) { out.write(bytes); }
+                    c.setRequestProperty("X-FBI-Pair-Code", code);
+                    c.setRequestProperty("X-FBI-Gateway-Id", gatewayId);
+                    c.setRequestProperty("X-FBI-Gateway-Name", "FBI Android SMS Gateway");
+                    c.setRequestProperty("User-Agent", "FBI-SMS-Gateway-Android/8");
+
                     int response = c.getResponseCode();
-                    java.io.InputStream in = response >= 200 && response < 400 ? c.getInputStream() : c.getErrorStream();
+                    java.io.InputStream in = response >= 200 && response < 400
+                            ? c.getInputStream() : c.getErrorStream();
                     String raw = in == null ? "" : new java.io.BufferedReader(
                             new java.io.InputStreamReader(in, StandardCharsets.UTF_8))
                             .lines().collect(java.util.stream.Collectors.joining());
-                    c.disconnect();
                     JSONObject result = parsePairResponse(raw);
-                    if (response == 200 && result.optBoolean("ok") && result.optString("token").length() > 20) {
+
+                    if (response == 200 && result.optBoolean("ok")
+                            && result.optString("token").length() > 20) {
                         getSharedPreferences(PREFS, MODE_PRIVATE).edit()
                                 .putString(KEY_TOKEN, result.getString("token")).apply();
-                        runOnUiThread(() -> { status.setText("PAIRED • READY"); refreshUi(); });
+                        runOnUiThread(() -> {
+                            status.setText("PAIRED • READY");
+                            refreshUi();
+                        });
                         return;
                     }
+
                     String serverError = result.optString("error", "").trim();
-                    if (serverError.isEmpty()) {
-                        serverError = raw.trim();
-                    }
-                    if (serverError.isEmpty()) {
-                        serverError = "Empty response.";
-                    }
+                    if (serverError.isEmpty()) serverError = raw.trim();
+                    if (serverError.isEmpty()) serverError = "Empty response.";
                     lastDetail = base + " → HTTP " + response + " → " + serverError;
-                    // Do not stop just because one endpoint returned an HTTP error.
-                    // The second endpoint may be the healthy route.
-                    continue;
                 } catch (Throwable t) {
                     lastDetail = base + " → " + String.valueOf(t.getMessage());
                 } finally {
                     if (c != null) c.disconnect();
                 }
             }
+
             final String detail = lastDetail;
             runOnUiThread(() -> {
                 status.setText(("PAIRING FAILED • " + detail).toUpperCase());
