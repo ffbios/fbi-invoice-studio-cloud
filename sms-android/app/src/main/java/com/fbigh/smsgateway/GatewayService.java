@@ -17,7 +17,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-public class GatewayService extends Service {
+public class GatewayService extends Service {\n    // Network fallback keeps the phone gateway usable while the custom domain DNS is repaired.
     private static final String CHANNEL = "fbi_sms_gateway";
     private static final String[] BASE_URLS = {\n            "https://invoice.fbigh.com",\n            "https://czo5a4qo.up.railway.app"\n    };
     private static final String PREFS = "fbi_sms_gateway";
