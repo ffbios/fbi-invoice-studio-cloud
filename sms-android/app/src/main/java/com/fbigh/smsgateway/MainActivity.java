@@ -26,7 +26,7 @@ import org.json.JSONObject;
 
 public class MainActivity extends Activity {
     private static final int SMS_PERMISSION = 1001;
-    private static final String BASE_URL = "https://invoice.fbigh.com";
+    private static final String[] BASE_URLS = {\n            "https://invoice.fbigh.com",\n            "https://czo5a4qo.up.railway.app"\n    };
     private static final String PREFS = "fbi_sms_gateway";
     private static final String KEY_TOKEN = "gateway_token";
     private static final String KEY_GATEWAY_ID = "gateway_id";
@@ -257,36 +257,44 @@ public class MainActivity extends Activity {
         pairButton.setEnabled(false);
         status.setText("PAIRING…");
         new Thread(() -> {
-            HttpURLConnection c = null;
-            try {
-                JSONObject body = new JSONObject();
-                body.put("code", code);
-                body.put("gatewayId", getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_GATEWAY_ID, ""));
-                body.put("gatewayName", "FBI Android SMS Gateway");
-                c = (HttpURLConnection) new URL(BASE_URL + "/api/sms/gateway/pair").openConnection();
-                c.setRequestMethod("POST");
-                c.setConnectTimeout(15000);
-                c.setReadTimeout(15000);
-                c.setDoOutput(true);
-                c.setRequestProperty("Content-Type", "application/json");
-                byte[] bytes = body.toString().getBytes(StandardCharsets.UTF_8);
-                try (OutputStream out = c.getOutputStream()) { out.write(bytes); }
-                int response = c.getResponseCode();
-                java.io.InputStream in = response >= 200 && response < 300 ? c.getInputStream() : c.getErrorStream();
-                String raw = new java.io.BufferedReader(new java.io.InputStreamReader(in, StandardCharsets.UTF_8)).lines().reduce("", (a,b) -> a+b);
-                JSONObject result = new JSONObject(raw);
-                if (response == 200 && result.optBoolean("ok") && result.optString("token").length() > 20) {
-                    getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(KEY_TOKEN, result.getString("token")).apply();
-                    runOnUiThread(() -> { status.setText("PAIRED • READY"); refreshUi(); });
-                } else {
+            Throwable lastError = null;
+            for (String base : BASE_URLS) {
+                HttpURLConnection c = null;
+                try {
+                    JSONObject body = new JSONObject();
+                    body.put("code", code);
+                    body.put("gatewayId", getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_GATEWAY_ID, ""));
+                    body.put("gatewayName", "FBI Android SMS Gateway");
+                    c = (HttpURLConnection) new URL(base + "/api/sms/gateway/pair").openConnection();
+                    c.setRequestMethod("POST");
+                    c.setConnectTimeout(10000);
+                    c.setReadTimeout(10000);
+                    c.setDoOutput(true);
+                    c.setRequestProperty("Content-Type", "application/json");
+                    byte[] bytes = body.toString().getBytes(StandardCharsets.UTF_8);
+                    try (OutputStream out = c.getOutputStream()) { out.write(bytes); }
+                    int response = c.getResponseCode();
+                    java.io.InputStream in = response >= 200 && response < 300 ? c.getInputStream() : c.getErrorStream();
+                    String raw = in == null ? "" : new java.io.BufferedReader(new java.io.InputStreamReader(in, StandardCharsets.UTF_8)).lines().reduce("", (x,y) -> x+y);
+                    c.disconnect();
+
+                    if (response == 404 && !base.equals(BASE_URLS[BASE_URLS.length - 1])) continue;
+                    JSONObject result = raw.isEmpty() ? new JSONObject() : new JSONObject(raw);
+                    if (response == 200 && result.optBoolean("ok") && result.optString("token").length() > 20) {
+                        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(KEY_TOKEN, result.getString("token")).apply();
+                        runOnUiThread(() -> { status.setText("PAIRED • READY"); refreshUi(); });
+                        return;
+                    }
                     final String msg = result.optString("error", "Pairing failed.");
                     runOnUiThread(() -> { status.setText(msg.toUpperCase()); pairButton.setEnabled(true); });
+                    return;
+                } catch (Throwable t) {
+                    lastError = t;
+                    if (c != null) c.disconnect();
                 }
-            } catch (Throwable t) {
-                runOnUiThread(() -> { status.setText("NETWORK ERROR • CHECK MOBILE DATA / WI-FI"); pairButton.setEnabled(true); });
-            } finally {
-                if (c != null) c.disconnect();
             }
+            final String detail = lastError == null ? "Unable to reach the SMS gateway." : String.valueOf(lastError.getMessage());
+            runOnUiThread(() -> { status.setText(("NETWORK ERROR • " + detail).toUpperCase()); pairButton.setEnabled(true); });
         }, "fbi-pair").start();
     }
 
