@@ -20,7 +20,9 @@ import java.nio.charset.StandardCharsets;
 public class GatewayService extends Service {
     private static final String CHANNEL = "fbi_sms_gateway";
     private static final String BASE_URL = "https://invoice.fbigh.com";
-    private static final String TOKEN = "__FBI_SMS_GATEWAY_TOKEN__";
+    private static final String PREFS = "fbi_sms_gateway";
+    private static final String KEY_TOKEN = "gateway_token";
+    private static final String KEY_GATEWAY_ID = "gateway_id";
     private volatile boolean running = true;
 
     @Override public void onCreate() {
@@ -34,9 +36,18 @@ public class GatewayService extends Service {
         return START_STICKY;
     }
 
+    private String token() {
+        return getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_TOKEN, "").trim();
+    }
+
+    private String gatewayId() {
+        return getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_GATEWAY_ID, "private-gateway-1");
+    }
+
     private void loop() {
         while (running) {
             try {
+                if (token().isEmpty()) { stopSelf(); return; }
                 heartbeat();
                 JSONObject job = nextJob();
                 if (job != null && job.optString("id","").length() > 0) sendJob(job);
@@ -53,24 +64,28 @@ public class GatewayService extends Service {
         c.disconnect();
         if (s == null || s.isEmpty() || "null".equals(s)) return null;
         JSONObject o = new JSONObject(s);
-        JSONObject job = o.optJSONObject("job");
-        return job != null ? job : o;
+        return o.optJSONObject("job");
     }
 
     private void heartbeat() throws Exception {
         JSONObject b = new JSONObject();
-        b.put("deviceName", "FBI Android SMS Gateway");
-        b.put("phoneModel", Build.MANUFACTURER + " " + Build.MODEL);
+        b.put("gatewayId", gatewayId());
+        b.put("gatewayName", "FBI Android SMS Gateway");
+        b.put("simLine", "FBI SIM");
+        b.put("portLabel", Build.MANUFACTURER + " " + Build.MODEL);
+        b.put("modemStatus", "online");
+        b.put("detail", "Android GSM gateway");
         post("/api/sms/gateway/heartbeat", b);
     }
 
     private void sendJob(JSONObject job) {
         String id = job.optString("id","");
-        String to = job.optString("to", job.optString("phone",""));
-        String body = job.optString("message", job.optString("body",""));
+        String to = job.optString("phone","");
+        String body = job.optString("message","");
         boolean ok = false;
         String err = null;
         try {
+            if (to.isEmpty() || body.isEmpty()) throw new IllegalArgumentException("Missing recipient or message");
             SmsManager.getDefault().sendTextMessage(to, null, body, null, null);
             ok = true;
         } catch (Throwable t) {
@@ -78,7 +93,7 @@ public class GatewayService extends Service {
         }
         try {
             JSONObject r = new JSONObject();
-            r.put("jobId", id);
+            r.put("id", id);
             r.put("status", ok ? "sent" : "failed");
             if (!ok) r.put("error", err == null ? "SMS send failed" : err);
             post("/api/sms/gateway/result", r);
@@ -90,8 +105,9 @@ public class GatewayService extends Service {
         c.setRequestMethod(method);
         c.setConnectTimeout(15000);
         c.setReadTimeout(15000);
-        c.setRequestProperty("Authorization", "Bearer " + TOKEN);
-        c.setRequestProperty("X-FBI-SMS-Gateway-Token", TOKEN);
+        String t = token();
+        c.setRequestProperty("Authorization", "Bearer " + t);
+        c.setRequestProperty("X-FBI-SMS-Gateway-Token", t);
         return c;
     }
 
