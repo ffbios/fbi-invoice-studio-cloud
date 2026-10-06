@@ -730,6 +730,39 @@ function mergeInvoiceStates(existingState, incomingState) {
   };
 }
 
+app.post('/api/internal/import-client-contacts', async (req, res) => {
+  try {
+    const expected = String(process.env.TEMP_CLIENT_IMPORT_TOKEN || '');
+    const supplied = String(req.headers['x-fbi-import-token'] || '');
+    if (!expected || !supplied || supplied !== expected) return json(res, 401, { ok:false, error:'Unauthorized.' });
+    const incoming = Array.isArray(req.body?.clients) ? req.body.clients : [];
+    if (!incoming.length) return json(res, 400, { ok:false, error:'No clients supplied.' });
+    const currentResult = await pool.query('SELECT state_json FROM app_state WHERE id=1');
+    let state = currentResult.rows[0]?.state_json || null;
+    if (typeof state === 'string') state = JSON.parse(state);
+    state = state || { version:4, savedAt:0, data:{data:[],clients:[],settings:{}} };
+    state.data = state.data || {data:[],clients:[],settings:{}};
+    state.data.clients = Array.isArray(state.data.clients) ? state.data.clients : [];
+    const clients = state.data.clients;
+    let added=0,updated=0;
+    for (const item of incoming) {
+      const name=String(item?.name||'').trim(), phone=String(item?.phone||'').trim(), email=String(item?.email||'').trim();
+      if (!name) continue;
+      const cleanPhone=phone.replace(/\D/g,''), cleanEmail=email.toLowerCase();
+      let existing=clients.find(x => (cleanPhone && String(x?.phone||'').replace(/\D/g,'')===cleanPhone) || (cleanEmail && String(x?.email||'').trim().toLowerCase()===cleanEmail) || String(x?.name||'').trim().toLowerCase()===name.toLowerCase());
+      if (!existing) { existing={id:'av-'+Date.now()+'-'+Math.random().toString(36).slice(2,10),createdAt:new Date().toISOString()}; clients.unshift(existing); added++; } else updated++;
+      Object.assign(existing,{name,phone,email,address:String(item?.address||'').trim(),notes:String(item?.notes||'').trim(),updatedAt:new Date().toISOString()});
+    }
+    state.version=Math.max(Number(state.version)||1,4);
+    state.savedAt=Date.now();
+    await pool.query('INSERT INTO app_state(id,version,saved_at,state_json) VALUES(1,$1,$2,$3::jsonb) ON CONFLICT(id) DO UPDATE SET version=EXCLUDED.version,saved_at=EXCLUDED.saved_at,state_json=EXCLUDED.state_json',[state.version,state.savedAt,JSON.stringify(state)]);
+    return json(res,200,{ok:true,added,updated,clientCount:clients.length});
+  } catch (e) {
+    console.error('Temporary client contact import failed:',e);
+    return json(res,500,{ok:false,error:e.message||'Import failed.'});
+  }
+});
+
 async function handleStateWrite(req, res) {
   const session = await requireAuth(req, res);
   if (!session) return;
