@@ -1,5 +1,5 @@
 name: Build FBI SMS Gateway APK
-# Pairing v8 verification pipeline
+# Pairing v9 verification pipeline
 
 on:
   workflow_dispatch:
@@ -30,14 +30,30 @@ jobs:
         run: gradle assembleDebug --stacktrace
       - name: Verify pairing endpoint is reachable
         run: |
-          set -e
+          set -euo pipefail
           for i in 1 2 3; do
-            code=$(curl -sS -o /tmp/pair-response.txt -w "%{http_code}" "https://invoice.fbigh.com/sms-gateway-pair"               -H "X-FBI-Pair-Code: 000000"               -H "X-FBI-Gateway-Id: ci-smoke-gateway"               -H "X-FBI-Gateway-Name: CI Smoke Test
-            -H "User-Agent: FBI-SMS-Gateway-CI/9""               -H "Accept: application/json")
-            echo "pair-v2 smoke HTTP $code"
+            code=$(curl -sS --connect-timeout 15 --max-time 30 \
+              -o /tmp/pair-response.txt \
+              -w "%{http_code}" \
+              "https://invoice.fbigh.com/sms-gateway-pair" \
+              -H "X-FBI-Pair-Code: 000000" \
+              -H "X-FBI-Gateway-Id: ci-smoke-gateway" \
+              -H "X-FBI-Gateway-Name: CI Smoke Test" \
+              -H "User-Agent: FBI-SMS-Gateway-CI/9" \
+              -H "Accept: application/json")
+            echo "pairing smoke HTTP $code"
             cat /tmp/pair-response.txt || true
-            if [ "$code" != "429" ] && [ "$code" != "000" ]; then exit 0; fi
-            sleep 10
+            # 401 proves the request reached the application and the test code
+            # is simply invalid. 429 means the edge rate-limit is still in play.
+            if [ "$code" = "401" ] || [ "$code" = "400" ]; then
+              exit 0
+            fi
+            if [ "$code" = "429" ] || [ "$code" = "000" ]; then
+              sleep 10
+              continue
+            fi
+            echo "Unexpected pairing response: HTTP $code"
+            exit 1
           done
           echo "Pairing endpoint is still returning 429/unreachable."
           exit 1
