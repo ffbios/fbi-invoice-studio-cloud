@@ -1786,7 +1786,7 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/api/sms/send' && req.method === 'POST') return handleSmsSend(req, res);
     if (url.pathname === '/api/sms/test' && req.method === 'POST') return handleSmsTest(req, res);
     if (url.pathname === '/api/sms/opt-out' && req.method === 'POST') return handleSmsOptOut(req, res);
-    if (url.pathname === '/sms-gateway-pair' && req.method === 'GET') return handleSmsGatewayPairPage(req, res);
+    if (url.pathname === '/sms-gateway-pair' && req.method === 'GET') { if (String(req.headers['x-fbi-pair-code'] || '').trim()) return handleSmsGatewayPair(req, res); return handleSmsGatewayPairPage(req, res); }
     if (url.pathname === '/api/sms/gateway/pair' && req.method === 'POST') return handleSmsGatewayPair(req, res);
     // Dedicated Android pairing route. Kept separate from the legacy route so the mobile gateway can use a clean edge path without changing the pairing engine.
     if (url.pathname === '/api/sms/gateway/pair-v2' && (req.method === 'GET' || req.method === 'POST')) return handleSmsGatewayPair(req, res);
