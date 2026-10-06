@@ -659,31 +659,138 @@ function deleteClient(id){
   toast("Client deleted")
 }
 function useClient(id){const c=clients.find(x=>x.id===id);if(!c)return;newInvoice();$("client").value=c.name||"";$("clientAddress").value=c.address||"";$("clientPhone").value=c.phone||"";$("clientEmail").value=c.email||"";$("clientSelect").value=c.id;show("create")}
-function parseCsvLine(line){
-  const out=[];let cur="",quoted=false;
-  for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(quoted&&line[i+1]==='"'){cur+='"';i++;}else quoted=!quoted;}else if(ch===','&&!quoted){out.push(cur.trim());cur="";}else cur+=ch;}
-  out.push(cur.trim());return out;
+function parseCsvRows(raw){
+  const text=String(raw||"").replace(/^\uFEFF/,"").replace(/\r\n?/g,"\n");
+  if(!text.trim())return [];
+  const firstLines=text.split("\n").slice(0,12).filter(function(x){return x.trim()&&!/^sep\s*=/.test(x.trim().toLowerCase());});
+  const sample=firstLines.slice(0,5).join("\n");
+  const candidates=[",",";","\t","|"];
+  let delimiter=",",best=-1;
+  candidates.forEach(function(d){
+    let count=0,quoted=false;
+    for(let i=0;i<sample.length;i++){
+      const ch=sample[i];
+      if(ch==='"'){if(quoted&&sample[i+1]==='"'){i++;continue;}quoted=!quoted;}
+      else if(ch===d&&!quoted)count++;
+    }
+    if(count>best){best=count;delimiter=d;}
+  });
+  const rows=[],row=[];let field="",quoted=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(ch==='"'){
+      if(quoted&&text[i+1]==='"'){field+='"';i++;}
+      else quoted=!quoted;
+      continue;
+    }
+    if(ch===delimiter&&!quoted){row.push(field.trim());field="";continue;}
+    if(ch==="\n"&&!quoted){row.push(field.trim());field="";if(row.some(function(v){return String(v).trim()!=="";}))rows.push(row.splice(0));continue;}
+    field+=ch;
+  }
+  row.push(field.trim());if(row.some(function(v){return String(v).trim()!=="";}))rows.push(row);
+  if(!rows.length)return [];
+  return rows;
 }
-function importClientsFile(evt){
+function normalizeImportHeader(v){
+  return String(v==null?"":v).replace(/^\uFEFF/,"").trim().toLowerCase().replace(/[&/\\()\-_.:#?]/g,"").replace(/\s+/g,"");
+}
+function importFieldIndex(headers,kind){
+  const aliases={
+    name:["name","fullname","firstname","clientname","clientcompanyname","clientcompany","company","companyname","customer","customername","customerorcompany","nameofclient","clientfullname"],
+    phone:["phone","phonenumber","mobile","mobilenumber","contact","contactnumber","telephone","telephonenumber","tel","whatsapp","whatsappnumber"],
+    email:["email","emailaddress","mail","clientemail","customeremail"],
+    address:["address","clientaddress","customeraddress","location","clientlocation","residentialaddress","businessaddress"],
+    notes:["notes","note","remarks","remark","comment","comments","description","clientnotes"]
+  };
+  const list=aliases[kind]||[kind];
+  for(let i=0;i<list.length;i++){const p=headers.indexOf(list[i]);if(p>=0)return p;}
+  return -1;
+}
+function cleanImportedClient(raw){
+  const name=String(raw.name||raw.client||raw.clientName||raw.clientCompanyName||raw.company||raw.companyName||raw.customer||raw.customerName||"").trim();
+  const phone=String(raw.phone||raw.phoneNumber||raw.mobile||raw.mobileNumber||raw.contact||raw.contactNumber||raw.telephone||"").trim();
+  const email=String(raw.email||raw.emailAddress||raw.mail||"").trim();
+  const address=String(raw.address||raw.clientAddress||raw.location||"").trim();
+  const notes=String(raw.notes||raw.note||raw.remarks||raw.comments||raw.description||"").trim();
+  return {name,phone,email,address,notes};
+}
+function findImportedClientMatch(raw){
+  const name=String(raw.name||"").trim().toLowerCase();
+  const phone=String(raw.phone||"").replace(/\D/g,"");
+  const email=String(raw.email||"").trim().toLowerCase();
+  return clients.find(function(x){
+    const xn=String(x.name||"").trim().toLowerCase();
+    const xp=String(x.phone||"").replace(/\D/g,"");
+    const xe=String(x.email||"").trim().toLowerCase();
+    return (email&&xe===email)||(phone&&xp===phone)||(name&&xn===name);
+  })||null;
+}
+async function importClientsFile(evt){
   const f=evt.target.files&&evt.target.files[0];if(!f)return;
   const status=$("clientImportStatus");if(status)status.textContent="Reading "+f.name+"…";
-  const reader=new FileReader();reader.onload=async e=>{
+  const reader=new FileReader();
+  reader.onload=async function(e){
     try{
-      const text=String(e.target.result||"");let rows=[];
-      if(f.name.toLowerCase().endsWith(".json")){
-        const raw=JSON.parse(text);rows=Array.isArray(raw)?raw:(Array.isArray(raw.clients)?raw.clients:[]);
+      const rawText=String(e.target.result||"");
+      let rows=[],sourceType="CSV";
+      if(/\.json$/i.test(f.name)){
+        sourceType="JSON";
+        const raw=JSON.parse(rawText);
+        const arr=Array.isArray(raw)?raw:(Array.isArray(raw.clients)?raw.clients:(Array.isArray(raw.data?.clients)?raw.data.clients:[]));
+        if(!arr.length)throw new Error("The JSON file does not contain a clients array.");
+        rows=arr.map(cleanImportedClient);
       }else{
-        const lines=text.replace(/^\uFEFF/,"").split(/\r?\n/).filter(x=>x.trim());if(!lines.length)throw new Error("The file is empty.");
-        const headers=parseCsvLine(lines.shift()).map(h=>h.toLowerCase().replace(/[^a-z0-9]/g,""));
-        const idx=k=>{const aliases={name:["name","clientname","company","companyname"],phone:["phone","phonenumber","mobile","contact"],email:["email","emailaddress"],address:["address","clientaddress"],notes:["notes","note"]}[k]||[k];return headers.findIndex(h=>aliases.includes(h))};
-        const ix={name:idx("name"),phone:idx("phone"),email:idx("email"),address:idx("address"),notes:idx("notes")};
-        rows=lines.map(line=>{const a=parseCsvLine(line);return{name:ix.name>=0?a[ix.name]:"",phone:ix.phone>=0?a[ix.phone]:"",email:ix.email>=0?a[ix.email]:"",address:ix.address>=0?a[ix.address]:"",notes:ix.notes>=0?a[ix.notes]:""}});
+        let table=parseCsvRows(rawText);
+        if(!table.length)throw new Error("The file is empty.");
+        if(/^sep\s*=/.test(String(table[0]?.[0]||"").toLowerCase()))table.shift();
+        const headers=table[0].map(normalizeImportHeader);
+        const idx={name:importFieldIndex(headers,"name"),phone:importFieldIndex(headers,"phone"),email:importFieldIndex(headers,"email"),address:importFieldIndex(headers,"address"),notes:importFieldIndex(headers,"notes")};
+        const recognized=Object.values(idx).filter(function(x){return x>=0}).length;
+        if(idx.name<0){
+          if(headers.length>=2){
+            // Headerless/unknown-header fallback: Google/Excel exports sometimes
+            // arrive without recognizable headings. Use the standard column order.
+            rows=table.map(function(a){return cleanImportedClient({name:a[0],phone:a[1],email:a[2],address:a[3],notes:a[4]})});
+          }else{
+            throw new Error("Could not find a client-name column. Use a header such as Name, Client Name, Company, or Client / Company Name.");
+          }
+        }else{
+          rows=table.slice(1).map(function(a){return cleanImportedClient({
+            name:idx.name>=0?a[idx.name]:"",
+            phone:idx.phone>=0?a[idx.phone]:"",
+            email:idx.email>=0?a[idx.email]:"",
+            address:idx.address>=0?a[idx.address]:"",
+            notes:idx.notes>=0?a[idx.notes]:""
+          })});
+          if(!recognized)throw new Error("No supported client columns were detected.");
+          const detected=["name","phone","email","address","notes"].filter(function(k){return idx[k]>=0}).join(", ");
+          if(status)status.textContent="Detected "+detected+" • "+rows.length+" data row"+(rows.length===1?"":"s")+" in "+f.name+"…";
+        }
       }
-      let added=0,updated=0;
-      rows.forEach(r=>{const name=String(r.name||r.client||r.company||"").trim();if(!name)return;let c=clients.find(x=>String(x.name||"").toLowerCase()===name.toLowerCase());if(!c){c={id:"av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10),createdAt:new Date().toISOString()};clients.unshift(c);added++;}else updated++;c.name=name;c.phone=String(r.phone||"").trim();c.email=String(r.email||"").trim();c.address=String(r.address||"").trim();c.notes=String(r.notes||"").trim();});
-      await persist();populateClientSelect();renderClients();if(status)status.textContent=`Imported ${added} new clients and updated ${updated} existing clients.`;toast("Client data imported");
-    }catch(err){console.error(err);if(status)status.textContent="Import failed: "+err.message;toast("Client import failed: "+err.message)}finally{evt.target.value=""}
-  };reader.readAsText(f);
+      rows=rows.map(cleanImportedClient).filter(function(x){return !!x.name;});
+      if(!rows.length)throw new Error("No client rows with a name were found in this file.");
+      let added=0,updated=0,skipped=0;
+      const seen=new Set();
+      rows.forEach(function(r){
+        const key=(String(r.email||"").toLowerCase()+"|"+String(r.phone||"").replace(/\D/g,"")+"|"+String(r.name||"").toLowerCase()).trim();
+        if(seen.has(key)){skipped++;return;}
+        seen.add(key);
+        let client=findImportedClientMatch(r);
+        if(!client){client={id:"av-"+Date.now()+"-"+Math.random().toString(36).slice(2,10),createdAt:new Date().toISOString()};clients.unshift(client);added++;}else updated++;
+        client.name=r.name;client.phone=r.phone;client.email=r.email;client.address=r.address;client.notes=r.notes;client.updatedAt=new Date().toISOString();
+      });
+      const saved=await persist();
+      if(!saved)throw new Error("The client rows were read, but the cloud database did not confirm the save. Your browser copy was kept; please refresh and check the database connection.");
+      populateClientSelect();renderClients();
+      if(status)status.textContent="Imported "+added+" new client"+(added===1?"":"s")+", updated "+updated+" existing client"+(updated===1?"":"s")+(skipped?" and skipped "+skipped+" duplicate row"+(skipped===1?"":"s"):"")+" from "+f.name+".";
+      toast("Client data imported successfully");
+    }catch(err){
+      console.error("Client import failed",err);
+      if(status)status.textContent="Import failed: "+(err.message||"Unknown error");
+      toast("Client import failed: "+(err.message||"Unknown error"));
+    }finally{evt.target.value=""}
+  };
+  reader.readAsText(f);
 }
 
 function renderClients(){
