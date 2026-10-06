@@ -1142,7 +1142,7 @@ function smsConfigured() {
 }
 
 function normalizeSmsPhone(value) {
-  let s=String(value||'').trim().replace(/[\\s()\\-.]/g,'');
+  let s=String(value||'').trim().replace(/[\s().-]/g,'');
   if(!s)return '';
   if(s.startsWith('00'))s='+'+s.slice(2);
   if(s.startsWith('+233'))s='233'+s.slice(4);
