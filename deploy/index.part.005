@@ -696,24 +696,62 @@ function normalizeImportHeader(v){
 }
 function importFieldIndex(headers,kind){
   const aliases={
-    name:["name","fullname","firstname","clientname","clientcompanyname","clientcompany","company","companyname","customer","customername","customerorcompany","nameofclient","clientfullname"],
-    phone:["phone","phonenumber","mobile","mobilenumber","contact","contactnumber","telephone","telephonenumber","tel","whatsapp","whatsappnumber"],
+    name:["name","fullname","firstname","lastname","clientname","clientfullname","clientcompanyname","clientcompany","company","companyname","customer","customername","customerorcompany","nameofclient"],
+    phone:["phone","phoneno","phonenumber","phonenumber1","mobile","mobileno","mobilenumber","contact","contactno","contactnumber","telephone","telephonenumber","tel","telno","whatsapp","whatsappno","whatsappnumber"],
     email:["email","emailaddress","mail","clientemail","customeremail"],
     address:["address","clientaddress","customeraddress","location","clientlocation","residentialaddress","businessaddress"],
     notes:["notes","note","remarks","remark","comment","comments","description","clientnotes"]
   };
   const list=aliases[kind]||[kind];
   for(let i=0;i<list.length;i++){const p=headers.indexOf(list[i]);if(p>=0)return p;}
-  return -1;
+  // Google Sheets and Excel exports often use labels such as
+  // "Phone No.", "Mobile No.", "Contact No." or "Client / Company".
+  // Use a conservative fuzzy fallback after exact aliases so the importer
+  // still finds the intended column without confusing email/address fields.
+  const scores=headers.map(function(h){
+    let score=0;
+    if(kind==="phone"){
+      if(/^(phone|mobile|contact|telephone|tel|whatsapp)/.test(h))score=90;
+      if(h.includes("number")&&/(phone|mobile|contact|telephone|whatsapp|tel)/.test(h))score=Math.max(score,100);
+      if(h.includes("name"))score=0;
+    }else if(kind==="name"){
+      if(/(^|)(client|customer|company)(|name)/.test(h))score=90;
+      if(h.includes("fullname")||h==="name")score=100;
+      if(h.includes("email")||h.includes("phone")||h.includes("address"))score=0;
+    }else if(kind==="email"){
+      if(h.includes("email")||h==="mail")score=100;
+    }else if(kind==="address"){
+      if(h.includes("address")||h==="location")score=100;
+    }else if(kind==="notes"){
+      if(h.includes("note")||h.includes("remark")||h.includes("comment")||h.includes("description"))score=100;
+    }
+    return score;
+  });
+  let best=-1,bestScore=0;
+  scores.forEach(function(s,i){if(s>bestScore){bestScore=s;best=i;}});
+  return best;
+}
+function normalizeImportedPhone(value){
+  const raw=String(value==null?"":value).trim();
+  if(!raw)return "";
+  // Keep international numbers as-is apart from whitespace/separators.
+  const digits=raw.replace(/\D/g,"");
+  if(digits.length===12&&digits.startsWith("233"))return digits;
+  if(digits.length===10&&digits.startsWith("0"))return digits;
+  // Google Sheets may export a Ghana mobile as 9 digits when the leading
+  // zero was stored as a number. Restore the local leading zero.
+  if(digits.length===9&&/^[235]/.test(digits))return "0"+digits;
+  return raw;
 }
 function cleanImportedClient(raw){
   const name=String(raw.name||raw.client||raw.clientName||raw.clientCompanyName||raw.company||raw.companyName||raw.customer||raw.customerName||"").trim();
-  const phone=String(raw.phone||raw.phoneNumber||raw.mobile||raw.mobileNumber||raw.contact||raw.contactNumber||raw.telephone||"").trim();
+  const phone=normalizeImportedPhone(raw.phone||raw.phoneNumber||raw.mobile||raw.mobileNumber||raw.contact||raw.contactNumber||raw.telephone||raw.tel||raw.whatsapp||"");
   const email=String(raw.email||raw.emailAddress||raw.mail||"").trim();
   const address=String(raw.address||raw.clientAddress||raw.location||"").trim();
   const notes=String(raw.notes||raw.note||raw.remarks||raw.comments||raw.description||"").trim();
   return {name,phone,email,address,notes};
 }
+
 function findImportedClientMatch(raw){
   const name=String(raw.name||"").trim().toLowerCase();
   const phone=String(raw.phone||"").replace(/\D/g,"");
