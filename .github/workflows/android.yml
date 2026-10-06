@@ -30,14 +30,14 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: fbi-sms-gateway-apk-v3
+          name: fbi-sms-gateway-apk-v4
           path: sms-android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
       - name: Publish GitHub pre-release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: fbi-sms-gateway-v3
-          name: FBI SMS Gateway v3
+          tag_name: fbi-sms-gateway-v4
+          name: FBI SMS Gateway v4
           prerelease: true
           make_latest: false
           files: sms-android/app/build/outputs/apk/debug/app-debug.apk
@@ -45,3 +45,4 @@ jobs:
             FBI SMS Gateway Android installer.
             Improved permission guidance and redesigned mobile UI.
             Secure paired-device authentication.
+            Includes Railway-domain fallback for reliable pairing when the custom domain DNS is unavailable.
