@@ -301,7 +301,7 @@ function sendPublicBusinessPage(res, kind) {
 }
 
 function smsPageAssets() {
-  return "<style id=\"fbi-sms-style\">\n.fbi-sms-view{padding-bottom:40px}\n.fbi-sms-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}\n.fbi-sms-top h2{margin:0;font-size:20px}.fbi-sms-top p{margin:6px 0 0;color:#7e8796;font-size:11px}\n.fbi-sms-eyebrow{font-size:9px;letter-spacing:1.4px;color:#e63d7e;font-weight:900;text-transform:uppercase}\n.fbi-sms-actions{display:flex;gap:8px;flex-wrap:wrap}\n.fbi-sms-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:14px}\n.fbi-sms-card{background:linear-gradient(180deg,#171b23,#13161d);border:1px solid #2b303c;border-radius:12px;padding:16px}\n.fbi-sms-card h3{margin:0 0 12px;font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:#e63d7e}\n.fbi-sms-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}\n.fbi-sms-stat{background:#0f1218;border:1px solid #2b303c;border-radius:10px;padding:11px}.fbi-sms-stat span{display:block;color:#7e8796;font-size:8px;text-transform:uppercase}.fbi-sms-stat b{display:block;margin-top:5px;font-size:18px}.fbi-sms-stat .good{color:#63e5a3}\n.fbi-sms-tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid #2b303c;padding-bottom:8px}\n.fbi-sms-tab{border:1px solid #303642;background:#0d1016;color:#aeb6c4;border-radius:8px;padding:8px 12px;font-size:10px;font-weight:800}.fbi-sms-tab.active{background:#a80e4d;color:#fff;border-color:#bd1b63}\n.fbi-sms-row{display:flex;gap:9px}.fbi-sms-row>*{flex:1}\n.fbi-sms-template-bar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}\n.fbi-sms-template{font-size:9px;padding:7px 9px;border:1px solid #353c49;background:#0e1117;color:#c9d0db;border-radius:7px}\n.fbi-sms-count{display:flex;justify-content:space-between;gap:10px;margin-top:6px;color:#717b8a;font-size:9px}\n.fbi-sms-preview{margin-top:12px;background:#0c0f14;border:1px solid #2a303b;border-radius:10px;padding:13px}\n.fbi-sms-preview-label{font-size:8px;color:#6e7787;text-transform:uppercase;margin-bottom:7px}\n.fbi-sms-bubble{background:#1b222d;border-radius:4px 12px 12px 12px;padding:11px 12px;color:#eef2f7;font-size:11px;line-height:1.5;max-width:92%;white-space:pre-wrap}\n.fbi-sms-audience-options{display:grid;gap:8px;margin:11px 0}.fbi-sms-radio{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid #2c333e;background:#0f1218;border-radius:8px;color:#c6cdd7;font-size:10px}.fbi-sms-radio input{width:auto;margin:0}\n.fbi-sms-client-list{max-height:330px;overflow:auto;border:1px solid #2b303c;border-radius:9px;background:#0c0f14}\n.fbi-sms-client{display:flex;align-items:center;gap:8px;padding:8px 9px;border-bottom:1px solid #222832}.fbi-sms-client input[type=checkbox]{width:auto}.fbi-sms-client .grow{min-width:0;flex:1}.fbi-sms-client b{display:block;font-size:10px;color:#edf0f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fbi-sms-client small{display:block;color:#70798a;font-size:8px;margin-top:2px}.fbi-sms-client .tag{font-size:7px;color:#63e5a3;padding:3px 5px;border-radius:999px;background:#123325}.fbi-sms-client .tag.blocked{color:#ff9aa8;background:#35161f}\n.fbi-sms-history-table{width:100%;border-collapse:collapse;min-width:760px;font-size:9px}.fbi-sms-history-table th{padding:8px;text-align:left;color:#737c8b;font-size:8px;text-transform:uppercase;border-bottom:1px solid #303642}.fbi-sms-history-table td{padding:9px 8px;border-bottom:1px solid #242a34;vertical-align:top}.fbi-sms-history-table td.num{text-align:right}\n.fbi-sms-pill{display:inline-flex;padding:4px 7px;border-radius:999px;font-size:7px;font-weight:900;text-transform:uppercase}.fbi-sms-pill.completed{background:#163126;color:#63e5a3}.fbi-sms-pill.partial{background:#382b13;color:#f2c15d}.fbi-sms-pill.failed{background:#3b1820;color:#ff8e9e}.fbi-sms-pill.ready{background:#163126;color:#63e5a3}\n.fbi-sms-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#8d96a5;font-size:9px}.fbi-sms-dot{width:8px;height:8px;border-radius:50%;background:#5a6575}.fbi-sms-dot.on{background:#43d18b;box-shadow:0 0 10px #43d18b66}\n.fbi-sms-empty{padding:30px;text-align:center;color:#6f7887;font-size:10px}.fbi-sms-warning{margin-top:12px;padding:10px 11px;border-radius:9px;border:1px solid #5a4721;background:#211b0f;color:#d7c28b;font-size:9px;line-height:1.5}.fbi-sms-confirm{display:flex;gap:8px;align-items:flex-start;margin-top:10px;color:#9aa3b1;font-size:9px;line-height:1.45}.fbi-sms-confirm input{width:auto;margin-top:2px}\n@media(max-width:980px){.fbi-sms-grid{grid-template-columns:1fr}.fbi-sms-stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.fbi-sms-top{flex-direction:column}.fbi-sms-row{flex-direction:column}.fbi-sms-stats{grid-template-columns:1fr 1fr}}\n</style>\n<script>\n(function(){\n'use strict';\nvar S={clients:[],campaigns:[],status:null,tab:'compose'};\nvar CUSTOMER='Happy Customer Service Week from Film Beyond Imagination! Thank you for trusting us. We are happy to serve you and share our services. Have a question or inquiry? Please contact us anytime. We look forward to going the extra mile for you. - FBI';\nfunction esc(s){return String(s==null?'':s).replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#039;'}[c];});}\nasync function api(path,opts){var o=opts||{},h=Object.assign({'Content-Type':'application/json'},o.headers||{});var r=await fetch(path,Object.assign({credentials:'same-origin',headers:h},o));var d={};try{d=await r.json();}catch(e){}if(!r.ok)throw new Error(d.error||'Request failed');return d;}\nfunction V(){return document.getElementById('view-sms');}function N(){return document.getElementById('fbiSmsNav');}\nfunction openSms(){document.querySelectorAll('.view').forEach(function(x){x.classList.remove('active');});var v=V();if(v)v.classList.add('active');var n=N();if(n)n.classList.add('active');var h=document.querySelector('.top h1');if(h)h.textContent='SMS Command Center';loadSms();}\nfunction addNav(){var nav=document.querySelector('.nav');if(!nav||N())return;var b=document.createElement('button');b.type='button';b.id='fbiSmsNav';b.className='nav-link';b.textContent='SMS Center';b.onclick=function(e){e.preventDefault();e.stopPropagation();openSms();};nav.appendChild(b);}\nfunction addView(){if(V())return;var main=document.querySelector('.main');if(!main)return;var v=document.createElement('section');v.id='view-sms';v.className='view fbi-sms-view';main.appendChild(v);}\nfunction render(){var v=V();if(!v)return;var s=S.status||{},cc=s.clientCounts||{},t=s.totals||{};v.innerHTML='<div class=\"fbi-sms-top\"><div><div class=\"fbi-sms-eyebrow\">CLIENT COMMUNICATIONS</div><h2>SMS Command Center</h2><p>Send a single message or broadcast directly from the Invoice Studio client database.</p></div><div class=\"fbi-sms-actions\"><button class=\"btn\" id=\"fbiSmsRefresh\">Refresh</button></div></div><div id=\"fbiSmsStats\" class=\"fbi-sms-stats\"><div class=\"fbi-sms-stat\"><span>Clients</span><b>'+Number(cc.total||0)+'</b></div><div class=\"fbi-sms-stat\"><span>SMS-ready</span><b>'+Number(cc.eligible||0)+'</b></div><div class=\"fbi-sms-stat\"><span>Accepted</span><b class=\"good\">'+Number(t.sent||0)+'</b></div><div class=\"fbi-sms-stat\"><span>Delivered</span><b class=\"good\">'+Number(t.delivered||0)+'</b></div></div><div class=\"fbi-sms-status\"><span class=\"fbi-sms-dot '+(s.configured?'on':'')+'\"></span><b style=\"color:#fff\">'+(s.configured?'SMS provider connected':'SMS provider not connected')+'</b><span>Provider: '+esc(String(s.provider||'Arkesel').toUpperCase())+'</span><span>Sender ID: '+esc(s.senderId||'-')+'</span><span>'+Number(cc.eligible||0)+' eligible clients</span></div><div style=\"height:14px\"></div><div class=\"fbi-sms-tabs\"><button class=\"fbi-sms-tab '+(S.tab==='compose'?'active':'')+'\" data-tab=\"compose\">Compose</button><button class=\"fbi-sms-tab '+(S.tab==='history'?'active':'')+'\" data-tab=\"history\">Campaign History</button><button class=\"fbi-sms-tab '+(S.tab==='clients'?'active':'')+'\" data-tab=\"clients\">Client SMS Status</button></div><div id=\"fbiSmsBody\"></div>';document.getElementById('fbiSmsRefresh').onclick=loadSms;document.querySelectorAll('.fbi-sms-tab').forEach(function(b){b.onclick=function(){S.tab=this.getAttribute('data-tab');render();renderBody();};});renderBody();}\nfunction renderBody(){var b=document.getElementById('fbiSmsBody');if(!b)return;if(S.tab==='history')renderHistory(b);else if(S.tab==='clients')renderClients(b);else renderComposer(b);}\nfunction template(t){if(t==='customer')return CUSTOMER;if(t==='thank')return 'Thank you for choosing Film Beyond Imagination. We truly appreciate your continued support. Please contact us anytime for photography, videography, live production, streaming or technology services. - FBI';return 'Hello from Film Beyond Imagination. We are checking in to see how we can support your next project. Please contact us with any questions or enquiries. - FBI';}\nfunction selectedKeys(){return Array.from(document.querySelectorAll('.fbi-sms-client input[data-key]:checked')).map(function(x){return x.getAttribute('data-key');});}function mode(){var x=document.querySelector('input[name=fbiSmsMode]:checked');return x?x.value:'all';}\nfunction renderList(){var box=document.getElementById('fbiSmsClientList');if(!box)return;var q=String((document.getElementById('fbiSmsSearch')||{}).value||'').toLowerCase();var list=S.clients.filter(function(c){return !q||(c.name||'').toLowerCase().includes(q)||(c.company||'').toLowerCase().includes(q)||(c.phone||'').toLowerCase().includes(q);});var keep=new Set(selectedKeys());box.innerHTML=list.length?list.map(function(c){return '<label class=\"fbi-sms-client\"><input type=\"checkbox\" data-key=\"'+esc(c.key)+'\"'+(keep.has(c.key)?' checked':'')+'><span class=\"grow\"><b>'+esc(c.name)+'</b><small>'+esc([c.company,c.phone||'No phone',c.email].filter(Boolean).join(' · '))+'</small></span><span class=\"tag '+(c.optedOut?'blocked':'')+'\">'+(c.optedOut?'SMS BLOCKED':'SMS READY')+'</span></label>';}).join(''):'<div class=\"fbi-sms-empty\">No matching clients.</div>';updateCount();}\nfunction updateCount(){var m=mode(),n=0,b=0;if(m==='all'){n=Number(S.status?.clientCounts?.eligible||0);b=Number(S.status?.clientCounts?.blocked||0);}else{var map={};S.clients.forEach(function(c){map[c.key]=c;});selectedKeys().forEach(function(k){var c=map[k];if(!c)return;if(c.optedOut)b++;else if(c.normalizedPhone)n++;});}var x=document.getElementById('fbiSmsAudienceCount');if(x)x.textContent=n+' eligible recipient'+(n===1?'':'s')+(b?' · '+b+' blocked':'');}\nfunction renderComposer(body){body.innerHTML='<div class=\"fbi-sms-grid\"><div class=\"fbi-sms-card\"><h3>Compose Message</h3><div class=\"fbi-sms-template-bar\"><button class=\"fbi-sms-template\" data-t=\"customer\">Customer Service Week</button><button class=\"fbi-sms-template\" data-t=\"thank\">Thank You</button><button class=\"fbi-sms-template\" data-t=\"follow\">Project Follow-up</button></div><div class=\"fbi-sms-row\"><div><label>Campaign Name</label><input id=\"fbiSmsCampaignName\" value=\"Customer Service Week 2026\"></div><div><label>Sender ID</label><input value=\"'+esc(S.status?.senderId||'-')+'\" readonly></div></div><label>Message</label><textarea id=\"fbiSmsMessage\" rows=\"9\" maxlength=\"1000\"></textarea><div class=\"fbi-sms-count\"><span id=\"fbiSmsCharCount\"></span><span>Plain text uses fewer SMS segments.</span></div><div class=\"fbi-sms-preview\"><div class=\"fbi-sms-preview-label\">Client Preview</div><div class=\"fbi-sms-bubble\" id=\"fbiSmsPreview\"></div></div><div class=\"fbi-sms-warning\"><strong>Bulk SMS:</strong> use this only for recipients who are permitted to receive the message. Blocked clients are automatically excluded.</div><label class=\"fbi-sms-confirm\"><input type=\"checkbox\" id=\"fbiSmsConfirm\"><span>I confirm that this campaign is appropriate for the selected recipients and that required permission/consent has been obtained where applicable.</span></label><div class=\"fbi-sms-actions\" style=\"margin-top:12px\"><button class=\"btn primary\" id=\"fbiSmsSend\">Send SMS Campaign</button></div></div><div class=\"fbi-sms-card\"><h3>Audience</h3><div class=\"fbi-sms-audience-options\"><label class=\"fbi-sms-radio\"><input type=\"radio\" name=\"fbiSmsMode\" value=\"all\" checked> All clients with a valid phone number</label><label class=\"fbi-sms-radio\"><input type=\"radio\" name=\"fbiSmsMode\" value=\"selected\"> Selected clients only</label></div><div class=\"fbi-sms-row\"><div><label>Search clients</label><input id=\"fbiSmsSearch\" placeholder=\"Search name, company or phone\"></div><div><label>Test Number</label><input id=\"fbiSmsTestNumber\" placeholder=\"024... or +233...\"></div></div><div class=\"fbi-sms-actions\" style=\"margin:10px 0\"><button class=\"btn\" id=\"fbiSmsSelectAll\">Select All Visible</button><button class=\"btn\" id=\"fbiSmsClear\">Clear</button><button class=\"btn\" id=\"fbiSmsTest\">Send Test SMS</button></div><div id=\"fbiSmsAudienceCount\" style=\"margin-bottom:7px;color:#8d96a5;font-size:9px\"></div><div id=\"fbiSmsClientList\" class=\"fbi-sms-client-list\"></div></div></div>';var msg=document.getElementById('fbiSmsMessage'),prev=document.getElementById('fbiSmsPreview'),cnt=document.getElementById('fbiSmsCharCount');msg.value=CUSTOMER;function update(){var v=msg.value||'',u=/[^\\x00-\\x7F]/.test(v),size=u?70:160,p=v?Math.ceil(v.length/size):0;cnt.textContent=v.length+' characters · '+p+' SMS part'+(p===1?'':'s')+(u?' · Unicode mode':'');prev.textContent=v||'Your message preview will appear here';}msg.oninput=update;update();document.querySelectorAll('.fbi-sms-template').forEach(function(b){b.onclick=function(){msg.value=template(this.getAttribute('data-t'));update();};});document.getElementById('fbiSmsSearch').oninput=renderList;document.querySelectorAll('input[name=fbiSmsMode]').forEach(function(r){r.onchange=updateCount;});document.getElementById('fbiSmsClientList').onchange=updateCount;document.getElementById('fbiSmsSelectAll').onclick=function(){document.querySelectorAll('.fbi-sms-client input[data-key]').forEach(function(x){x.checked=true;});updateCount();};document.getElementById('fbiSmsClear').onclick=function(){document.querySelectorAll('.fbi-sms-client input[data-key]').forEach(function(x){x.checked=false;});updateCount();};document.getElementById('fbiSmsTest').onclick=sendTest;document.getElementById('fbiSmsSend').onclick=sendCampaign;renderList();}\nasync function sendTest(){var phone=String((document.getElementById('fbiSmsTestNumber')||{}).value||'').trim(),msg=String((document.getElementById('fbiSmsMessage')||{}).value||'').trim();if(!phone||!msg){alert('Enter the test number and message.');return;}if(!confirm('Send a test SMS to '+phone+'?'))return;try{var d=await api('/api/sms/test',{method:'POST',body:JSON.stringify({phone:phone,message:msg,campaignName:(document.getElementById('fbiSmsCampaignName')||{}).value||'SMS Test'})});alert(d.message||'Test SMS accepted.');await loadSms();}catch(e){alert(e.message);}}\nasync function sendCampaign(){var msg=String((document.getElementById('fbiSmsMessage')||{}).value||'').trim(),name=String((document.getElementById('fbiSmsCampaignName')||{}).value||'').trim(),m=mode(),keys=selectedKeys(),count=parseInt(String((document.getElementById('fbiSmsAudienceCount')||{}).textContent||'0'),10)||0,ok=document.getElementById('fbiSmsConfirm');if(!msg){alert('Enter a message first.');return;}if(!count){alert('There are no eligible recipients in this audience.');return;}if(!ok||!ok.checked){alert('Please confirm the campaign recipient permission/consent before sending.');return;}if(!confirm('Send this SMS campaign to '+count+' eligible recipient'+(count===1?'':'s')+'?'))return;var btn=document.getElementById('fbiSmsSend');btn.disabled=true;try{var d=await api('/api/sms/send',{method:'POST',body:JSON.stringify({campaignName:name,message:msg,mode:m,clientKeys:keys,confirmMarketing:true})});alert((d.message||'Campaign sent.')+'\\nAccepted: '+d.accepted+'\\nFailed: '+d.failed+(d.skipped?'\\nBlocked/skipped: '+d.skipped:''));S.tab='history';await loadSms();}catch(e){alert(e.message);}finally{btn.disabled=false;}}\nfunction renderHistory(body){body.innerHTML='<div class=\"fbi-sms-card\"><h3>Campaign History</h3><p style=\"color:#7e8796;font-size:10px\">Campaigns and recipient results are stored in PostgreSQL.</p><div style=\"overflow:auto\"><table class=\"fbi-sms-history-table\"><thead><tr><th>Date</th><th>Campaign</th><th>Sender</th><th>Total</th><th>Accepted</th><th>Delivered</th><th>Failed</th><th>Status</th></tr></thead><tbody>'+(S.campaigns.length?S.campaigns.map(function(c){return '<tr><td>'+esc(new Date(Number(c.created_at)).toLocaleString('en-GH',{timeZone:'Africa/Accra'}))+'</td><td><b>'+esc(c.name)+'</b><div style=\"margin-top:4px;color:#70798a;max-width:360px;white-space:pre-wrap\">'+esc(String(c.message||'').slice(0,140))+'</div></td><td>'+esc(c.sender||'')+'</td><td class=\"num\">'+Number(c.total_recipients||0)+'</td><td class=\"num\">'+Number(c.accepted_count||0)+'</td><td class=\"num\">'+Number(c.delivered_count||0)+'</td><td class=\"num\">'+Number(c.failed_count||0)+'</td><td><span class=\"fbi-sms-pill '+esc(c.status||'')+'\">'+esc(c.status||'')+'</span></td></tr>';}).join(''):'<tr><td colspan=\"8\" class=\"fbi-sms-empty\">No SMS campaigns yet.</td></tr>')+'</tbody></table></div></div>';}\nfunction renderClients(body){body.innerHTML='<div class=\"fbi-sms-card\"><h3>Client SMS Status</h3><p style=\"color:#7e8796;font-size:10px\">This table is read directly from Invoice Studio client records. New phone numbers appear automatically.</p><div style=\"overflow:auto\"><table class=\"fbi-sms-history-table\"><thead><tr><th>Client</th><th>Phone</th><th>Email</th><th>Status</th><th>Action</th></tr></thead><tbody>'+(S.clients.length?S.clients.map(function(c){return '<tr><td><b>'+esc(c.name)+'</b>'+(c.company?'<div style=\"margin-top:3px;color:#6f7887\">'+esc(c.company)+'</div>':'')+'</td><td>'+esc(c.phone||'Not provided')+'</td><td>'+esc(c.email||'')+'</td><td>'+(c.normalizedPhone?(c.optedOut?'<span class=\"fbi-sms-pill failed\">blocked</span>':'<span class=\"fbi-sms-pill ready\">ready</span>'):'No phone')+'</td><td>'+(c.normalizedPhone?'<button class=\"btn\" data-block=\"'+esc(c.normalizedPhone)+'\">'+(c.optedOut?'Allow SMS':'Block SMS')+'</button>':'')+'</td></tr>';}).join(''):'<tr><td colspan=\"5\" class=\"fbi-sms-empty\">No clients found.</td></tr>')+'</tbody></table></div></div>';body.querySelectorAll('[data-block]').forEach(function(b){b.onclick=async function(){var phone=this.getAttribute('data-block'),c=S.clients.find(function(x){return x.normalizedPhone===phone;});if(!c)return;var block=!c.optedOut;if(!confirm((block?'Block ':'Allow ')+'SMS for '+c.name+'?'))return;try{await api('/api/sms/opt-out',{method:'POST',body:JSON.stringify({phone:phone,blocked:block})});await loadSms();}catch(e){alert(e.message);}};});}\nasync function loadSms(){try{var p=await Promise.all([api('/api/sms/status'),api('/api/sms/clients'),api('/api/sms/campaigns')]);S.status=p[0];S.clients=p[1].clients||[];S.campaigns=p[2].campaigns||[];render();}catch(e){var v=V();if(v)v.innerHTML='<div class=\"fbi-sms-card\"><h2>SMS Command Center</h2><p>Unable to load SMS data.</p><div class=\"fbi-sms-note\"><strong>SMS module error:</strong> '+esc(e.message)+'</div></div>';}}\nfunction boot(){addNav();addView();}\nif(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();\n})();\n</script>";
+  return "<style id=\"fbi-sms-style\">\n.fbi-sms-view{padding-bottom:40px}\n.fbi-sms-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}\n.fbi-sms-top h2{margin:0;font-size:20px}.fbi-sms-top p{margin:6px 0 0;color:#7e8796;font-size:11px}\n.fbi-sms-eyebrow{font-size:9px;letter-spacing:1.4px;color:#e63d7e;font-weight:900;text-transform:uppercase}\n.fbi-sms-actions{display:flex;gap:8px;flex-wrap:wrap}\n.fbi-sms-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:14px}\n.fbi-sms-card{background:linear-gradient(180deg,#171b23,#13161d);border:1px solid #2b303c;border-radius:12px;padding:16px}\n.fbi-sms-card h3{margin:0 0 12px;font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:#e63d7e}\n.fbi-sms-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}\n.fbi-sms-stat{background:#0f1218;border:1px solid #2b303c;border-radius:10px;padding:11px}.fbi-sms-stat span{display:block;color:#7e8796;font-size:8px;text-transform:uppercase}.fbi-sms-stat b{display:block;margin-top:5px;font-size:18px}.fbi-sms-stat .good{color:#63e5a3}\n.fbi-sms-tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid #2b303c;padding-bottom:8px}\n.fbi-sms-tab{border:1px solid #303642;background:#0d1016;color:#aeb6c4;border-radius:8px;padding:8px 12px;font-size:10px;font-weight:800}.fbi-sms-tab.active{background:#a80e4d;color:#fff;border-color:#bd1b63}\n.fbi-sms-row{display:flex;gap:9px}.fbi-sms-row>*{flex:1}\n.fbi-sms-template-bar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}\n.fbi-sms-template{font-size:9px;padding:7px 9px;border:1px solid #353c49;background:#0e1117;color:#c9d0db;border-radius:7px}\n.fbi-sms-count{display:flex;justify-content:space-between;gap:10px;margin-top:6px;color:#717b8a;font-size:9px}\n.fbi-sms-preview{margin-top:12px;background:#0c0f14;border:1px solid #2a303b;border-radius:10px;padding:13px}\n.fbi-sms-preview-label{font-size:8px;color:#6e7787;text-transform:uppercase;margin-bottom:7px}\n.fbi-sms-bubble{background:#1b222d;border-radius:4px 12px 12px 12px;padding:11px 12px;color:#eef2f7;font-size:11px;line-height:1.5;max-width:92%;white-space:pre-wrap}\n.fbi-sms-audience-options{display:grid;gap:8px;margin:11px 0}.fbi-sms-radio{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid #2c333e;background:#0f1218;border-radius:8px;color:#c6cdd7;font-size:10px}.fbi-sms-radio input{width:auto;margin:0}\n.fbi-sms-client-list{max-height:330px;overflow:auto;border:1px solid #2b303c;border-radius:9px;background:#0c0f14}\n.fbi-sms-client{display:flex;align-items:center;gap:8px;padding:8px 9px;border-bottom:1px solid #222832}.fbi-sms-client input[type=checkbox]{width:auto}.fbi-sms-client .grow{min-width:0;flex:1}.fbi-sms-client b{display:block;font-size:10px;color:#edf0f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fbi-sms-client small{display:block;color:#70798a;font-size:8px;margin-top:2px}.fbi-sms-client .tag{font-size:7px;color:#63e5a3;padding:3px 5px;border-radius:999px;background:#123325}.fbi-sms-client .tag.blocked{color:#ff9aa8;background:#35161f}\n.fbi-sms-history-table{width:100%;border-collapse:collapse;min-width:760px;font-size:9px}.fbi-sms-history-table th{padding:8px;text-align:left;color:#737c8b;font-size:8px;text-transform:uppercase;border-bottom:1px solid #303642}.fbi-sms-history-table td{padding:9px 8px;border-bottom:1px solid #242a34;vertical-align:top}.fbi-sms-history-table td.num{text-align:right}\n.fbi-sms-pill{display:inline-flex;padding:4px 7px;border-radius:999px;font-size:7px;font-weight:900;text-transform:uppercase}.fbi-sms-pill.completed{background:#163126;color:#63e5a3}.fbi-sms-pill.partial{background:#382b13;color:#f2c15d}.fbi-sms-pill.failed{background:#3b1820;color:#ff8e9e}.fbi-sms-pill.ready{background:#163126;color:#63e5a3}\n.fbi-sms-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#8d96a5;font-size:9px}.fbi-sms-dot{width:8px;height:8px;border-radius:50%;background:#5a6575}.fbi-sms-dot.on{background:#43d18b;box-shadow:0 0 10px #43d18b66}\n.fbi-sms-empty{padding:30px;text-align:center;color:#6f7887;font-size:10px}.fbi-sms-warning{margin-top:12px;padding:10px 11px;border-radius:9px;border:1px solid #5a4721;background:#211b0f;color:#d7c28b;font-size:9px;line-height:1.5}.fbi-sms-confirm{display:flex;gap:8px;align-items:flex-start;margin-top:10px;color:#9aa3b1;font-size:9px;line-height:1.45}.fbi-sms-confirm input{width:auto;margin-top:2px}\n@media(max-width:980px){.fbi-sms-grid{grid-template-columns:1fr}.fbi-sms-stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.fbi-sms-top{flex-direction:column}.fbi-sms-row{flex-direction:column}.fbi-sms-stats{grid-template-columns:1fr 1fr}}\n</style>\n<script>\n(function(){\n'use strict';\nvar S={clients:[],campaigns:[],status:null,tab:'compose'};\nvar CUSTOMER='Happy Customer Service Week from Film Beyond Imagination! Thank you for trusting us. We are happy to serve you and share our services. Have a question or inquiry? Please contact us anytime. We look forward to going the extra mile for you. - FBI';\nfunction esc(s){return String(s==null?'':s).replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#039;'}[c];});}\nasync function api(path,opts){var o=opts||{},h=Object.assign({'Content-Type':'application/json'},o.headers||{});var r=await fetch(path,Object.assign({credentials:'same-origin',headers:h},o));var d={};try{d=await r.json();}catch(e){}if(!r.ok)throw new Error(d.error||'Request failed');return d;}\nfunction V(){return document.getElementById('view-sms');}function N(){return document.getElementById('fbiSmsNav');}\nfunction openSms(){document.querySelectorAll('.view').forEach(function(x){x.classList.remove('active');});var v=V();if(v)v.classList.add('active');var n=N();if(n)n.classList.add('active');var h=document.querySelector('.top h1');if(h)h.textContent='SMS Command Center';loadSms();}\nfunction addNav(){var nav=document.querySelector('.nav');if(!nav||N())return;var b=document.createElement('button');b.type='button';b.id='fbiSmsNav';b.className='nav-link';b.textContent='SMS Center';b.onclick=function(e){e.preventDefault();e.stopPropagation();openSms();};nav.appendChild(b);}\nfunction addView(){if(V())return;var main=document.querySelector('.main');if(!main)return;var v=document.createElement('section');v.id='view-sms';v.className='view fbi-sms-view';main.appendChild(v);}\nfunction render(){var v=V();if(!v)return;var s=S.status||{},cc=s.clientCounts||{},t=s.totals||{};v.innerHTML='<div class=\"fbi-sms-top\"><div><div class=\"fbi-sms-eyebrow\">CLIENT COMMUNICATIONS</div><h2>SMS Command Center</h2><p>Send a single message or broadcast directly from the Invoice Studio client database.</p></div><div class=\"fbi-sms-actions\"><button class=\"btn\" id=\"fbiSmsRefresh\">Refresh</button></div></div><div id=\"fbiSmsStats\" class=\"fbi-sms-stats\"><div class=\"fbi-sms-stat\"><span>Clients</span><b>'+Number(cc.total||0)+'</b></div><div class=\"fbi-sms-stat\"><span>SMS-ready</span><b>'+Number(cc.eligible||0)+'</b></div><div class=\"fbi-sms-stat\"><span>Accepted</span><b class=\"good\">'+Number(t.sent||0)+'</b></div><div class=\"fbi-sms-stat\"><span>Delivered</span><b class=\"good\">'+Number(t.delivered||0)+'</b></div></div><div class=\"fbi-sms-status\"><span class=\"fbi-sms-dot '+(s.configured?'on':'')+'\"></span><b style=\"color:#fff\">'+(s.configured?'SMS gateway connected':'SMS gateway not connected')+'</b><span>Gateway: '+esc(String(s.provider||'SELF-HOSTED-GSM').toUpperCase())+'</span><span>SIM Line: '+esc(s.senderId||'Private SIM line')+'</span><span>'+Number(cc.eligible||0)+' eligible clients</span></div><div style=\"height:14px\"></div><div class=\"fbi-sms-tabs\"><button class=\"fbi-sms-tab '+(S.tab==='compose'?'active':'')+'\" data-tab=\"compose\">Compose</button><button class=\"fbi-sms-tab '+(S.tab==='history'?'active':'')+'\" data-tab=\"history\">Campaign History</button><button class=\"fbi-sms-tab '+(S.tab==='clients'?'active':'')+'\" data-tab=\"clients\">Client SMS Status</button></div><div id=\"fbiSmsBody\"></div>';document.getElementById('fbiSmsRefresh').onclick=loadSms;document.querySelectorAll('.fbi-sms-tab').forEach(function(b){b.onclick=function(){S.tab=this.getAttribute('data-tab');render();renderBody();};});renderBody();}\nfunction renderBody(){var b=document.getElementById('fbiSmsBody');if(!b)return;if(S.tab==='history')renderHistory(b);else if(S.tab==='clients')renderClients(b);else renderComposer(b);}\nfunction template(t){if(t==='customer')return CUSTOMER;if(t==='thank')return 'Thank you for choosing Film Beyond Imagination. We truly appreciate your continued support. Please contact us anytime for photography, videography, live production, streaming or technology services. - FBI';return 'Hello from Film Beyond Imagination. We are checking in to see how we can support your next project. Please contact us with any questions or enquiries. - FBI';}\nfunction selectedKeys(){return Array.from(document.querySelectorAll('.fbi-sms-client input[data-key]:checked')).map(function(x){return x.getAttribute('data-key');});}function mode(){var x=document.querySelector('input[name=fbiSmsMode]:checked');return x?x.value:'all';}\nfunction renderList(){var box=document.getElementById('fbiSmsClientList');if(!box)return;var q=String((document.getElementById('fbiSmsSearch')||{}).value||'').toLowerCase();var list=S.clients.filter(function(c){return !q||(c.name||'').toLowerCase().includes(q)||(c.company||'').toLowerCase().includes(q)||(c.phone||'').toLowerCase().includes(q);});var keep=new Set(selectedKeys());box.innerHTML=list.length?list.map(function(c){return '<label class=\"fbi-sms-client\"><input type=\"checkbox\" data-key=\"'+esc(c.key)+'\"'+(keep.has(c.key)?' checked':'')+'><span class=\"grow\"><b>'+esc(c.name)+'</b><small>'+esc([c.company,c.phone||'No phone',c.email].filter(Boolean).join(' · '))+'</small></span><span class=\"tag '+(c.optedOut?'blocked':'')+'\">'+(c.optedOut?'SMS BLOCKED':'SMS READY')+'</span></label>';}).join(''):'<div class=\"fbi-sms-empty\">No matching clients.</div>';updateCount();}\nfunction updateCount(){var m=mode(),n=0,b=0;if(m==='all'){n=Number(S.status?.clientCounts?.eligible||0);b=Number(S.status?.clientCounts?.blocked||0);}else{var map={};S.clients.forEach(function(c){map[c.key]=c;});selectedKeys().forEach(function(k){var c=map[k];if(!c)return;if(c.optedOut)b++;else if(c.normalizedPhone)n++;});}var x=document.getElementById('fbiSmsAudienceCount');if(x)x.textContent=n+' eligible recipient'+(n===1?'':'s')+(b?' · '+b+' blocked':'');}\nfunction renderComposer(body){body.innerHTML='<div class=\"fbi-sms-grid\"><div class=\"fbi-sms-card\"><h3>Compose Message</h3><div class=\"fbi-sms-template-bar\"><button class=\"fbi-sms-template\" data-t=\"customer\">Customer Service Week</button><button class=\"fbi-sms-template\" data-t=\"thank\">Thank You</button><button class=\"fbi-sms-template\" data-t=\"follow\">Project Follow-up</button></div><div class=\"fbi-sms-row\"><div><label>Campaign Name</label><input id=\"fbiSmsCampaignName\" value=\"Customer Service Week 2026\"></div><div><label>Sender ID</label><input value=\"'+esc(S.status?.senderId||'-')+'\" readonly></div></div><label>Message</label><textarea id=\"fbiSmsMessage\" rows=\"9\" maxlength=\"1000\"></textarea><div class=\"fbi-sms-count\"><span id=\"fbiSmsCharCount\"></span><span>Plain text uses fewer SMS segments. Your private gateway handles the actual SIM delivery.</span></div><div class=\"fbi-sms-preview\"><div class=\"fbi-sms-preview-label\">Client Preview</div><div class=\"fbi-sms-bubble\" id=\"fbiSmsPreview\"></div></div><div class=\"fbi-sms-warning\"><strong>Bulk SMS:</strong> use this only for recipients who are permitted to receive the message. Blocked clients are automatically excluded.</div><label class=\"fbi-sms-confirm\"><input type=\"checkbox\" id=\"fbiSmsConfirm\"><span>I confirm that this campaign is appropriate for the selected recipients and that required permission/consent has been obtained where applicable.</span></label><div class=\"fbi-sms-actions\" style=\"margin-top:12px\"><button class=\"btn primary\" id=\"fbiSmsSend\">Send SMS Campaign</button></div></div><div class=\"fbi-sms-card\"><h3>Audience</h3><div class=\"fbi-sms-audience-options\"><label class=\"fbi-sms-radio\"><input type=\"radio\" name=\"fbiSmsMode\" value=\"all\" checked> All clients with a valid phone number</label><label class=\"fbi-sms-radio\"><input type=\"radio\" name=\"fbiSmsMode\" value=\"selected\"> Selected clients only</label></div><div class=\"fbi-sms-row\"><div><label>Search clients</label><input id=\"fbiSmsSearch\" placeholder=\"Search name, company or phone\"></div><div><label>Test Number</label><input id=\"fbiSmsTestNumber\" placeholder=\"024... or +233...\"></div></div><div class=\"fbi-sms-actions\" style=\"margin:10px 0\"><button class=\"btn\" id=\"fbiSmsSelectAll\">Select All Visible</button><button class=\"btn\" id=\"fbiSmsClear\">Clear</button><button class=\"btn\" id=\"fbiSmsTest\">Send Test SMS</button></div><div id=\"fbiSmsAudienceCount\" style=\"margin-bottom:7px;color:#8d96a5;font-size:9px\"></div><div id=\"fbiSmsClientList\" class=\"fbi-sms-client-list\"></div></div></div>';var msg=document.getElementById('fbiSmsMessage'),prev=document.getElementById('fbiSmsPreview'),cnt=document.getElementById('fbiSmsCharCount');msg.value=CUSTOMER;function update(){var v=msg.value||'',u=/[^\\x00-\\x7F]/.test(v),size=u?70:160,p=v?Math.ceil(v.length/size):0;cnt.textContent=v.length+' characters · '+p+' SMS part'+(p===1?'':'s')+(u?' · Unicode mode':'');prev.textContent=v||'Your message preview will appear here';}msg.oninput=update;update();document.querySelectorAll('.fbi-sms-template').forEach(function(b){b.onclick=function(){msg.value=template(this.getAttribute('data-t'));update();};});document.getElementById('fbiSmsSearch').oninput=renderList;document.querySelectorAll('input[name=fbiSmsMode]').forEach(function(r){r.onchange=updateCount;});document.getElementById('fbiSmsClientList').onchange=updateCount;document.getElementById('fbiSmsSelectAll').onclick=function(){document.querySelectorAll('.fbi-sms-client input[data-key]').forEach(function(x){x.checked=true;});updateCount();};document.getElementById('fbiSmsClear').onclick=function(){document.querySelectorAll('.fbi-sms-client input[data-key]').forEach(function(x){x.checked=false;});updateCount();};document.getElementById('fbiSmsTest').onclick=sendTest;document.getElementById('fbiSmsSend').onclick=sendCampaign;renderList();}\nasync function sendTest(){var phone=String((document.getElementById('fbiSmsTestNumber')||{}).value||'').trim(),msg=String((document.getElementById('fbiSmsMessage')||{}).value||'').trim();if(!phone||!msg){alert('Enter the test number and message.');return;}if(!confirm('Send a test SMS to '+phone+'?'))return;try{var d=await api('/api/sms/test',{method:'POST',body:JSON.stringify({phone:phone,message:msg,campaignName:(document.getElementById('fbiSmsCampaignName')||{}).value||'SMS Test'})});alert(d.message||'Test SMS queued.');await loadSms();}catch(e){alert(e.message);}}\nasync function sendCampaign(){var msg=String((document.getElementById('fbiSmsMessage')||{}).value||'').trim(),name=String((document.getElementById('fbiSmsCampaignName')||{}).value||'').trim(),m=mode(),keys=selectedKeys(),count=parseInt(String((document.getElementById('fbiSmsAudienceCount')||{}).textContent||'0'),10)||0,ok=document.getElementById('fbiSmsConfirm');if(!msg){alert('Enter a message first.');return;}if(!count){alert('There are no eligible recipients in this audience.');return;}if(!ok||!ok.checked){alert('Please confirm the campaign recipient permission/consent before sending.');return;}if(!confirm('Send this SMS campaign to '+count+' eligible recipient'+(count===1?'':'s')+'?'))return;var btn=document.getElementById('fbiSmsSend');btn.disabled=true;try{var d=await api('/api/sms/send',{method:'POST',body:JSON.stringify({campaignName:name,message:msg,mode:m,clientKeys:keys,confirmMarketing:true})});alert((d.message||'Campaign sent.')+'\\nAccepted: '+d.accepted+'\\nFailed: '+d.failed+(d.skipped?'\\nBlocked/skipped: '+d.skipped:''));S.tab='history';await loadSms();}catch(e){alert(e.message);}finally{btn.disabled=false;}}\nfunction renderHistory(body){body.innerHTML='<div class=\"fbi-sms-card\"><h3>Campaign History</h3><p style=\"color:#7e8796;font-size:10px\">Campaigns and recipient results are stored in PostgreSQL. SMS is sent through your private GSM gateway, not a third-party SMS provider.</p><div style=\"overflow:auto\"><table class=\"fbi-sms-history-table\"><thead><tr><th>Date</th><th>Campaign</th><th>SIM Line</th><th>Total</th><th>Accepted</th><th>Delivered</th><th>Failed</th><th>Status</th></tr></thead><tbody>'+(S.campaigns.length?S.campaigns.map(function(c){return '<tr><td>'+esc(new Date(Number(c.created_at)).toLocaleString('en-GH',{timeZone:'Africa/Accra'}))+'</td><td><b>'+esc(c.name)+'</b><div style=\"margin-top:4px;color:#70798a;max-width:360px;white-space:pre-wrap\">'+esc(String(c.message||'').slice(0,140))+'</div></td><td>'+esc(c.sender||'')+'</td><td class=\"num\">'+Number(c.total_recipients||0)+'</td><td class=\"num\">'+Number(c.accepted_count||0)+'</td><td class=\"num\">'+Number(c.delivered_count||0)+'</td><td class=\"num\">'+Number(c.failed_count||0)+'</td><td><span class=\"fbi-sms-pill '+esc(c.status||'')+'\">'+esc(c.status||'')+'</span></td></tr>';}).join(''):'<tr><td colspan=\"8\" class=\"fbi-sms-empty\">No SMS campaigns yet.</td></tr>')+'</tbody></table></div></div>';}\nfunction renderClients(body){body.innerHTML='<div class=\"fbi-sms-card\"><h3>Client SMS Status</h3><p style=\"color:#7e8796;font-size:10px\">This table is read directly from Invoice Studio client records. New phone numbers appear automatically.</p><div style=\"overflow:auto\"><table class=\"fbi-sms-history-table\"><thead><tr><th>Client</th><th>Phone</th><th>Email</th><th>Status</th><th>Action</th></tr></thead><tbody>'+(S.clients.length?S.clients.map(function(c){return '<tr><td><b>'+esc(c.name)+'</b>'+(c.company?'<div style=\"margin-top:3px;color:#6f7887\">'+esc(c.company)+'</div>':'')+'</td><td>'+esc(c.phone||'Not provided')+'</td><td>'+esc(c.email||'')+'</td><td>'+(c.normalizedPhone?(c.optedOut?'<span class=\"fbi-sms-pill failed\">blocked</span>':'<span class=\"fbi-sms-pill ready\">ready</span>'):'No phone')+'</td><td>'+(c.normalizedPhone?'<button class=\"btn\" data-block=\"'+esc(c.normalizedPhone)+'\">'+(c.optedOut?'Allow SMS':'Block SMS')+'</button>':'')+'</td></tr>';}).join(''):'<tr><td colspan=\"5\" class=\"fbi-sms-empty\">No clients found.</td></tr>')+'</tbody></table></div></div>';body.querySelectorAll('[data-block]').forEach(function(b){b.onclick=async function(){var phone=this.getAttribute('data-block'),c=S.clients.find(function(x){return x.normalizedPhone===phone;});if(!c)return;var block=!c.optedOut;if(!confirm((block?'Block ':'Allow ')+'SMS for '+c.name+'?'))return;try{await api('/api/sms/opt-out',{method:'POST',body:JSON.stringify({phone:phone,blocked:block})});await loadSms();}catch(e){alert(e.message);}};});}\nasync function loadSms(){try{var p=await Promise.all([api('/api/sms/status'),api('/api/sms/clients'),api('/api/sms/campaigns')]);S.status=p[0];S.clients=p[1].clients||[];S.campaigns=p[2].campaigns||[];render();}catch(e){var v=V();if(v)v.innerHTML='<div class=\"fbi-sms-card\"><h2>SMS Command Center</h2><p>Unable to load SMS data.</p><div class=\"fbi-sms-note\"><strong>SMS gateway module error:</strong> '+esc(e.message)+'</div></div>';}}\nfunction boot(){addNav();addView();}\nif(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();\n})();\n</script>";
 }
 async function sendIndex(res) {
   try {
@@ -597,7 +597,6 @@ async function handleAuthLogout(req, res) {
   clearSessionCookie(res);
   return json(res, 200, { ok: true });
 }
-
 async function handleAuthRecoveryQuestions(res) {
   const account = await getAccount();
   if (!account) return json(res, 404, { ok: false, error: 'No administrator account exists yet.' });
@@ -1090,198 +1089,106 @@ async function handleDraftDelete(req, res) {
 }
 
 // ===== SMS CENTER =====
-const SMS_PROVIDER = String(process.env.SMS_PROVIDER || 'arkesel').trim().toLowerCase();
-const ARKESEL_API_KEY = String(process.env.ARKESEL_API_KEY || '').trim();
-const ARKESEL_SENDER_ID = String(process.env.ARKESEL_SENDER_ID || 'FBI').trim().slice(0, 11);
+const SMS_PROVIDER = 'self-hosted-gsm';
 const SMS_ENABLED = String(process.env.SMS_ENABLED || 'false').toLowerCase() === 'true';
-const SMS_SANDBOX = String(process.env.SMS_SANDBOX || 'false').toLowerCase() === 'true';
-const SMS_WEBHOOK_URL = String(process.env.SMS_WEBHOOK_URL || 'https://invoice.fbigh.com/api/sms/webhook').trim();
-const SMS_WEBHOOK_SECRET = String(process.env.SMS_WEBHOOK_SECRET || '').trim();
-const SMS_BATCH_SIZE = Math.max(1, Math.min(1000, Number(process.env.SMS_BATCH_SIZE || 200)));
+const SMS_GATEWAY_ENABLED = String(process.env.SMS_GATEWAY_ENABLED || 'true').toLowerCase() === 'true';
+const SMS_GATEWAY_TOKEN = String(process.env.SMS_GATEWAY_TOKEN || '').trim();
+const SMS_GATEWAY_NAME = String(process.env.SMS_GATEWAY_NAME || 'FBI Private SMS Gateway').trim();
+const SMS_GATEWAY_LINE = String(process.env.SMS_GATEWAY_LINE || 'Private SIM line').trim().slice(0, 40);
+const SMS_GATEWAY_OFFLINE_AFTER_MS = Math.max(30000, Number(process.env.SMS_GATEWAY_OFFLINE_AFTER_MS || 90000));
 
 async function ensureSmsTables() {
-  await pool.query('CREATE TABLE IF NOT EXISTS sms_campaigns (id UUID PRIMARY KEY,name TEXT NOT NULL,sender TEXT NOT NULL,message TEXT NOT NULL,total_recipients INTEGER NOT NULL DEFAULT 0,accepted_count INTEGER NOT NULL DEFAULT 0,delivered_count INTEGER NOT NULL DEFAULT 0,failed_count INTEGER NOT NULL DEFAULT 0,skipped_count INTEGER NOT NULL DEFAULT 0,status TEXT NOT NULL DEFAULT \'queued\',created_at BIGINT NOT NULL,created_by TEXT)');
+  await pool.query('CREATE TABLE IF NOT EXISTS sms_campaigns (id UUID PRIMARY KEY,name TEXT NOT NULL,sender TEXT NOT NULL,message TEXT NOT NULL,total_recipients INTEGER NOT NULL DEFAULT 0,accepted_count INTEGER NOT NULL DEFAULT 0,delivered_count INTEGER NOT NULL DEFAULT 0,failed_count INTEGER NOT NULL DEFAULT 0,skipped_count INTEGER NOT NULL DEFAULT 0,status TEXT NOT NULL DEFAULT \\'queued\\',created_at BIGINT NOT NULL,created_by TEXT)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_sms_campaigns_created_at ON sms_campaigns(created_at DESC)');
-  await pool.query('CREATE TABLE IF NOT EXISTS sms_message_log (id BIGSERIAL PRIMARY KEY,campaign_id UUID NOT NULL REFERENCES sms_campaigns(id) ON DELETE CASCADE,client_id TEXT,client_name TEXT,phone TEXT NOT NULL,message TEXT NOT NULL,status TEXT NOT NULL DEFAULT \'queued\',provider_status TEXT,provider_message_id TEXT,error_message TEXT,created_at BIGINT NOT NULL,delivered_at BIGINT)');
+  await pool.query('CREATE TABLE IF NOT EXISTS sms_message_log (id BIGSERIAL PRIMARY KEY,campaign_id UUID NOT NULL REFERENCES sms_campaigns(id) ON DELETE CASCADE,client_id TEXT,client_name TEXT,phone TEXT NOT NULL,message TEXT NOT NULL,status TEXT NOT NULL DEFAULT \\'queued\\',provider_status TEXT,provider_message_id TEXT,error_message TEXT,created_at BIGINT NOT NULL,delivered_at BIGINT)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_sms_message_log_campaign ON sms_message_log(campaign_id,created_at DESC)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_sms_message_log_provider_id ON sms_message_log(provider_message_id)');
   await pool.query('CREATE TABLE IF NOT EXISTS sms_opt_out (phone TEXT PRIMARY KEY,reason TEXT,created_at BIGINT NOT NULL)');
+  await pool.query('ALTER TABLE sms_message_log ADD COLUMN IF NOT EXISTS gateway_claimed_at BIGINT');
+  await pool.query('ALTER TABLE sms_message_log ADD COLUMN IF NOT EXISTS gateway_attempts INTEGER NOT NULL DEFAULT 0');
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_sms_message_log_gateway_queue ON sms_message_log(status,gateway_claimed_at,created_at)');
+  await pool.query('CREATE TABLE IF NOT EXISTS sms_gateway_state (id INTEGER PRIMARY KEY CHECK (id=1),gateway_id TEXT NOT NULL,gateway_name TEXT NOT NULL,sim_line TEXT,port_label TEXT,modem_status TEXT NOT NULL DEFAULT \\'unknown\\',last_seen BIGINT NOT NULL,updated_at BIGINT NOT NULL,detail TEXT)');
 }
 
 function smsConfigured() {
-  return SMS_ENABLED && SMS_PROVIDER === 'arkesel' && !!ARKESEL_API_KEY && !!ARKESEL_SENDER_ID;
+  return SMS_ENABLED && SMS_GATEWAY_ENABLED && !!SMS_GATEWAY_TOKEN;
+}
+
+function gatewayAuthorized(req) {
+  if (!SMS_GATEWAY_TOKEN) return false;
+  const header=String(req.headers['x-fbi-sms-gateway-token']||'').trim();
+  const auth=String(req.headers.authorization||'').trim();
+  const supplied=header||(auth.toLowerCase().startsWith('bearer ')?auth.slice(7).trim():'');
+  if(!supplied)return false;
+  const a=Buffer.from(supplied),b=Buffer.from(SMS_GATEWAY_TOKEN);
+  return a.length===b.length&&crypto.timingSafeEqual(a,b);
 }
 
 function normalizeSmsPhone(value) {
-  let s = String(value || '').trim().replace(/[\s()\-.]/g, '');
-  if (!s) return '';
-  if (s.startsWith('00')) s = '+' + s.slice(2);
-  if (s.startsWith('+233')) s = '233' + s.slice(4);
-  if (s.startsWith('233')) return /^233\d{9}$/.test(s) ? s : '';
-  if (s.startsWith('0') && /^0\d{9}$/.test(s)) return '233' + s.slice(1);
-  if (/^\d{9}$/.test(s)) return '233' + s;
-  if (/^\d{10,15}$/.test(s)) return s;
+  let s=String(value||'').trim().replace(/[\s()\-.]/g,'');
+  if(!s)return '';
+  if(s.startsWith('00'))s='+'+s.slice(2);
+  if(s.startsWith('+233'))s='233'+s.slice(4);
+  if(s.startsWith('233'))return /^233\d{9}$/.test(s)?s:'';
+  if(s.startsWith('0')&&/^0\d{9}$/.test(s))return '233'+s.slice(1);
+  if(/^\d{9}$/.test(s))return '233'+s;
+  if(/^\d{10,15}$/.test(s))return s;
   return '';
 }
 
-function smsClientKey(client) {
-  const id = String(client?.id || '').trim();
-  if (id) return id;
-  return 'contact:' + String(client?.name || '').trim().toLowerCase() + '|' + normalizeSmsPhone(client?.phone);
+function smsClientKey(client){
+  const id=String(client?.id||'').trim();
+  return id||('contact:'+String(client?.name||'').trim().toLowerCase()+'|'+normalizeSmsPhone(client?.phone));
 }
 
-async function loadInvoiceStateForSms() {
-  const q = await pool.query('SELECT state_json FROM app_state WHERE id=1');
-  let state = q.rows[0]?.state_json || null;
-  if (typeof state === 'string') {
-    try { state = JSON.parse(state); } catch { state = null; }
-  }
-  if (!state?.data || !Array.isArray(state.data.clients)) return { data: { clients: [], data: [], settings: {} } };
+async function loadInvoiceStateForSms(){
+  const q=await pool.query('SELECT state_json FROM app_state WHERE id=1');
+  let state=q.rows[0]?.state_json||null;
+  if(typeof state==='string'){try{state=JSON.parse(state)}catch{state=null}}
+  if(!state?.data||!Array.isArray(state.data.clients))return {data:{clients:[],data:[],settings:{}}};
   return state;
 }
 
-async function loadSmsOptOutSet() {
-  const q = await pool.query('SELECT phone FROM sms_opt_out');
-  return new Set(q.rows.map(r => String(r.phone || '').trim()).filter(Boolean));
+async function loadSmsOptOutSet(){
+  const q=await pool.query('SELECT phone FROM sms_opt_out');
+  return new Set(q.rows.map(r=>String(r.phone||'').trim()).filter(Boolean));
 }
 
-function smsWebhookCallbackUrl() {
-  if (!SMS_WEBHOOK_URL) return '';
-  try {
-    const u = new URL(SMS_WEBHOOK_URL);
-    if (SMS_WEBHOOK_SECRET) u.searchParams.set('token', SMS_WEBHOOK_SECRET);
-    return u.toString();
-  } catch { return ''; }
+async function smsGatewaySnapshot(){
+  const q=await pool.query('SELECT gateway_id,gateway_name,sim_line,port_label,modem_status,last_seen,updated_at,detail FROM sms_gateway_state WHERE id=1');
+  const row=q.rows[0]||null;
+  const online=!!row&&(Date.now()-Number(row.last_seen||0)<=SMS_GATEWAY_OFFLINE_AFTER_MS)&&String(row.modem_status||'').toLowerCase()==='online';
+  return {online,gatewayId:row?.gateway_id||null,gatewayName:row?.gateway_name||SMS_GATEWAY_NAME,simLine:row?.sim_line||SMS_GATEWAY_LINE,portLabel:row?.port_label||'',modemStatus:row?.modem_status||'offline',lastSeen:Number(row?.last_seen||0)||null,detail:row?.detail||''};
 }
 
-async function arkeselSendBatch(message, recipients) {
-  const payload = { sender: ARKESEL_SENDER_ID, message: String(message), recipients: recipients.map(x => x.phone) };
-  const callback = smsWebhookCallbackUrl();
-  if (callback) payload.callback_url = callback;
-  if (SMS_SANDBOX) payload.sandbox = true;
-  let response;
-  let body = {};
-  try {
-    response = await fetch('https://sms.arkesel.com/api/v2/sms/send', {
-      method: 'POST',
-      headers: { 'api-key': ARKESEL_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    body = await response.json().catch(() => ({}));
-  } catch (err) {
-    return { ok: false, status: 0, error: err.message || 'Unable to reach SMS provider.', sent: [], failed: recipients };
-  }
-
-  const idByPhone = new Map();
-  const invalid = new Set();
-  const data = body?.data;
-  if (Array.isArray(data)) {
-    for (const item of data) {
-      if (!item || typeof item !== 'object') continue;
-      const phone = normalizeSmsPhone(item.recipient || item.phone || '');
-      const id = String(item.id || item.message_id || '').trim();
-      if (phone && id) idByPhone.set(phone, id);
-      if (Array.isArray(item['invalid numbers'])) {
-        for (const p of item['invalid numbers']) {
-          const n = normalizeSmsPhone(p);
-          if (n) invalid.add(n);
-        }
-      }
-    }
-  } else if (data && typeof data === 'object' && recipients.length === 1) {
-    const id = String(data.id || data.message_id || '').trim();
-    if (id) idByPhone.set(recipients[0].phone, id);
-  }
-
-  const okStatus = response.ok && (String(body?.status || '').toLowerCase() === 'success' || response.status === 200);
-  const providerError = String(body?.message || body?.error?.message || 'SMS provider request failed.');
-  const sent = [];
-  const failed = [];
-  for (const r of recipients) {
-    if (invalid.has(r.phone)) failed.push({ ...r, error: 'The SMS provider rejected this phone number.' });
-    else if (okStatus) sent.push({ ...r, providerMessageId: idByPhone.get(r.phone) || null });
-    else failed.push({ ...r, error: providerError });
-  }
-  return { ok: okStatus, status: response.status, body, sent, failed, error: okStatus ? null : providerError };
+async function refreshSmsCampaign(campaignId){
+  const q=await pool.query(`
+    SELECT
+      COUNT(*)::int AS total,
+      COUNT(*) FILTER (WHERE status IN ('sent','delivered'))::int AS accepted,
+      COUNT(*) FILTER (WHERE status='delivered')::int AS delivered,
+      COUNT(*) FILTER (WHERE status='failed')::int AS failed,
+      COUNT(*) FILTER (WHERE status='queued')::int AS queued,
+      COUNT(*) FILTER (WHERE status='processing')::int AS processing
+    FROM sms_message_log WHERE campaign_id=$1
+  `,[campaignId]);
+  const r=q.rows[0]||{};
+  const total=Number(r.total||0),accepted=Number(r.accepted||0),delivered=Number(r.delivered||0),failed=Number(r.failed||0),queued=Number(r.queued||0),processing=Number(r.processing||0);
+  let status='queued';
+  if(!total)status='failed';
+  else if(queued||processing)status='sending';
+  else if(accepted===total)status='completed';
+  else if(accepted>0)status='partial';
+  else if(failed===total)status='failed';
+  else status='partial';
+  await pool.query('UPDATE sms_campaigns SET accepted_count=$2,delivered_count=$3,failed_count=$4,status=$5 WHERE id=$1',[campaignId,accepted,delivered,failed,status]);
+  return {total,accepted,delivered,failed,queued,processing,status};
 }
 
-async function createSmsCampaignRecord(args) {
-  const id = crypto.randomUUID();
-  await pool.query(
-    'INSERT INTO sms_campaigns(id,name,sender,message,total_recipients,accepted_count,delivered_count,failed_count,skipped_count,status,created_at,created_by) VALUES($1,$2,$3,$4,$5,0,0,0,$6,\'sending\',$7,$8)',
-    [id, args.name, args.sender, args.message, args.total, args.skipped, Date.now(), args.createdBy || 'Admin']
-  );
+async function createSmsCampaignRecord(args){
+  const id=crypto.randomUUID();
+  await pool.query('INSERT INTO sms_campaigns(id,name,sender,message,total_recipients,accepted_count,delivered_count,failed_count,skipped_count,status,created_at,created_by) VALUES($1,$2,$3,$4,$5,0,0,0,$6,\\'queued\\',$7,$8)',[id,args.name,args.sender,args.message,args.total,args.skipped,Date.now(),args.createdBy||'Admin']);
   return id;
-}
-
-async function logSmsBatch(campaignId, sent, failed, message) {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    for (const r of sent) {
-      await client.query(
-        'INSERT INTO sms_message_log(campaign_id,client_id,client_name,phone,message,status,provider_status,provider_message_id,error_message,created_at) VALUES($1,$2,$3,$4,$5,\'sent\',\'SUBMITTED\',$6,NULL,$7)',
-        [campaignId, r.clientId || null, r.clientName || null, r.phone, message, r.providerMessageId || null, Date.now()]
-      );
-    }
-    for (const r of failed) {
-      await client.query(
-        'INSERT INTO sms_message_log(campaign_id,client_id,client_name,phone,message,status,provider_status,provider_message_id,error_message,created_at) VALUES($1,$2,$3,$4,$5,\'failed\',\'NOT_DELIVERED\',NULL,$6,$7)',
-        [campaignId, r.clientId || null, r.clientName || null, r.phone, message, r.error || 'SMS failed', Date.now()]
-      );
-    }
-    await client.query('UPDATE sms_campaigns SET accepted_count=accepted_count+$2,failed_count=failed_count+$3 WHERE id=$1',[campaignId,sent.length,failed.length]);
-    await client.query('COMMIT');
-  } catch (err) {
-    try { await client.query('ROLLBACK'); } catch {}
-    throw err;
-  } finally {
-    client.release();
-  }
-}
-
-async function handleSmsStatus(req, res) {
-  const session = await requireAuth(req, res);
-  if (!session) return;
-  const state = await loadInvoiceStateForSms();
-  const clients = Array.isArray(state?.data?.clients) ? state.data.clients : [];
-  const optOuts = await loadSmsOptOutSet();
-  const withPhones = clients.filter(c => !!normalizeSmsPhone(c?.phone));
-  const blocked = withPhones.filter(c => optOuts.has(normalizeSmsPhone(c?.phone)));
-  const totals = await pool.query("SELECT COUNT(*)::int AS messages,COUNT(*) FILTER (WHERE status='sent')::int AS sent,COUNT(*) FILTER (WHERE status='delivered')::int AS delivered,COUNT(*) FILTER (WHERE status='failed')::int AS failed FROM sms_message_log");
-  const campaigns = await pool.query('SELECT id,name,total_recipients,accepted_count,delivered_count,failed_count,skipped_count,status,created_at,created_by FROM sms_campaigns ORDER BY created_at DESC LIMIT 8');
-  return json(res,200,{ok:true,configured:smsConfigured(),provider:SMS_PROVIDER,senderId:ARKESEL_SENDER_ID,sandbox:SMS_SANDBOX,clientCounts:{total:clients.length,withPhone:withPhones.length,blocked:blocked.length,eligible:Math.max(0,withPhones.length-blocked.length)},totals:totals.rows[0]||{messages:0,sent:0,delivered:0,failed:0},campaigns:campaigns.rows});
-}
-
-async function handleSmsClients(req, res) {
-  const session = await requireAuth(req, res);
-  if (!session) return;
-  const state = await loadInvoiceStateForSms();
-  const optOuts = await loadSmsOptOutSet();
-  const clients = (Array.isArray(state?.data?.clients) ? state.data.clients : []).map(c => {
-    const phone = normalizeSmsPhone(c?.phone);
-    return {key:smsClientKey(c),id:c?.id?String(c.id):'',name:String(c?.name||c?.company||'Client').trim(),company:String(c?.company||'').trim(),phone:String(c?.phone||'').trim(),normalizedPhone:phone,email:String(c?.email||'').trim(),optedOut:!!phone&&optOuts.has(phone)};
-  }).sort((a,b)=>a.name.localeCompare(b.name));
-  return json(res,200,{ok:true,clients});
-}
-
-async function handleSmsCampaigns(req,res) {
-  const session=await requireAuth(req,res);
-  if(!session)return;
-  const q=await pool.query('SELECT id,name,sender,message,total_recipients,accepted_count,delivered_count,failed_count,skipped_count,status,created_at,created_by FROM sms_campaigns ORDER BY created_at DESC LIMIT 100');
-  return json(res,200,{ok:true,campaigns:q.rows});
-}
-
-async function handleSmsBalance(req,res) {
-  const session=await requireAuth(req,res);
-  if(!session)return;
-  if(!smsConfigured())return json(res,503,{ok:false,error:'SMS is not configured.'});
-  try{
-    const r=await fetch('https://sms.arkesel.com/api/v2/clients/balance-details',{headers:{'api-key':ARKESEL_API_KEY}});
-    const body=await r.json().catch(()=>({}));
-    if(!r.ok)return json(res,502,{ok:false,error:body?.message||'Unable to read SMS balance.'});
-    return json(res,200,{ok:true,smsBalance:body?.data?.sms_balance??body?.sms_balance??null,mainBalance:body?.data?.main_balance??body?.main_balance??null});
-  }catch(err){return json(res,502,{ok:false,error:err.message||'Unable to read SMS balance.'});}
 }
 
 function chooseSmsRecipients(clients,body,optOuts){
@@ -1299,10 +1206,60 @@ function chooseSmsRecipients(clients,body,optOuts){
   return {recipients:out,skipped};
 }
 
+async function logQueuedSms(campaignId,recipients,message){
+  const client=await pool.connect();
+  try{
+    await client.query('BEGIN');
+    for(const r of recipients){
+      await client.query('INSERT INTO sms_message_log(campaign_id,client_id,client_name,phone,message,status,created_at) VALUES($1,$2,$3,$4,$5,\\'queued\\',$6)',[campaignId,r.clientId||null,r.clientName||null,r.phone,message,Date.now()]);
+    }
+    await client.query('COMMIT');
+  }catch(err){try{await client.query('ROLLBACK')}catch{}throw err;}finally{client.release();}
+}
+
+async function handleSmsStatus(req,res){
+  const session=await requireAuth(req,res);if(!session)return;
+  const state=await loadInvoiceStateForSms(),clients=Array.isArray(state?.data?.clients)?state.data.clients:[];
+  const optOuts=await loadSmsOptOutSet(),withPhones=clients.filter(c=>!!normalizeSmsPhone(c?.phone)),blocked=withPhones.filter(c=>optOuts.has(normalizeSmsPhone(c?.phone)));
+  const totals=await pool.query(`
+    SELECT COUNT(*)::int AS messages,
+      COUNT(*) FILTER (WHERE status='queued')::int AS queued,
+      COUNT(*) FILTER (WHERE status='processing')::int AS processing,
+      COUNT(*) FILTER (WHERE status IN ('sent','delivered'))::int AS sent,
+      COUNT(*) FILTER (WHERE status='delivered')::int AS delivered,
+      COUNT(*) FILTER (WHERE status='failed')::int AS failed
+    FROM sms_message_log
+  `);
+  const gateway=await smsGatewaySnapshot();
+  const campaigns=await pool.query('SELECT id,name,total_recipients,accepted_count,delivered_count,failed_count,skipped_count,status,created_at,created_by FROM sms_campaigns ORDER BY created_at DESC LIMIT 8');
+  return json(res,200,{ok:true,configured:smsConfigured(),provider:SMS_PROVIDER,senderId:gateway.simLine,gateway,clientCounts:{total:clients.length,withPhone:withPhones.length,blocked:blocked.length,eligible:Math.max(0,withPhones.length-blocked.length)},totals:totals.rows[0]||{messages:0,queued:0,processing:0,sent:0,delivered:0,failed:0},campaigns:campaigns.rows});
+}
+
+async function handleSmsClients(req,res){
+  const session=await requireAuth(req,res);if(!session)return;
+  const state=await loadInvoiceStateForSms(),optOuts=await loadSmsOptOutSet();
+  const clients=(Array.isArray(state?.data?.clients)?state.data.clients:[]).map(c=>{
+    const phone=normalizeSmsPhone(c?.phone);
+    return {key:smsClientKey(c),id:c?.id?String(c.id):'',name:String(c?.name||c?.company||'Client').trim(),company:String(c?.company||'').trim(),phone:String(c?.phone||'').trim(),normalizedPhone:phone,email:String(c?.email||'').trim(),optedOut:!!phone&&optOuts.has(phone)};
+  }).sort((a,b)=>a.name.localeCompare(b.name));
+  return json(res,200,{ok:true,clients});
+}
+
+async function handleSmsCampaigns(req,res){
+  const session=await requireAuth(req,res);if(!session)return;
+  const q=await pool.query('SELECT id,name,sender,message,total_recipients,accepted_count,delivered_count,failed_count,skipped_count,status,created_at,created_by FROM sms_campaigns ORDER BY created_at DESC LIMIT 100');
+  return json(res,200,{ok:true,campaigns:q.rows});
+}
+
+async function handleSmsBalance(req,res){
+  const session=await requireAuth(req,res);if(!session)return;
+  const gateway=await smsGatewaySnapshot();
+  return json(res,200,{ok:true,selfHosted:true,message:'No SMS provider balance is used. Messages are sent through the private GSM gateway and its SIM.',gateway});
+}
+
 async function handleSmsSend(req,res){
-  const session=await requireAuth(req,res);
-  if(!session)return;
-  if(!smsConfigured())return json(res,503,{ok:false,error:'SMS is not configured. Add SMS_ENABLED=true, ARKESEL_API_KEY and ARKESEL_SENDER_ID in Railway.'});
+  const session=await requireAuth(req,res);if(!session)return;
+  if(!smsConfigured())return json(res,503,{ok:false,error:'Self-hosted SMS is not configured. Set SMS_ENABLED=true, SMS_GATEWAY_ENABLED=true and SMS_GATEWAY_TOKEN in Railway.'});
   try{
     const body=await parseJsonBody(req);
     const name=String(body?.campaignName||'').trim()||('SMS Campaign '+new Date().toLocaleDateString('en-GH'));
@@ -1310,46 +1267,32 @@ async function handleSmsSend(req,res){
     if(!message)return json(res,400,{ok:false,error:'Message is required.'});
     if(message.length>1000)return json(res,400,{ok:false,error:'Message is too long. Keep it within 1,000 characters.'});
     if(body?.confirmMarketing!==true)return json(res,400,{ok:false,error:'Please confirm that the selected contacts are permitted to receive this SMS campaign.'});
-    const state=await loadInvoiceStateForSms();
-    const clients=Array.isArray(state?.data?.clients)?state.data.clients:[];
-    const optOuts=await loadSmsOptOutSet();
-    const chosen=chooseSmsRecipients(clients,body,optOuts);
+    const state=await loadInvoiceStateForSms(),clients=Array.isArray(state?.data?.clients)?state.data.clients:[],optOuts=await loadSmsOptOutSet(),chosen=chooseSmsRecipients(clients,body,optOuts);
     if(!chosen.recipients.length)return json(res,400,{ok:false,error:'No eligible client phone numbers were found.'});
     if(chosen.recipients.length>10000)return json(res,413,{ok:false,error:'This campaign is limited to 10,000 recipients per send.'});
-    const campaignId=await createSmsCampaignRecord({name,sender:ARKESEL_SENDER_ID,message,total:chosen.recipients.length,createdBy:session.username,skipped:chosen.skipped});
-    let accepted=0,failed=0;
-    for(let i=0;i<chosen.recipients.length;i+=SMS_BATCH_SIZE){
-      const batch=chosen.recipients.slice(i,i+SMS_BATCH_SIZE);
-      const result=await arkeselSendBatch(message,batch);
-      accepted+=result.sent.length;failed+=result.failed.length;
-      await logSmsBatch(campaignId,result.sent,result.failed,message);
-    }
-    const status=accepted&&!failed?'completed':accepted?'partial':'failed';
-    await pool.query('UPDATE sms_campaigns SET status=$2 WHERE id=$1',[campaignId,status]);
-    return json(res,accepted?200:502,{ok:accepted>0,campaignId,status,totalRecipients:chosen.recipients.length,accepted,failed,skipped:chosen.skipped,message:accepted?('SMS campaign sent to '+accepted+' recipient'+(accepted===1?'':'s')+'.'):'The SMS provider did not accept any of the selected recipients.'});
+    const campaignId=await createSmsCampaignRecord({name,sender:SMS_GATEWAY_LINE,message,total:chosen.recipients.length,createdBy:session.username,skipped:chosen.skipped});
+    await logQueuedSms(campaignId,chosen.recipients,message);
+    const stats=await refreshSmsCampaign(campaignId);
+    return json(res,200,{ok:true,campaignId,status:stats.status,totalRecipients:chosen.recipients.length,queued:stats.queued,accepted:stats.accepted,failed:stats.failed,skipped:chosen.skipped,message:'SMS campaign queued. Your private SMS gateway will send it through the connected SIM.'});
   }catch(err){console.error('SMS campaign failed:',err);return json(res,500,{ok:false,error:err.message||'SMS campaign failed.'});}
 }
 
 async function handleSmsTest(req,res){
-  const session=await requireAuth(req,res);
-  if(!session)return;
-  if(!smsConfigured())return json(res,503,{ok:false,error:'SMS is not configured. Add SMS_ENABLED=true, ARKESEL_API_KEY and ARKESEL_SENDER_ID in Railway.'});
+  const session=await requireAuth(req,res);if(!session)return;
+  if(!smsConfigured())return json(res,503,{ok:false,error:'Self-hosted SMS is not configured. Set SMS_ENABLED=true, SMS_GATEWAY_ENABLED=true and SMS_GATEWAY_TOKEN in Railway.'});
   try{
-    const body=await parseJsonBody(req);
-    const phone=normalizeSmsPhone(body?.phone),message=String(body?.message||'').trim();
+    const body=await parseJsonBody(req),phone=normalizeSmsPhone(body?.phone),message=String(body?.message||'').trim();
     if(!phone)return json(res,400,{ok:false,error:'Enter a valid phone number.'});
     if(!message)return json(res,400,{ok:false,error:'Message is required.'});
-    const campaignId=await createSmsCampaignRecord({name:'[TEST] '+String(body?.campaignName||'SMS Test').trim(),sender:ARKESEL_SENDER_ID,message,total:1,createdBy:session.username,skipped:0});
-    const result=await arkeselSendBatch(message,[{clientId:'',clientName:'Test Recipient',phone}]);
-    await logSmsBatch(campaignId,result.sent,result.failed,message);
-    await pool.query('UPDATE sms_campaigns SET status=$2 WHERE id=$1',[campaignId,result.sent.length?'completed':'failed']);
-    return json(res,result.sent.length?200:502,{ok:!!result.sent.length,campaignId,message:result.sent.length?'Test SMS accepted by the provider.':(result.failed[0]?.error||'Test SMS failed.')});
+    const campaignId=await createSmsCampaignRecord({name:'[TEST] '+String(body?.campaignName||'SMS Test').trim(),sender:SMS_GATEWAY_LINE,message,total:1,createdBy:session.username,skipped:0});
+    await logQueuedSms(campaignId,[{clientId:'',clientName:'Test Recipient',phone}],message);
+    const stats=await refreshSmsCampaign(campaignId);
+    return json(res,200,{ok:true,campaignId,status:stats.status,queued:stats.queued,message:'Test SMS queued for your private gateway.'});
   }catch(err){return json(res,500,{ok:false,error:err.message||'Test SMS failed.'});}
 }
 
 async function handleSmsOptOut(req,res){
-  const session=await requireAuth(req,res);
-  if(!session)return;
+  const session=await requireAuth(req,res);if(!session)return;
   try{
     const body=await parseJsonBody(req),phone=normalizeSmsPhone(body?.phone),blocked=body?.blocked!==false;
     if(!phone)return json(res,400,{ok:false,error:'A valid phone number is required.'});
@@ -1359,41 +1302,64 @@ async function handleSmsOptOut(req,res){
   }catch(err){return json(res,500,{ok:false,error:err.message||'SMS preference update failed.'});}
 }
 
-async function handleSmsWebhook(req,res){
+async function handleSmsGatewayHeartbeat(req,res){
+  if(!gatewayAuthorized(req))return json(res,401,{ok:false,error:'Unauthorized SMS gateway.'});
   try{
-    const incomingUrl=new URL(req.url,'http://'+(req.headers.host||'localhost'));
-    const secret=String(incomingUrl.searchParams.get('token')||'');
-    if(SMS_WEBHOOK_SECRET&&secret!==SMS_WEBHOOK_SECRET)return json(res,401,{ok:false,error:'Unauthorized webhook.'});
-    let smsId=String(incomingUrl.searchParams.get('sms_id')||'').trim();
-    let providerStatus=String(incomingUrl.searchParams.get('status')||'').trim().toUpperCase();
-    if((!smsId||!providerStatus)&&req.method==='POST'){
-      const raw=await readBody(req).catch(()=>'');
-      if(raw){
-        try{
-          const b=JSON.parse(raw);
-          smsId=smsId||String(b.sms_id||b.smsId||b.id||'').trim();
-          providerStatus=providerStatus||String(b.status||'').trim().toUpperCase();
-        }catch{
-          const form=new URLSearchParams(raw);
-          smsId=smsId||String(form.get('sms_id')||'').trim();
-          providerStatus=providerStatus||String(form.get('status')||'').trim().toUpperCase();
-        }
-      }
-    }
-    if(!smsId||!providerStatus)return json(res,400,{ok:false,error:'sms_id and status are required.'});
-    let normalized='pending';
-    if(providerStatus==='DELIVERED')normalized='delivered';
-    else if(['NOT_DELIVERED','EXPIRED','PROHIBITED'].includes(providerStatus))normalized='failed';
-    else if(['SUBMITTED','QUEUED'].includes(providerStatus))normalized='sent';
-    const existing=await pool.query('SELECT id,campaign_id,status FROM sms_message_log WHERE provider_message_id=$1',[smsId]);
-    if(existing.rows[0]){
-      const old=existing.rows[0];
-      await pool.query('UPDATE sms_message_log SET provider_status=$1,status=CASE WHEN $2=\'delivered\' THEN \'delivered\' WHEN $2=\'failed\' THEN \'failed\' ELSE status END,delivered_at=CASE WHEN $2=\'delivered\' THEN $3 ELSE delivered_at END WHERE id=$4',[providerStatus,normalized,Date.now(),old.id]);
-      if(old.status!=='delivered'&&normalized==='delivered')await pool.query('UPDATE sms_campaigns SET delivered_count=delivered_count+1 WHERE id=$1',[old.campaign_id]);
-      if(old.status!=='failed'&&normalized==='failed')await pool.query('UPDATE sms_campaigns SET failed_count=failed_count+1 WHERE id=$1',[old.campaign_id]);
-    }
-    return json(res,200,{ok:true});
-  }catch(err){console.error('SMS webhook failed:',err);return json(res,500,{ok:false,error:'Webhook processing failed.'});}
+    const body=await parseJsonBody(req),gatewayId=String(body?.gatewayId||'private-gateway-1').trim().slice(0,120),gatewayName=String(body?.gatewayName||SMS_GATEWAY_NAME).trim().slice(0,120)||SMS_GATEWAY_NAME,simLine=String(body?.simLine||SMS_GATEWAY_LINE).trim().slice(0,40)||SMS_GATEWAY_LINE,portLabel=String(body?.portLabel||'').trim().slice(0,120),modemStatus=String(body?.modemStatus||'unknown').trim().toLowerCase(),detail=String(body?.detail||'').trim().slice(0,500);
+    await pool.query(`
+      INSERT INTO sms_gateway_state(id,gateway_id,gateway_name,sim_line,port_label,modem_status,last_seen,updated_at,detail)
+      VALUES(1,$1,$2,$3,$4,$5,$6,$6,$7)
+      ON CONFLICT(id) DO UPDATE SET gateway_id=EXCLUDED.gateway_id,gateway_name=EXCLUDED.gateway_name,sim_line=EXCLUDED.sim_line,port_label=EXCLUDED.port_label,modem_status=EXCLUDED.modem_status,last_seen=EXCLUDED.last_seen,updated_at=EXCLUDED.updated_at,detail=EXCLUDED.detail
+    `,[gatewayId,gatewayName,simLine,portLabel,modemStatus,Date.now(),detail]);
+    return json(res,200,{ok:true,serverTime:Date.now()});
+  }catch(err){return json(res,500,{ok:false,error:err.message||'Gateway heartbeat failed.'});}
+}
+
+async function handleSmsGatewayNext(req,res){
+  if(!gatewayAuthorized(req))return json(res,401,{ok:false,error:'Unauthorized SMS gateway.'});
+  try{
+    const staleBefore=Date.now()-10*60*1000;
+    await pool.query('UPDATE sms_message_log SET status=\\'queued\\',gateway_claimed_at=NULL WHERE status=\\'processing\\' AND gateway_claimed_at IS NOT NULL AND gateway_claimed_at<$1',[staleBefore]);
+    const client=await pool.connect();
+    try{
+      await client.query('BEGIN');
+      const q=await client.query(`
+        SELECT id,campaign_id,client_id,client_name,phone,message,created_at,gateway_attempts
+        FROM sms_message_log
+        WHERE status='queued'
+        ORDER BY created_at ASC,id ASC
+        LIMIT 1
+        FOR UPDATE SKIP LOCKED
+      `);
+      if(!q.rows[0]){await client.query('COMMIT');return json(res,200,{ok:true,job:null});}
+      const row=q.rows[0],attempts=Number(row.gateway_attempts||0)+1;
+      await client.query('UPDATE sms_message_log SET status=\\'processing\\',gateway_claimed_at=$2,gateway_attempts=$3 WHERE id=$1',[row.id,Date.now(),attempts]);
+      await client.query('COMMIT');
+      return json(res,200,{ok:true,job:{id:String(row.id),campaignId:String(row.campaign_id),clientId:row.client_id||'',clientName:row.client_name||'Client',phone:row.phone,message:row.message,attempts}});
+    }catch(err){try{await client.query('ROLLBACK')}catch{}throw err;}finally{client.release();}
+  }catch(err){return json(res,500,{ok:false,error:err.message||'Unable to claim SMS job.'});}
+}
+
+async function handleSmsGatewayResult(req,res){
+  if(!gatewayAuthorized(req))return json(res,401,{ok:false,error:'Unauthorized SMS gateway.'});
+  try{
+    const body=await parseJsonBody(req),id=String(body?.id||'').trim(),resultStatus=String(body?.status||'').trim().toLowerCase();
+    if(!id||!['sent','failed'].includes(resultStatus))return json(res,400,{ok:false,error:'Job id and status=sent|failed are required.'});
+    const providerId=String(body?.providerMessageId||'').trim().slice(0,200),providerStatus=String(body?.providerStatus||'').trim().slice(0,120),errorMessage=String(body?.error||'').trim().slice(0,1000);
+    const q=await pool.query(`
+      UPDATE sms_message_log
+      SET status=$2,provider_status=$3,provider_message_id=$4,error_message=CASE WHEN $2='failed' THEN $5 ELSE NULL END,gateway_claimed_at=NULL
+      WHERE id=$1
+      RETURNING campaign_id
+    `,[id,resultStatus,providerStatus||null,providerId||null,errorMessage||null]);
+    if(!q.rows[0])return json(res,404,{ok:false,error:'SMS job not found.'});
+    const stats=await refreshSmsCampaign(q.rows[0].campaign_id);
+    return json(res,200,{ok:true,campaignId:String(q.rows[0].campaign_id),stats});
+  }catch(err){return json(res,500,{ok:false,error:err.message||'Unable to record SMS gateway result.'});}
+}
+
+async function handleSmsWebhook(req,res){
+  return json(res,200,{ok:true,selfHosted:true,message:'The self-hosted GSM gateway reports directly to Invoice Studio. No third-party SMS webhook is used.'});
 }
 // ===== END SMS CENTER =====
 const WHATSAPP_API_VERSION = process.env.META_WHATSAPP_API_VERSION || 'v23.0';
