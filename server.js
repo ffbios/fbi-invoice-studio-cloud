@@ -1673,6 +1673,9 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/api/sms/send' && req.method === 'POST') return handleSmsSend(req, res);
     if (url.pathname === '/api/sms/test' && req.method === 'POST') return handleSmsTest(req, res);
     if (url.pathname === '/api/sms/opt-out' && req.method === 'POST') return handleSmsOptOut(req, res);
+    if (url.pathname === '/api/sms/gateway/heartbeat' && req.method === 'POST') return handleSmsGatewayHeartbeat(req, res);
+    if (url.pathname === '/api/sms/gateway/next' && req.method === 'GET') return handleSmsGatewayNext(req, res);
+    if (url.pathname === '/api/sms/gateway/result' && req.method === 'POST') return handleSmsGatewayResult(req, res);
     if (url.pathname === '/api/sms/webhook' && (req.method === 'GET' || req.method === 'POST')) return handleSmsWebhook(req, res);
 
     if (url.pathname === '/api/whatsapp/embedded-config' && req.method === 'GET') return json(res, 200, {ok:true, appId:WHATSAPP_APP_ID, configId:WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID, featureType:'whatsapp_business_app_onboarding'});
