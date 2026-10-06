@@ -1128,9 +1128,9 @@ const ARKESEL_API_URL = 'https://sms.arkesel.com/api/v2/sms/send';
 const ARKESEL_BALANCE_URL = 'https://sms.arkesel.com/api/v2/clients/balance-details';
 
 async function ensureSmsTables() {
-  await pool.query('CREATE TABLE IF NOT EXISTS sms_campaigns (id UUID PRIMARY KEY,name TEXT NOT NULL,sender TEXT NOT NULL,message TEXT NOT NULL,total_recipients INTEGER NOT NULL DEFAULT 0,accepted_count INTEGER NOT NULL DEFAULT 0,delivered_count INTEGER NOT NULL DEFAULT 0,failed_count INTEGER NOT NULL DEFAULT 0,skipped_count INTEGER NOT NULL DEFAULT 0,status TEXT NOT NULL DEFAULT \\'queued\\',created_at BIGINT NOT NULL,created_by TEXT)');
+  await pool.query('CREATE TABLE IF NOT EXISTS sms_campaigns (id UUID PRIMARY KEY,name TEXT NOT NULL,sender TEXT NOT NULL,message TEXT NOT NULL,total_recipients INTEGER NOT NULL DEFAULT 0,accepted_count INTEGER NOT NULL DEFAULT 0,delivered_count INTEGER NOT NULL DEFAULT 0,failed_count INTEGER NOT NULL DEFAULT 0,skipped_count INTEGER NOT NULL DEFAULT 0,status TEXT NOT NULL DEFAULT \'queued\',created_at BIGINT NOT NULL,created_by TEXT)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_sms_campaigns_created_at ON sms_campaigns(created_at DESC)');
-  await pool.query('CREATE TABLE IF NOT EXISTS sms_message_log (id BIGSERIAL PRIMARY KEY,campaign_id UUID NOT NULL REFERENCES sms_campaigns(id) ON DELETE CASCADE,client_id TEXT,client_name TEXT,phone TEXT NOT NULL,message TEXT NOT NULL,status TEXT NOT NULL DEFAULT \\'queued\\',provider_status TEXT,provider_message_id TEXT,error_message TEXT,created_at BIGINT NOT NULL,delivered_at BIGINT)');
+  await pool.query('CREATE TABLE IF NOT EXISTS sms_message_log (id BIGSERIAL PRIMARY KEY,campaign_id UUID NOT NULL REFERENCES sms_campaigns(id) ON DELETE CASCADE,client_id TEXT,client_name TEXT,phone TEXT NOT NULL,message TEXT NOT NULL,status TEXT NOT NULL DEFAULT \'queued\',provider_status TEXT,provider_message_id TEXT,error_message TEXT,created_at BIGINT NOT NULL,delivered_at BIGINT)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_sms_message_log_campaign ON sms_message_log(campaign_id,created_at DESC)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_sms_message_log_provider_id ON sms_message_log(provider_message_id)');
   await pool.query('CREATE TABLE IF NOT EXISTS sms_opt_out (phone TEXT PRIMARY KEY,reason TEXT,created_at BIGINT NOT NULL)');
@@ -1188,7 +1188,7 @@ function chooseSmsRecipients(clients,body,optOuts){
 
 async function createSmsCampaignRecord(args){
   const id=crypto.randomUUID();
-  await pool.query('INSERT INTO sms_campaigns(id,name,sender,message,total_recipients,accepted_count,delivered_count,failed_count,skipped_count,status,created_at,created_by) VALUES($1,$2,$3,$4,$5,0,0,0,$6,\\'queued\\',$7,$8)',[id,args.name,args.sender,args.message,args.total,args.skipped,Date.now(),args.createdBy||'Admin']);
+  await pool.query('INSERT INTO sms_campaigns(id,name,sender,message,total_recipients,accepted_count,delivered_count,failed_count,skipped_count,status,created_at,created_by) VALUES($1,$2,$3,$4,$5,0,0,0,$6,\'queued\',$7,$8)',[id,args.name,args.sender,args.message,args.total,args.skipped,Date.now(),args.createdBy||'Admin']);
   return id;
 }
 
@@ -1197,14 +1197,14 @@ async function logQueuedSms(campaignId,recipients,message){
   try{
     await client.query('BEGIN');
     for(const r of recipients){
-      await client.query('INSERT INTO sms_message_log(campaign_id,client_id,client_name,phone,message,status,created_at) VALUES($1,$2,$3,$4,$5,\\'queued\\',$6)',[campaignId,r.clientId||null,r.clientName||null,r.phone,message,Date.now()]);
+      await client.query('INSERT INTO sms_message_log(campaign_id,client_id,client_name,phone,message,status,created_at) VALUES($1,$2,$3,$4,$5,\'queued\',$6)',[campaignId,r.clientId||null,r.clientName||null,r.phone,message,Date.now()]);
     }
     await client.query('COMMIT');
   }catch(err){try{await client.query('ROLLBACK')}catch{}throw err;}finally{client.release();}
 }
 
 async function refreshSmsCampaign(campaignId){
-  const q=await pool.query('SELECT COUNT(*)::int AS total,COUNT(*) FILTER (WHERE status IN (\\'sent\\',\\'delivered\\'))::int AS accepted,COUNT(*) FILTER (WHERE status=\\'delivered\\')::int AS delivered,COUNT(*) FILTER (WHERE status=\\'failed\\')::int AS failed,COUNT(*) FILTER (WHERE status=\\'queued\\')::int AS queued,COUNT(*) FILTER (WHERE status=\\'processing\\')::int AS processing FROM sms_message_log WHERE campaign_id=$1',[campaignId]);
+  const q=await pool.query('SELECT COUNT(*)::int AS total,COUNT(*) FILTER (WHERE status IN (\'sent\',\'delivered\'))::int AS accepted,COUNT(*) FILTER (WHERE status=\'delivered\')::int AS delivered,COUNT(*) FILTER (WHERE status=\'failed\')::int AS failed,COUNT(*) FILTER (WHERE status=\'queued\')::int AS queued,COUNT(*) FILTER (WHERE status=\'processing\')::int AS processing FROM sms_message_log WHERE campaign_id=$1',[campaignId]);
   const r=q.rows[0]||{},total=Number(r.total||0),accepted=Number(r.accepted||0),delivered=Number(r.delivered||0),failed=Number(r.failed||0),queued=Number(r.queued||0),processing=Number(r.processing||0);
   let status='queued';
   if(!total)status='failed'; else if(queued||processing)status='sending'; else if(accepted===total)status='completed'; else if(accepted>0)status='partial'; else if(failed===total)status='failed'; else status='partial';
@@ -1221,7 +1221,7 @@ async function sendArkeselBatch(campaignId,recipients,message){
     response=await fetch(ARKESEL_API_URL,{method:'POST',headers:{'api-key':ARKESEL_API_KEY,'Content-Type':'application/json'},body:JSON.stringify(payload)});
     body=await response.json().catch(()=>({}));
   }catch(err){
-    await pool.query('UPDATE sms_message_log SET status=\\'failed\\',error_message=$2 WHERE campaign_id=$1 AND phone=ANY($3::text[]) AND status=\\'queued\\'',[campaignId,err.message||'Unable to reach Arkesel.',numbers]);
+    await pool.query('UPDATE sms_message_log SET status=\'failed\',error_message=$2 WHERE campaign_id=$1 AND phone=ANY($3::text[]) AND status=\'queued\'',[campaignId,err.message||'Unable to reach Arkesel.',numbers]);
     return {ok:false,accepted:0,failed:numbers.length,error:err.message||'Unable to reach Arkesel.'};
   }
 
@@ -1240,16 +1240,16 @@ async function sendArkeselBatch(campaignId,recipients,message){
 
   if(!response.ok||String(body?.status||'').toLowerCase()!=='success'){
     const msg=body?.message||body?.error?.message||('Arkesel returned HTTP '+response.status+'.');
-    await pool.query('UPDATE sms_message_log SET status=\\'failed\\',provider_status=$2,error_message=$3 WHERE campaign_id=$1 AND phone=ANY($4::text[]) AND status=\\'queued\\'',[campaignId,String(response.status),msg,numbers]);
+    await pool.query('UPDATE sms_message_log SET status=\'failed\',provider_status=$2,error_message=$3 WHERE campaign_id=$1 AND phone=ANY($4::text[]) AND status=\'queued\'',[campaignId,String(response.status),msg,numbers]);
     return {ok:false,accepted:0,failed:numbers.length,error:msg,httpStatus:response.status};
   }
 
   for(const r of recipients){
     const providerId=sentByPhone.get(r.phone)||null;
     if(invalid.has(r.phone)){
-      await pool.query('UPDATE sms_message_log SET status=\\'failed\\',provider_status=$2,error_message=$3 WHERE campaign_id=$1 AND phone=$4 AND status=\\'queued\\'',[campaignId,'INVALID_NUMBER','Arkesel rejected the phone number.',r.phone]);
+      await pool.query('UPDATE sms_message_log SET status=\'failed\',provider_status=$2,error_message=$3 WHERE campaign_id=$1 AND phone=$4 AND status=\'queued\'',[campaignId,'INVALID_NUMBER','Arkesel rejected the phone number.',r.phone]);
     }else{
-      await pool.query('UPDATE sms_message_log SET status=\\'sent\\',provider_status=\\'accepted\\',provider_message_id=$2,error_message=NULL WHERE campaign_id=$1 AND phone=$3 AND status=\\'queued\\'',[campaignId,providerId,r.phone]);
+      await pool.query('UPDATE sms_message_log SET status=\'sent\',provider_status=\'accepted\',provider_message_id=$2,error_message=NULL WHERE campaign_id=$1 AND phone=$3 AND status=\'queued\'',[campaignId,providerId,r.phone]);
     }
   }
   const failed=invalid.size;
@@ -1272,7 +1272,7 @@ async function handleSmsStatus(req,res){
   const session=await requireAuth(req,res);if(!session)return;
   const state=await loadInvoiceStateForSms(),clients=Array.isArray(state?.data?.clients)?state.data.clients:[];
   const optOuts=await loadSmsOptOutSet(),withPhones=clients.filter(c=>!!normalizeSmsPhone(c?.phone)),blocked=withPhones.filter(c=>optOuts.has(normalizeSmsPhone(c?.phone)));
-  const totals=await pool.query('SELECT COUNT(*)::int AS messages,COUNT(*) FILTER (WHERE status=\\'queued\\')::int AS queued,COUNT(*) FILTER (WHERE status=\\'processing\\')::int AS processing,COUNT(*) FILTER (WHERE status IN (\\'sent\\',\\'delivered\\'))::int AS sent,COUNT(*) FILTER (WHERE status=\\'delivered\\')::int AS delivered,COUNT(*) FILTER (WHERE status=\\'failed\\')::int AS failed FROM sms_message_log');
+  const totals=await pool.query('SELECT COUNT(*)::int AS messages,COUNT(*) FILTER (WHERE status=\'queued\')::int AS queued,COUNT(*) FILTER (WHERE status=\'processing\')::int AS processing,COUNT(*) FILTER (WHERE status IN (\'sent\',\'delivered\'))::int AS sent,COUNT(*) FILTER (WHERE status=\'delivered\')::int AS delivered,COUNT(*) FILTER (WHERE status=\'failed\')::int AS failed FROM sms_message_log');
   return json(res,200,{ok:true,configured:smsConfigured(),provider:SMS_PROVIDER,senderId:ARKESEL_SENDER_ID,providerName:'Arkesel',sandbox:ARKESEL_SANDBOX,clientCounts:{total:clients.length,withPhone:withPhones.length,blocked:blocked.length,eligible:Math.max(0,withPhones.length-blocked.length)},totals:totals.rows[0]||{messages:0,queued:0,processing:0,sent:0,delivered:0,failed:0}});
 }
 
