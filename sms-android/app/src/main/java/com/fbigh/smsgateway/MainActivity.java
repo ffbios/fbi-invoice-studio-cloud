@@ -21,18 +21,25 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
+import java.security.spec.MGF1ParameterSpec;
+import java.security.spec.OAEPParameterSpec;
+import java.security.spec.PSource;
+import java.util.Base64;
 import java.util.UUID;
+import javax.crypto.Cipher;
 import org.json.JSONObject;
 
 public class MainActivity extends Activity {
     private static final int SMS_PERMISSION = 1001;
-    // Pairing uses GET + private headers to avoid the Railway edge POST 429.
-    // Keep the Railway service domain first, with the custom domain as fallback.
-    private static final String[] PAIR_PATHS = {"/api/sms/gateway/pair-v2", "/sms-gateway-pair"};
-    private static final String[] BASE_URLS = {
-            "https://fbi-invoice-studio-production.up.railway.app",
-            "https://invoice.fbigh.com"
-    };
+    // Railway's HTTP edge is returning 429 for automated pairing requests.
+    // Pairing uses the dedicated raw TCP proxy; the gateway token is RSA-encrypted
+    // to a one-time phone key before it crosses that connection.
+    private static final String PAIR_TCP_BASE = "http://thomas.proxy.rlwy.net:27251";
+    private static final String PAIR_BOOTSTRAP_PATH = "/api/sms/gateway/pair-bootstrap";
+    private static final String PAIR_EXCHANGE_PATH = "/api/sms/gateway/pair-exchange";
     private static final String PREFS = "fbi_sms_gateway";
     private static final String KEY_TOKEN = "gateway_token";
     private static final String KEY_GATEWAY_ID = "gateway_id";
@@ -305,60 +312,90 @@ public class MainActivity extends Activity {
             String lastDetail = "Unable to reach the SMS gateway.";
             final String gatewayId = getSharedPreferences(PREFS, MODE_PRIVATE)
                     .getString(KEY_GATEWAY_ID, "");
-            // Try the Railway-generated host first, then the custom domain,
-            // and try both supported GET pairing paths.
-            boolean paired = false;
-            outer:
-            for (String base : BASE_URLS) {
-                for (String pairPath : PAIR_PATHS) {
-                    HttpURLConnection c = null;
+            try {
+                if (gatewayId.isEmpty()) throw new IllegalStateException("Gateway ID is missing.");
+
+                KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+                generator.initialize(2048);
+                KeyPair keyPair = generator.generateKeyPair();
+
+                String secret = UUID.randomUUID().toString() + UUID.randomUUID();
+                String secretHash = sha256Hex(secret);
+                String publicKey = Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
+
+                HttpURLConnection bootstrap = null;
+                try {
+                    bootstrap = (HttpURLConnection) new URL(PAIR_TCP_BASE + PAIR_BOOTSTRAP_PATH).openConnection();
+                    bootstrap.setRequestMethod("GET");
+                    bootstrap.setConnectTimeout(15000);
+                    bootstrap.setReadTimeout(15000);
+                    bootstrap.setDoInput(true);
+                    bootstrap.setUseCaches(false);
+                    bootstrap.setRequestProperty("Accept", "application/json");
+                    bootstrap.setRequestProperty("Cache-Control", "no-cache");
+                    bootstrap.setRequestProperty("X-FBI-Pair-Code", code);
+                    bootstrap.setRequestProperty("X-FBI-Gateway-Id", gatewayId);
+                    bootstrap.setRequestProperty("X-FBI-Gateway-Name", "FBI Android SMS Gateway");
+                    bootstrap.setRequestProperty("X-FBI-Pair-Secret-Hash", secretHash);
+                    bootstrap.setRequestProperty("X-FBI-Pair-Public-Key", publicKey);
+                    bootstrap.setRequestProperty("User-Agent", "FBI-SMS-Gateway-Android/14");
+
+                    int response = bootstrap.getResponseCode();
+                    String raw = readResponse(bootstrap, response);
+                    JSONObject result = parsePairResponse(raw);
+                    if (response != 200 || !result.optBoolean("ok")) {
+                        String error = result.optString("error", raw.trim());
+                        throw new IllegalStateException("Bootstrap HTTP " + response + " → " + error);
+                    }
+
+                    String exchangeId = result.optString("exchangeId", "").trim();
+                    if (exchangeId.isEmpty()) throw new IllegalStateException("Bootstrap did not return an exchange ID.");
+
+                    HttpURLConnection exchange = null;
                     try {
-                        c = (HttpURLConnection) new URL(base + pairPath).openConnection();
-                        c.setRequestMethod("GET");
-                        c.setConnectTimeout(15000);
-                        c.setReadTimeout(15000);
-                        c.setDoInput(true);
-                        c.setUseCaches(false);
-                        c.setRequestProperty("Accept", "application/json");
-                        c.setRequestProperty("Cache-Control", "no-cache");
-                        c.setRequestProperty("X-FBI-Pair-Code", code);
-                        c.setRequestProperty("X-FBI-Gateway-Id", gatewayId);
-                        c.setRequestProperty("X-FBI-Gateway-Name", "FBI Android SMS Gateway");
-                        c.setRequestProperty("User-Agent", "FBI-SMS-Gateway-Android/10");
+                        String exchangeUrl = PAIR_TCP_BASE + PAIR_EXCHANGE_PATH
+                                + "?exchangeId=" + java.net.URLEncoder.encode(exchangeId, "UTF-8");
+                        exchange = (HttpURLConnection) new URL(exchangeUrl).openConnection();
+                        exchange.setRequestMethod("GET");
+                        exchange.setConnectTimeout(15000);
+                        exchange.setReadTimeout(15000);
+                        exchange.setDoInput(true);
+                        exchange.setUseCaches(false);
+                        exchange.setRequestProperty("Accept", "application/json");
+                        exchange.setRequestProperty("Cache-Control", "no-cache");
+                        exchange.setRequestProperty("User-Agent", "FBI-SMS-Gateway-Android/14");
 
-                        int response = c.getResponseCode();
-                        java.io.InputStream in = response >= 200 && response < 400
-                                ? c.getInputStream() : c.getErrorStream();
-                        String raw = in == null ? "" : new java.io.BufferedReader(
-                                new java.io.InputStreamReader(in, StandardCharsets.UTF_8))
-                                .lines().collect(java.util.stream.Collectors.joining());
-                        JSONObject result = parsePairResponse(raw);
-
-                        if (response == 200 && result.optBoolean("ok")
-                                && result.optString("token").length() > 20) {
-                            getSharedPreferences(PREFS, MODE_PRIVATE).edit()
-                                    .putString(KEY_TOKEN, result.getString("token")).apply();
-                            paired = true;
-                            runOnUiThread(() -> {
-                                status.setText("PAIRED • READY");
-                                refreshUi();
-                            });
-                            break outer;
+                        int exchangeResponse = exchange.getResponseCode();
+                        String exchangeRaw = readResponse(exchange, exchangeResponse);
+                        JSONObject exchangeResult = parsePairResponse(exchangeRaw);
+                        if (exchangeResponse != 200 || !exchangeResult.optBoolean("ok")) {
+                            String error = exchangeResult.optString("error", exchangeRaw.trim());
+                            throw new IllegalStateException("Exchange HTTP " + exchangeResponse + " → " + error);
                         }
 
-                        String serverError = result.optString("error", "").trim();
-                        if (serverError.isEmpty()) serverError = raw.trim();
-                        if (serverError.isEmpty()) serverError = "Empty response.";
-                        lastDetail = base + pairPath + " → HTTP " + response + " → " + serverError;
-                    } catch (Throwable t) {
-                        lastDetail = base + pairPath + " → " + String.valueOf(t.getMessage());
-                    } finally {
-                        if (c != null) c.disconnect();
-                    }
-                }
-            }
+                        String encrypted = exchangeResult.optString("encryptedToken", "").trim();
+                        if (encrypted.isEmpty()) throw new IllegalStateException("Encrypted gateway token was not returned.");
 
-            if (paired) return;
+                        String token = decryptToken(encrypted, keyPair);
+                        if (token.length() < 20) throw new IllegalStateException("Decrypted gateway token is invalid.");
+
+                        getSharedPreferences(PREFS, MODE_PRIVATE).edit()
+                                .putString(KEY_TOKEN, token).apply();
+
+                        runOnUiThread(() -> {
+                            status.setText("PAIRED • READY");
+                            refreshUi();
+                        });
+                        return;
+                    } finally {
+                        if (exchange != null) exchange.disconnect();
+                    }
+                } finally {
+                    if (bootstrap != null) bootstrap.disconnect();
+                }
+            } catch (Throwable t) {
+                lastDetail = t.getMessage() == null ? t.toString() : t.getMessage();
+            }
 
             final String detail = lastDetail;
             runOnUiThread(() -> {
@@ -366,6 +403,31 @@ public class MainActivity extends Activity {
                 pairButton.setEnabled(true);
             });
         }, "fbi-pair").start();
+    }
+
+    private static String sha256Hex(String value) throws Exception {
+        byte[] digest = MessageDigest.getInstance("SHA-256")
+                .digest(value.getBytes(StandardCharsets.UTF_8));
+        StringBuilder out = new StringBuilder(digest.length * 2);
+        for (byte b : digest) out.append(String.format("%02x", b & 0xff));
+        return out.toString();
+    }
+
+    private static String readResponse(HttpURLConnection c, int response) throws Exception {
+        java.io.InputStream in = response >= 200 && response < 400
+                ? c.getInputStream() : c.getErrorStream();
+        if (in == null) return "";
+        return new java.io.BufferedReader(new java.io.InputStreamReader(in, StandardCharsets.UTF_8))
+                .lines().collect(java.util.stream.Collectors.joining());
+    }
+
+    private static String decryptToken(String encryptedBase64, KeyPair keyPair) throws Exception {
+        Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPPadding");
+        OAEPParameterSpec spec = new OAEPParameterSpec(
+                "SHA-256", "MGF1", MGF1ParameterSpec.SHA256, PSource.PSpecified.DEFAULT);
+        cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate(), spec);
+        byte[] encrypted = Base64.getDecoder().decode(encryptedBase64);
+        return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
     }
 
     private void startGateway() {
