@@ -251,6 +251,45 @@ public class MainActivity extends Activity {
         startButton.setText(permitted && isPaired() ? "START GATEWAY" : "COMPLETE STEPS 1 + 2");
     }
 
+    private JSONObject parsePairResponse(String raw) {
+        String text = raw == null ? "" : raw.trim();
+        if (text.isEmpty()) return new JSONObject();
+        try {
+            JSONObject direct = new JSONObject(text);
+            direct.put("_raw", text);
+            return direct;
+        } catch (Throwable ignored) {
+            // Some proxies/older gateways return a JSON string containing the
+            // actual JSON object. Unwrap that safely instead of crashing.
+            try {
+                Object value = new org.json.JSONTokener(text).nextValue();
+                if (value instanceof String) {
+                    String nested = ((String) value).trim();
+                    try {
+                        JSONObject nestedObject = new JSONObject(nested);
+                        nestedObject.put("_raw", text);
+                        return nestedObject;
+                    } catch (Throwable ignoredNested) {
+                        JSONObject out = new JSONObject();
+                        out.put("error", nested);
+                        out.put("_raw", text);
+                        return out;
+                    }
+                }
+            } catch (Throwable ignoredString) {
+                // Fall through to a diagnostic object below.
+            }
+            try {
+                JSONObject out = new JSONObject();
+                out.put("error", text);
+                out.put("_raw", text);
+                return out;
+            } catch (Throwable ignoredFinal) {
+                return new JSONObject();
+            }
+        }
+    }
+
     private void pairPhone() {
         final String code = codeInput.getText().toString().replaceAll("\\D", "");
         if (!code.matches("\\d{6}")) {
@@ -286,16 +325,24 @@ public class MainActivity extends Activity {
                             new java.io.InputStreamReader(in, StandardCharsets.UTF_8))
                             .lines().collect(java.util.stream.Collectors.joining());
                     c.disconnect();
-                    JSONObject result = raw.isEmpty() ? new JSONObject() : new JSONObject(raw);
+                    JSONObject result = parsePairResponse(raw);
                     if (response == 200 && result.optBoolean("ok") && result.optString("token").length() > 20) {
                         getSharedPreferences(PREFS, MODE_PRIVATE).edit()
                                 .putString(KEY_TOKEN, result.getString("token")).apply();
                         runOnUiThread(() -> { status.setText("PAIRED • READY"); refreshUi(); });
                         return;
                     }
-                    lastDetail = base + " → HTTP " + response + " → "
-                            + result.optString("error", raw.isEmpty() ? "No response body." : raw);
-                    if (response >= 400 && response < 500 && response != 404) break;
+                    String serverError = result.optString("error", "").trim();
+                    if (serverError.isEmpty()) {
+                        serverError = raw.trim();
+                    }
+                    if (serverError.isEmpty()) {
+                        serverError = "Empty response.";
+                    }
+                    lastDetail = base + " → HTTP " + response + " → " + serverError;
+                    // Do not stop just because one endpoint returned an HTTP error.
+                    // The second endpoint may be the healthy route.
+                    continue;
                 } catch (Throwable t) {
                     lastDetail = base + " → " + String.valueOf(t.getMessage());
                 } finally {
