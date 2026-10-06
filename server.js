@@ -1174,10 +1174,14 @@ async function handleSmsGatewayPairPage(req,res) {
 async function handleSmsGatewayPair(req,res){
   let client=null;
   try{
-    const body=await parseJsonBody(req);
-    const code=String(body?.code||'').replace(/\D/g,'').slice(0,6);
-    const gatewayId=String(body?.gatewayId||'').trim().slice(0,120);
-    const gatewayName=String(body?.gatewayName||'FBI Android SMS Gateway').trim().slice(0,120)||'FBI Android SMS Gateway';
+    // Android pairing uses GET + private headers because the Railway edge was
+    // returning HTTP 429 before POST /api/sms/gateway/pair reached Node.
+    // Keep POST support for the web/legacy clients.
+    const isHeaderPair = req.method === 'GET';
+    const body = isHeaderPair ? {} : await parseJsonBody(req);
+    const code = String(isHeaderPair ? (req.headers['x-fbi-pair-code'] || '') : (body?.code || '')).replace(/\D/g,'').slice(0,6);
+    const gatewayId = String(isHeaderPair ? (req.headers['x-fbi-gateway-id'] || '') : (body?.gatewayId || '')).trim().slice(0,120);
+    const gatewayName = String(isHeaderPair ? (req.headers['x-fbi-gateway-name'] || 'FBI Android SMS Gateway') : (body?.gatewayName || 'FBI Android SMS Gateway')).trim().slice(0,120)||'FBI Android SMS Gateway';
     if(!/^\d{6}$/.test(code)||!gatewayId)return json(res,400,{ok:false,error:'A valid 6-digit pairing code and gateway ID are required.'});
 
     const codeHash=crypto.createHash('sha256').update(code).digest('hex');
@@ -1785,7 +1789,7 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/sms-gateway-pair' && req.method === 'GET') return handleSmsGatewayPairPage(req, res);
     if (url.pathname === '/api/sms/gateway/pair' && req.method === 'POST') return handleSmsGatewayPair(req, res);
     // Dedicated Android pairing route. Kept separate from the legacy route so the mobile gateway can use a clean edge path without changing the pairing engine.
-    if (url.pathname === '/api/sms/gateway/pair-v2' && req.method === 'POST') return handleSmsGatewayPair(req, res);
+    if (url.pathname === '/api/sms/gateway/pair-v2' && (req.method === 'GET' || req.method === 'POST')) return handleSmsGatewayPair(req, res);
     if (url.pathname === '/api/sms/gateway/heartbeat' && req.method === 'POST') return handleSmsGatewayHeartbeat(req, res);
     if (url.pathname === '/api/sms/gateway/next' && req.method === 'GET') return handleSmsGatewayNext(req, res);
     if (url.pathname === '/api/sms/gateway/result' && req.method === 'POST') return handleSmsGatewayResult(req, res);
