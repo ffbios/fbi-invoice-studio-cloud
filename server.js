@@ -1784,6 +1784,8 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/api/sms/opt-out' && req.method === 'POST') return handleSmsOptOut(req, res);
     if (url.pathname === '/sms-gateway-pair' && req.method === 'GET') return handleSmsGatewayPairPage(req, res);
     if (url.pathname === '/api/sms/gateway/pair' && req.method === 'POST') return handleSmsGatewayPair(req, res);
+    // Dedicated Android pairing route. Kept separate from the legacy route so the mobile gateway can use a clean edge path without changing the pairing engine.
+    if (url.pathname === '/api/sms/gateway/pair-v2' && req.method === 'POST') return handleSmsGatewayPair(req, res);
     if (url.pathname === '/api/sms/gateway/heartbeat' && req.method === 'POST') return handleSmsGatewayHeartbeat(req, res);
     if (url.pathname === '/api/sms/gateway/next' && req.method === 'GET') return handleSmsGatewayNext(req, res);
     if (url.pathname === '/api/sms/gateway/result' && req.method === 'POST') return handleSmsGatewayResult(req, res);
