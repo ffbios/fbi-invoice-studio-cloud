@@ -730,7 +730,7 @@ function mergeInvoiceStates(existingState, incomingState) {
   };
 }
 
-app.post('/api/internal/import-client-contacts', async (req, res) => {
+async function handleTemporaryClientContactImport(req, res) {
   try {
     const expected = String(process.env.TEMP_CLIENT_IMPORT_TOKEN || '');
     const supplied = String(req.headers['x-fbi-import-token'] || '');
@@ -761,7 +761,7 @@ app.post('/api/internal/import-client-contacts', async (req, res) => {
     console.error('Temporary client contact import failed:',e);
     return json(res,500,{ok:false,error:e.message||'Import failed.'});
   }
-});
+}
 
 async function handleStateWrite(req, res) {
   const session = await requireAuth(req, res);
