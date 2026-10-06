@@ -27,17 +27,29 @@ jobs:
       - name: Build debug APK
         working-directory: sms-android
         run: gradle assembleDebug --stacktrace
+      - name: Verify pairing endpoint is reachable
+        run: |
+          set -e
+          for i in 1 2 3 4 5; do
+            code=$(curl -sS -o /tmp/pair-response.txt -w "%{http_code}" "https://fbi-invoice-studio-production.up.railway.app/api/sms/gateway/pair-v2"               -H "X-FBI-Pair-Code: 000000"               -H "X-FBI-Gateway-Id: ci-smoke-gateway"               -H "X-FBI-Gateway-Name: CI Smoke Test"               -H "Accept: application/json")
+            echo "pair-v2 smoke HTTP $code"
+            cat /tmp/pair-response.txt || true
+            if [ "$code" != "429" ] && [ "$code" != "000" ]; then exit 0; fi
+            sleep 10
+          done
+          echo "Pairing endpoint is still returning 429/unreachable."
+          exit 1
       - name: Upload APK artifact
         uses: actions/upload-artifact@v6
         with:
-          name: fbi-sms-gateway-apk-v6
+          name: fbi-sms-gateway-apk-v8
           path: sms-android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
       - name: Publish GitHub pre-release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: fbi-sms-gateway-v6
-          name: FBI SMS Gateway v6
+          tag_name: fbi-sms-gateway-v8
+          name: FBI SMS Gateway v8
           prerelease: true
           make_latest: false
           files: sms-android/app/build/outputs/apk/debug/app-debug.apk
@@ -45,4 +57,4 @@ jobs:
             FBI SMS Gateway Android installer.
             Improved permission guidance and redesigned mobile UI.
             Secure paired-device authentication.
-            Includes Railway-domain fallback for reliable pairing when the custom domain DNS is unavailable.
+            Pairing uses GET with private headers to avoid the Railway edge POST rate-limit path.
