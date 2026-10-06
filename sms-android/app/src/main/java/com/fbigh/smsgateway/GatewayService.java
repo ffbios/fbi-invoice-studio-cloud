@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets;
 
 public class GatewayService extends Service {
     private static final String CHANNEL = "fbi_sms_gateway";
-    private static final String BASE_URL = "https://invoice.fbigh.com";
+    private static final String[] BASE_URLS = {\n            "https://invoice.fbigh.com",\n            "https://czo5a4qo.up.railway.app"\n    };
     private static final String PREFS = "fbi_sms_gateway";
     private static final String KEY_TOKEN = "gateway_token";
     private static final String KEY_GATEWAY_ID = "gateway_id";
@@ -57,14 +57,26 @@ public class GatewayService extends Service {
     }
 
     private JSONObject nextJob() throws Exception {
-        HttpURLConnection c = auth(new URL(BASE_URL + "/api/sms/gateway/next"), "GET");
-        int code = c.getResponseCode();
-        if (code != 200) { c.disconnect(); return null; }
-        String s = read(c);
-        c.disconnect();
-        if (s == null || s.isEmpty() || "null".equals(s)) return null;
-        JSONObject o = new JSONObject(s);
-        return o.optJSONObject("job");
+        Throwable last = null;
+        for (String base : BASE_URLS) {
+            HttpURLConnection c = null;
+            try {
+                c = auth(new URL(base + "/api/sms/gateway/next"), "GET");
+                int code = c.getResponseCode();
+                if (code == 404 && !base.equals(BASE_URLS[BASE_URLS.length - 1])) { c.disconnect(); continue; }
+                if (code != 200) { c.disconnect(); return null; }
+                String s = read(c);
+                c.disconnect();
+                if (s == null || s.isEmpty() || "null".equals(s)) return null;
+                JSONObject o = new JSONObject(s);
+                return o.optJSONObject("job");
+            } catch (Throwable t) {
+                last = t;
+                if (c != null) c.disconnect();
+            }
+        }
+        if (last instanceof Exception) throw (Exception) last;
+        return null;
     }
 
     private void heartbeat() throws Exception {
@@ -112,13 +124,25 @@ public class GatewayService extends Service {
     }
 
     private void post(String path, JSONObject body) throws Exception {
-        HttpURLConnection c = auth(new URL(BASE_URL + path), "POST");
-        c.setDoOutput(true);
-        c.setRequestProperty("Content-Type", "application/json");
-        byte[] bytes = body.toString().getBytes(StandardCharsets.UTF_8);
-        try (OutputStream o = c.getOutputStream()) { o.write(bytes); }
-        c.getResponseCode();
-        c.disconnect();
+        Throwable last = null;
+        for (String base : BASE_URLS) {
+            HttpURLConnection c = null;
+            try {
+                c = auth(new URL(base + path), "POST");
+                c.setDoOutput(true);
+                c.setRequestProperty("Content-Type", "application/json");
+                byte[] bytes = body.toString().getBytes(StandardCharsets.UTF_8);
+                try (OutputStream o = c.getOutputStream()) { o.write(bytes); }
+                int code = c.getResponseCode();
+                c.disconnect();
+                if (code == 404 && !base.equals(BASE_URLS[BASE_URLS.length - 1])) continue;
+                return;
+            } catch (Throwable t) {
+                last = t;
+                if (c != null) c.disconnect();
+            }
+        }
+        if (last instanceof Exception) throw (Exception) last;
     }
 
     private String read(HttpURLConnection c) throws Exception {
