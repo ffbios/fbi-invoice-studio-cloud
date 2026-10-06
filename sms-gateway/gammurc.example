@@ -1,0 +1,11 @@
+; Example Gammu configuration for an AT-capable GSM/4G modem.
+;
+; Windows example:
+; device = COM12:
+;
+; Linux example:
+; device = /dev/ttyUSB0
+;
+[gammu]
+device = COM12:
+connection = at
