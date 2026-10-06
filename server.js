@@ -1098,16 +1098,16 @@ const SMS_GATEWAY_LINE = String(process.env.SMS_GATEWAY_LINE || 'Private SIM lin
 const SMS_GATEWAY_OFFLINE_AFTER_MS = Math.max(30000, Number(process.env.SMS_GATEWAY_OFFLINE_AFTER_MS || 90000));
 
 async function ensureSmsTables() {
-  await pool.query('CREATE TABLE IF NOT EXISTS sms_campaigns (id UUID PRIMARY KEY,name TEXT NOT NULL,sender TEXT NOT NULL,message TEXT NOT NULL,total_recipients INTEGER NOT NULL DEFAULT 0,accepted_count INTEGER NOT NULL DEFAULT 0,delivered_count INTEGER NOT NULL DEFAULT 0,failed_count INTEGER NOT NULL DEFAULT 0,skipped_count INTEGER NOT NULL DEFAULT 0,status TEXT NOT NULL DEFAULT \\'queued\\',created_at BIGINT NOT NULL,created_by TEXT)');
+  await pool.query('CREATE TABLE IF NOT EXISTS sms_campaigns (id UUID PRIMARY KEY,name TEXT NOT NULL,sender TEXT NOT NULL,message TEXT NOT NULL,total_recipients INTEGER NOT NULL DEFAULT 0,accepted_count INTEGER NOT NULL DEFAULT 0,delivered_count INTEGER NOT NULL DEFAULT 0,failed_count INTEGER NOT NULL DEFAULT 0,skipped_count INTEGER NOT NULL DEFAULT 0,status TEXT NOT NULL DEFAULT \'queued\',created_at BIGINT NOT NULL,created_by TEXT)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_sms_campaigns_created_at ON sms_campaigns(created_at DESC)');
-  await pool.query('CREATE TABLE IF NOT EXISTS sms_message_log (id BIGSERIAL PRIMARY KEY,campaign_id UUID NOT NULL REFERENCES sms_campaigns(id) ON DELETE CASCADE,client_id TEXT,client_name TEXT,phone TEXT NOT NULL,message TEXT NOT NULL,status TEXT NOT NULL DEFAULT \\'queued\\',provider_status TEXT,provider_message_id TEXT,error_message TEXT,created_at BIGINT NOT NULL,delivered_at BIGINT)');
+  await pool.query('CREATE TABLE IF NOT EXISTS sms_message_log (id BIGSERIAL PRIMARY KEY,campaign_id UUID NOT NULL REFERENCES sms_campaigns(id) ON DELETE CASCADE,client_id TEXT,client_name TEXT,phone TEXT NOT NULL,message TEXT NOT NULL,status TEXT NOT NULL DEFAULT \'queued\',provider_status TEXT,provider_message_id TEXT,error_message TEXT,created_at BIGINT NOT NULL,delivered_at BIGINT)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_sms_message_log_campaign ON sms_message_log(campaign_id,created_at DESC)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_sms_message_log_provider_id ON sms_message_log(provider_message_id)');
   await pool.query('CREATE TABLE IF NOT EXISTS sms_opt_out (phone TEXT PRIMARY KEY,reason TEXT,created_at BIGINT NOT NULL)');
   await pool.query('ALTER TABLE sms_message_log ADD COLUMN IF NOT EXISTS gateway_claimed_at BIGINT');
   await pool.query('ALTER TABLE sms_message_log ADD COLUMN IF NOT EXISTS gateway_attempts INTEGER NOT NULL DEFAULT 0');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_sms_message_log_gateway_queue ON sms_message_log(status,gateway_claimed_at,created_at)');
-  await pool.query('CREATE TABLE IF NOT EXISTS sms_gateway_state (id INTEGER PRIMARY KEY CHECK (id=1),gateway_id TEXT NOT NULL,gateway_name TEXT NOT NULL,sim_line TEXT,port_label TEXT,modem_status TEXT NOT NULL DEFAULT \\'unknown\\',last_seen BIGINT NOT NULL,updated_at BIGINT NOT NULL,detail TEXT)');
+  await pool.query('CREATE TABLE IF NOT EXISTS sms_gateway_state (id INTEGER PRIMARY KEY CHECK (id=1),gateway_id TEXT NOT NULL,gateway_name TEXT NOT NULL,sim_line TEXT,port_label TEXT,modem_status TEXT NOT NULL DEFAULT \'unknown\',last_seen BIGINT NOT NULL,updated_at BIGINT NOT NULL,detail TEXT)');
 }
 
 function smsConfigured() {
@@ -1187,7 +1187,7 @@ async function refreshSmsCampaign(campaignId){
 
 async function createSmsCampaignRecord(args){
   const id=crypto.randomUUID();
-  await pool.query('INSERT INTO sms_campaigns(id,name,sender,message,total_recipients,accepted_count,delivered_count,failed_count,skipped_count,status,created_at,created_by) VALUES($1,$2,$3,$4,$5,0,0,0,$6,\\'queued\\',$7,$8)',[id,args.name,args.sender,args.message,args.total,args.skipped,Date.now(),args.createdBy||'Admin']);
+  await pool.query('INSERT INTO sms_campaigns(id,name,sender,message,total_recipients,accepted_count,delivered_count,failed_count,skipped_count,status,created_at,created_by) VALUES($1,$2,$3,$4,$5,0,0,0,$6,\'queued\',$7,$8)',[id,args.name,args.sender,args.message,args.total,args.skipped,Date.now(),args.createdBy||'Admin']);
   return id;
 }
 
@@ -1211,7 +1211,7 @@ async function logQueuedSms(campaignId,recipients,message){
   try{
     await client.query('BEGIN');
     for(const r of recipients){
-      await client.query('INSERT INTO sms_message_log(campaign_id,client_id,client_name,phone,message,status,created_at) VALUES($1,$2,$3,$4,$5,\\'queued\\',$6)',[campaignId,r.clientId||null,r.clientName||null,r.phone,message,Date.now()]);
+      await client.query('INSERT INTO sms_message_log(campaign_id,client_id,client_name,phone,message,status,created_at) VALUES($1,$2,$3,$4,$5,\'queued\',$6)',[campaignId,r.clientId||null,r.clientName||null,r.phone,message,Date.now()]);
     }
     await client.query('COMMIT');
   }catch(err){try{await client.query('ROLLBACK')}catch{}throw err;}finally{client.release();}
@@ -1319,7 +1319,7 @@ async function handleSmsGatewayNext(req,res){
   if(!gatewayAuthorized(req))return json(res,401,{ok:false,error:'Unauthorized SMS gateway.'});
   try{
     const staleBefore=Date.now()-10*60*1000;
-    await pool.query('UPDATE sms_message_log SET status=\\'queued\\',gateway_claimed_at=NULL WHERE status=\\'processing\\' AND gateway_claimed_at IS NOT NULL AND gateway_claimed_at<$1',[staleBefore]);
+    await pool.query('UPDATE sms_message_log SET status=\'queued\',gateway_claimed_at=NULL WHERE status=\'processing\' AND gateway_claimed_at IS NOT NULL AND gateway_claimed_at<$1',[staleBefore]);
     const client=await pool.connect();
     try{
       await client.query('BEGIN');
@@ -1333,7 +1333,7 @@ async function handleSmsGatewayNext(req,res){
       `);
       if(!q.rows[0]){await client.query('COMMIT');return json(res,200,{ok:true,job:null});}
       const row=q.rows[0],attempts=Number(row.gateway_attempts||0)+1;
-      await client.query('UPDATE sms_message_log SET status=\\'processing\\',gateway_claimed_at=$2,gateway_attempts=$3 WHERE id=$1',[row.id,Date.now(),attempts]);
+      await client.query('UPDATE sms_message_log SET status=\'processing\',gateway_claimed_at=$2,gateway_attempts=$3 WHERE id=$1',[row.id,Date.now(),attempts]);
       await client.query('COMMIT');
       return json(res,200,{ok:true,job:{id:String(row.id),campaignId:String(row.campaign_id),clientId:row.client_id||'',clientName:row.client_name||'Client',phone:row.phone,message:row.message,attempts}});
     }catch(err){try{await client.query('ROLLBACK')}catch{}throw err;}finally{client.release();}
