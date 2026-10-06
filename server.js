@@ -1126,6 +1126,7 @@ async function ensureSmsTables() {
   await pool.query('ALTER TABLE sms_gateway_pairings ADD COLUMN IF NOT EXISTS pending_gateway_id TEXT');
   await pool.query('ALTER TABLE sms_gateway_pairings ADD COLUMN IF NOT EXISTS pending_gateway_name TEXT');
   await pool.query('ALTER TABLE sms_gateway_pairings ADD COLUMN IF NOT EXISTS pending_at BIGINT');
+  await pool.query('ALTER TABLE sms_gateway_pairings ADD COLUMN IF NOT EXISTS pending_public_key TEXT');
 }
 
 function smsConfigured() {
@@ -1181,7 +1182,8 @@ async function handleSmsGatewayPairBootstrap(req,res){
     const gatewayId=String(req.headers['x-fbi-gateway-id']||'').trim().slice(0,120);
     const gatewayName=String(req.headers['x-fbi-gateway-name']||'FBI Android SMS Gateway').trim().slice(0,120)||'FBI Android SMS Gateway';
     const secretHash=String(req.headers['x-fbi-pair-secret-hash']||'').trim().toLowerCase();
-    if(!/^\d{6}$/.test(code)||!gatewayId||!/^[a-f0-9]{64}$/.test(secretHash)){
+    const publicKey=String(req.headers['x-fbi-pair-public-key']||'').trim();
+    if(!/^\d{6}$/.test(code)||!gatewayId||!/^[a-f0-9]{64}$/.test(secretHash)||publicKey.length<100){
       return json(res,400,{ok:false,error:'Pairing code, gateway ID and pairing secret are required.'});
     }
     const codeHash=crypto.createHash('sha256').update(code).digest('hex');
@@ -1197,8 +1199,8 @@ async function handleSmsGatewayPairBootstrap(req,res){
     }
     const now=Date.now();
     await pool.query(
-      'UPDATE sms_gateway_pairings SET attempts=$2,pending_secret_hash=$3,pending_gateway_id=$4,pending_gateway_name=$5,pending_at=$6 WHERE id=$1 AND used_at IS NULL AND expires_at>$6',
-      [row.id,attempts,secretHash,gatewayId,gatewayName,now]
+      'UPDATE sms_gateway_pairings SET attempts=$2,pending_secret_hash=$3,pending_gateway_id=$4,pending_gateway_name=$5,pending_at=$6,pending_public_key=$7 WHERE id=$1 AND used_at IS NULL AND expires_at>$6',
+      [row.id,attempts,secretHash,gatewayId,gatewayName,now,publicKey]
     );
     return json(res,200,{ok:true,exchangeId:row.id,expiresAt:Number(row.expires_at)});
   }catch(err){
@@ -1212,22 +1214,22 @@ async function handleSmsGatewayPairExchange(req,res){
   try{
     const u=new URL(req.url,'http://localhost');
     const exchangeId=String(u.searchParams.get('exchangeId')||'').trim();
-    const secret=String(u.searchParams.get('secret')||'').trim();
-    if(!exchangeId||!secret)return json(res,400,{ok:false,error:'Pairing exchange credentials are required.'});
-    const secretHash=crypto.createHash('sha256').update(secret).digest('hex');
+    if(!exchangeId)return json(res,400,{ok:false,error:'Pairing exchange ID is required.'});
     client=await pool.connect();
     await client.query('BEGIN');
     const q=await client.query(
-      'SELECT id,expires_at,used_at,pending_secret_hash,pending_gateway_id,pending_gateway_name,attempts FROM sms_gateway_pairings WHERE id=$1 FOR UPDATE',
+      'SELECT id,expires_at,used_at,pending_secret_hash,pending_gateway_id,pending_gateway_name,pending_public_key,attempts FROM sms_gateway_pairings WHERE id=$1 FOR UPDATE',
       [exchangeId]
     );
     const row=q.rows[0];
-    if(!row||row.used_at||Number(row.expires_at)<=Date.now()||String(row.pending_secret_hash||'')!==secretHash||!row.pending_gateway_id){
+    if(!row||row.used_at||Number(row.expires_at)<=Date.now()||!row.pending_secret_hash||!row.pending_gateway_id||!row.pending_public_key){
       await client.query('ROLLBACK');
       return json(res,401,{ok:false,error:'Pairing exchange is invalid or expired.'});
     }
     const token=crypto.randomBytes(32).toString('base64url');
     const tokenHash=crypto.createHash('sha256').update(token).digest('hex');
+    const publicKeyObject=crypto.createPublicKey({key:Buffer.from(String(row.pending_public_key),'base64'),format:'der',type:'spki'});
+    const encryptedToken=crypto.publicEncrypt({key:publicKeyObject,padding:crypto.constants.RSA_PKCS1_OAEP_PADDING,oaepHash:'sha256'},Buffer.from(token,'utf8')).toString('base64');
     const now=Date.now();
     const gatewayId=String(row.pending_gateway_id);
     const gatewayName=String(row.pending_gateway_name||'FBI Android SMS Gateway');
@@ -1244,7 +1246,7 @@ async function handleSmsGatewayPairExchange(req,res){
       );
     }
     const marked=await client.query(
-      'UPDATE sms_gateway_pairings SET used_at=$2,pending_secret_hash=NULL,pending_gateway_id=NULL,pending_gateway_name=NULL,pending_at=NULL WHERE id=$1 AND used_at IS NULL RETURNING id',
+      'UPDATE sms_gateway_pairings SET used_at=$2,pending_secret_hash=NULL,pending_gateway_id=NULL,pending_gateway_name=NULL,pending_at=NULL,pending_public_key=NULL WHERE id=$1 AND used_at IS NULL RETURNING id',
       [exchangeId,now]
     );
     if(!marked.rows[0]){
@@ -1252,7 +1254,7 @@ async function handleSmsGatewayPairExchange(req,res){
       return json(res,409,{ok:false,error:'This pairing exchange was already completed. Generate a new code.'});
     }
     await client.query('COMMIT');
-    return json(res,200,{ok:true,token,gatewayId,gatewayName,serverTime:now});
+    return json(res,200,{ok:true,encryptedToken:encryptedToken,gatewayId,gatewayName,serverTime:now});
   }catch(err){
     if(client){try{await client.query('ROLLBACK');}catch{}}
     console.error('SMS gateway pairing exchange failed:',err);
