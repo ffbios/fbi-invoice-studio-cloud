@@ -28,10 +28,10 @@ public class MainActivity extends Activity {
     private static final int SMS_PERMISSION = 1001;
     // Pairing uses GET + private headers to avoid the Railway edge POST 429.
     // Keep the Railway service domain first, with the custom domain as fallback.
-    private static final String PAIR_PATH = "/api/sms/gateway/pair-v2";
+    private static final String PAIR_PATH = "/sms-gateway-pair";
     private static final String[] BASE_URLS = {
-            "https://fbi-invoice-studio-production.up.railway.app",
-            "https://invoice.fbigh.com"
+            "https://invoice.fbigh.com",
+            "https://fbi-invoice-studio-production.up.railway.app"
     };
     private static final String PREFS = "fbi_sms_gateway";
     private static final String KEY_TOKEN = "gateway_token";
