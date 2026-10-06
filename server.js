@@ -1108,20 +1108,84 @@ async function ensureSmsTables() {
   await pool.query('ALTER TABLE sms_message_log ADD COLUMN IF NOT EXISTS gateway_attempts INTEGER NOT NULL DEFAULT 0');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_sms_message_log_gateway_queue ON sms_message_log(status,gateway_claimed_at,created_at)');
   await pool.query('CREATE TABLE IF NOT EXISTS sms_gateway_state (id INTEGER PRIMARY KEY CHECK (id=1),gateway_id TEXT NOT NULL,gateway_name TEXT NOT NULL,sim_line TEXT,port_label TEXT,modem_status TEXT NOT NULL DEFAULT \'unknown\',last_seen BIGINT NOT NULL,updated_at BIGINT NOT NULL,detail TEXT)');
+  await pool.query('CREATE TABLE IF NOT EXISTS sms_gateway_devices (id UUID PRIMARY KEY,gateway_id TEXT NOT NULL UNIQUE,gateway_name TEXT NOT NULL,token_hash TEXT NOT NULL UNIQUE,created_at BIGINT NOT NULL,last_seen BIGINT,revoked_at BIGINT)');
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_sms_gateway_devices_last_seen ON sms_gateway_devices(last_seen)');
+  await pool.query('CREATE TABLE IF NOT EXISTS sms_gateway_pairings (id UUID PRIMARY KEY,code_hash TEXT NOT NULL UNIQUE,attempts INTEGER NOT NULL DEFAULT 0,created_at BIGINT NOT NULL,expires_at BIGINT NOT NULL,used_at BIGINT)');
 }
 
 function smsConfigured() {
   return SMS_ENABLED && SMS_GATEWAY_ENABLED && !!SMS_GATEWAY_TOKEN;
 }
 
-function gatewayAuthorized(req) {
-  if (!SMS_GATEWAY_TOKEN) return false;
+function extractGatewayToken(req) {
   const header=String(req.headers['x-fbi-sms-gateway-token']||'').trim();
   const auth=String(req.headers.authorization||'').trim();
-  const supplied=header||(auth.toLowerCase().startsWith('bearer ')?auth.slice(7).trim():'');
+  return header||(auth.toLowerCase().startsWith('bearer ')?auth.slice(7).trim():'');
+}
+
+async function gatewayAuthorized(req) {
+  const supplied=extractGatewayToken(req);
   if(!supplied)return false;
-  const a=Buffer.from(supplied),b=Buffer.from(SMS_GATEWAY_TOKEN);
-  return a.length===b.length&&crypto.timingSafeEqual(a,b);
+  if(SMS_GATEWAY_TOKEN){
+    const a=Buffer.from(supplied),b=Buffer.from(SMS_GATEWAY_TOKEN);
+    if(a.length===b.length&&crypto.timingSafeEqual(a,b))return true;
+  }
+  const hash=crypto.createHash('sha256').update(supplied).digest('hex');
+  const q=await pool.query('SELECT id FROM sms_gateway_devices WHERE token_hash=$1 AND revoked_at IS NULL LIMIT 1',[hash]);
+  return !!q.rows[0];
+}
+
+function createSmsPairCode() {
+  return String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+}
+
+async function createSmsGatewayPairing() {
+  const code=createSmsPairCode();
+  const codeHash=crypto.createHash('sha256').update(code).digest('hex');
+  const now=Date.now();
+  const expires=now+10*60*1000;
+  await pool.query('DELETE FROM sms_gateway_pairings WHERE expires_at<$1 OR used_at IS NOT NULL',[now]);
+  await pool.query('INSERT INTO sms_gateway_pairings(id,code_hash,attempts,created_at,expires_at) VALUES($1,$2,0,$3,$4)',[crypto.randomUUID(),codeHash,now,expires]);
+  return {code,expiresAt:expires};
+}
+
+async function handleSmsGatewayPairPage(req,res) {
+  const session=await requireAuth(req,res);if(!session)return;
+  try{
+    const pairing=await createSmsGatewayPairing();
+    const mins=Math.max(1,Math.ceil((pairing.expiresAt-Date.now())/60000));
+    const html='<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FBI SMS Gateway Pairing</title><style>body{margin:0;background:#0b0b0d;color:#fff;font-family:Arial,sans-serif;display:grid;place-items:center;min-height:100vh}.card{width:min(420px,calc(100vw - 40px));background:#151518;border:1px solid #2b2b31;border-radius:18px;padding:28px;box-sizing:border-box;text-align:center}.brand{font-weight:700;letter-spacing:2px;color:#d4af37}.code{font-size:48px;font-weight:800;letter-spacing:10px;margin:24px 0;color:#fff}.note{color:#aaa;line-height:1.5}button{border:0;border-radius:10px;padding:12px 18px;background:#d4af37;color:#0b0b0d;font-weight:700;cursor:pointer}</style></head><body><div class="card"><div class="brand">FILM BEYOND IMAGINATION</div><h2>SMS Gateway Pairing</h2><div class="code">'+pairing.code+'</div><button onclick="navigator.clipboard?.writeText(\''+pairing.code+'\')">COPY CODE</button><p class="note">Enter this 6-digit code in the FBI SMS Gateway app on the company phone. It expires in '+mins+' minutes and can be used once.</p><p class="note">Keep this page private.</p></div></body></html>';
+    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+    res.end(html);
+  }catch(err){return json(res,500,{ok:false,error:err.message||'Unable to create gateway pairing code.'});}
+}
+
+async function handleSmsGatewayPair(req,res){
+  try{
+    const body=await parseJsonBody(req);
+    const code=String(body?.code||'').replace(/\D/g,'').slice(0,6);
+    const gatewayId=String(body?.gatewayId||'').trim().slice(0,120);
+    const gatewayName=String(body?.gatewayName||'FBI Android SMS Gateway').trim().slice(0,120)||'FBI Android SMS Gateway';
+    if(!/^\d{6}$/.test(code)||!gatewayId)return json(res,400,{ok:false,error:'A valid 6-digit pairing code and gateway ID are required.'});
+    const codeHash=crypto.createHash('sha256').update(code).digest('hex');
+    const q=await pool.query('SELECT id,attempts,expires_at,used_at FROM sms_gateway_pairings WHERE code_hash=$1 LIMIT 1',[codeHash]);
+    const row=q.rows[0];
+    if(!row||row.used_at||Number(row.expires_at)<=Date.now()){
+      return json(res,401,{ok:false,error:'Pairing code is invalid or expired.'});
+    }
+    const attempts=Number(row.attempts||0)+1;
+    if(attempts>10){
+      await pool.query('UPDATE sms_gateway_pairings SET attempts=$2 WHERE id=$1',[row.id,attempts]);
+      return json(res,429,{ok:false,error:'Pairing code has been locked. Generate a new code.'});
+    }
+    await pool.query('UPDATE sms_gateway_pairings SET attempts=$2 WHERE id=$1',[row.id,attempts]);
+    const token=crypto.randomBytes(32).toString('base64url');
+    const tokenHash=crypto.createHash('sha256').update(token).digest('hex');
+    const now=Date.now();
+    await pool.query('INSERT INTO sms_gateway_devices(id,gateway_id,gateway_name,token_hash,created_at,last_seen,revoked_at) VALUES($1,$2,$3,$4,$5,$5,NULL) ON CONFLICT(gateway_id) DO UPDATE SET gateway_name=EXCLUDED.gateway_name,token_hash=EXCLUDED.token_hash,last_seen=EXCLUDED.last_seen,revoked_at=NULL',[crypto.randomUUID(),gatewayId,gatewayName,tokenHash,now]);
+    await pool.query('UPDATE sms_gateway_pairings SET used_at=$2 WHERE id=$1',[row.id,now]);
+    return json(res,200,{ok:true,token,gatewayId,gatewayName,serverTime:now});
+  }catch(err){return json(res,500,{ok:false,error:err.message||'Gateway pairing failed.'});}
 }
 
 function normalizeSmsPhone(value) {
@@ -1303,7 +1367,7 @@ async function handleSmsOptOut(req,res){
 }
 
 async function handleSmsGatewayHeartbeat(req,res){
-  if(!gatewayAuthorized(req))return json(res,401,{ok:false,error:'Unauthorized SMS gateway.'});
+  if(!(await gatewayAuthorized(req)))return json(res,401,{ok:false,error:'Unauthorized SMS gateway.'});
   try{
     const body=await parseJsonBody(req),gatewayId=String(body?.gatewayId||'private-gateway-1').trim().slice(0,120),gatewayName=String(body?.gatewayName||SMS_GATEWAY_NAME).trim().slice(0,120)||SMS_GATEWAY_NAME,simLine=String(body?.simLine||SMS_GATEWAY_LINE).trim().slice(0,40)||SMS_GATEWAY_LINE,portLabel=String(body?.portLabel||'').trim().slice(0,120),modemStatus=String(body?.modemStatus||'unknown').trim().toLowerCase(),detail=String(body?.detail||'').trim().slice(0,500);
     await pool.query(`
@@ -1673,6 +1737,8 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/api/sms/send' && req.method === 'POST') return handleSmsSend(req, res);
     if (url.pathname === '/api/sms/test' && req.method === 'POST') return handleSmsTest(req, res);
     if (url.pathname === '/api/sms/opt-out' && req.method === 'POST') return handleSmsOptOut(req, res);
+    if (url.pathname === '/sms-gateway-pair' && req.method === 'GET') return handleSmsGatewayPairPage(req, res);
+    if (url.pathname === '/api/sms/gateway/pair' && req.method === 'POST') return handleSmsGatewayPair(req, res);
     if (url.pathname === '/api/sms/gateway/heartbeat' && req.method === 'POST') return handleSmsGatewayHeartbeat(req, res);
     if (url.pathname === '/api/sms/gateway/next' && req.method === 'GET') return handleSmsGatewayNext(req, res);
     if (url.pathname === '/api/sms/gateway/result' && req.method === 'POST') return handleSmsGatewayResult(req, res);
