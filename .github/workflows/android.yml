@@ -1,5 +1,5 @@
 name: Build FBI SMS Gateway APK
-# Pairing v11 verification pipeline
+# Pairing v12 verification pipeline
 
 on:
   workflow_dispatch:
@@ -32,14 +32,15 @@ jobs:
         run: |
           set -euo pipefail
           endpoints=(
-            "http://thomas.proxy.rlwy.net:27251/api/sms/gateway/pair-v2"
+            "http://thomas.proxy.rlwy.net:27251/api/sms/gateway/pair-bootstrap"
+            "https://fbi-invoice-studio-production.up.railway.app/api/sms/gateway/pair-exchange?exchangeId=none&secret=x"
             "https://fbi-invoice-studio-production.up.railway.app/api/sms/gateway/pair-v2"
             "https://fbi-invoice-studio-production.up.railway.app/sms-gateway-pair"
             "https://invoice.fbigh.com/sms-gateway-pair"
           )
           for endpoint in "${endpoints[@]}"; do
             echo "Testing pairing endpoint: $endpoint"
-            code=$(curl -sS --connect-timeout 15 --max-time 30               -o /tmp/pair-response.txt               -w "%{http_code}"               "$endpoint"               -H "X-FBI-Pair-Code: 000000"               -H "X-FBI-Gateway-Id: ci-smoke-gateway"               -H "X-FBI-Gateway-Name: CI Smoke Test"               -H "User-Agent: FBI-SMS-Gateway-CI/11"               -H "Accept: application/json")
+            code=$(curl -sS --connect-timeout 15 --max-time 30               -o /tmp/pair-response.txt               -w "%{http_code}"               "$endpoint"               -H "X-FBI-Pair-Code: 000000"               -H "X-FBI-Gateway-Id: ci-smoke-gateway"               -H "X-FBI-Gateway-Name: CI Smoke Test"               -H "User-Agent: FBI-SMS-Gateway-CI/12"               -H "Accept: application/json")
             echo "HTTP $code"
             cat /tmp/pair-response.txt || true
             if [ "$code" = "401" ] || [ "$code" = "400" ]; then
@@ -52,14 +53,14 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v6
         with:
-          name: fbi-sms-gateway-apk-v11
+          name: fbi-sms-gateway-apk-v12
           path: sms-android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
       - name: Publish GitHub pre-release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: fbi-sms-gateway-v11
-          name: FBI SMS Gateway v11
+          tag_name: fbi-sms-gateway-v12
+          name: FBI SMS Gateway v12
           prerelease: true
           make_latest: false
           files: sms-android/app/build/outputs/apk/debug/app-debug.apk
