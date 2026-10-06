@@ -1,4 +1,5 @@
 name: Build FBI SMS Gateway APK
+# Pairing v8 verification pipeline
 
 on:
   workflow_dispatch:
