@@ -735,7 +735,8 @@ async function handleTemporaryClientContactImport(req, res) {
     const expected = String(process.env.TEMP_CLIENT_IMPORT_TOKEN || '');
     const supplied = String(req.headers['x-fbi-import-token'] || '');
     if (!expected || !supplied || supplied !== expected) return json(res, 401, { ok:false, error:'Unauthorized.' });
-    const incoming = Array.isArray(req.body?.clients) ? req.body.clients : [];
+    const body = await parseJsonBody(req);
+    const incoming = Array.isArray(body?.clients) ? body.clients : [];
     if (!incoming.length) return json(res, 400, { ok:false, error:'No clients supplied.' });
     const currentResult = await pool.query('SELECT state_json FROM app_state WHERE id=1');
     let state = currentResult.rows[0]?.state_json || null;
