@@ -28,6 +28,7 @@ public class MainActivity extends Activity {
     private static final int SMS_PERMISSION = 1001;
     // Try the public custom domain first, then both live Railway domains.
     // Pairing succeeds only when the response is a valid {ok:true,token:...} object.
+    private static final String PAIR_PATH = "/api/sms/gateway/pair-v2";
     private static final String[] BASE_URLS = {
             "https://invoice.fbigh.com",
             "https://fbi-invoice-studio-production.up.railway.app",
@@ -310,7 +311,7 @@ public class MainActivity extends Activity {
                     body.put("code", code);
                     body.put("gatewayId", getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_GATEWAY_ID, ""));
                     body.put("gatewayName", "FBI Android SMS Gateway");
-                    c = (HttpURLConnection) new URL(base + "/api/sms/gateway/pair").openConnection();
+                    c = (HttpURLConnection) new URL(base + PAIR_PATH).openConnection();
                     c.setRequestMethod("POST");
                     c.setConnectTimeout(15000);
                     c.setReadTimeout(15000);
@@ -319,7 +320,7 @@ public class MainActivity extends Activity {
                     c.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
                     c.setRequestProperty("Accept", "application/json");
                     c.setRequestProperty("Cache-Control", "no-cache");
-                    c.setRequestProperty("User-Agent", "FBI-SMS-Gateway-Android/6");
+                    c.setRequestProperty("User-Agent", "FBI-SMS-Gateway-Android/7");
                     byte[] bytes = body.toString().getBytes(StandardCharsets.UTF_8);
                     try (OutputStream out = c.getOutputStream()) { out.write(bytes); }
                     int response = c.getResponseCode();
