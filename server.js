@@ -1802,8 +1802,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-initDb().then(async () => {
-  await importTemporaryClientContactsFromEnv();
+initDb().then(() => {
   server.listen(PORT, HOST, () => {
     console.log('FBI Invoice Studio Cloud server');
     console.log(`Local: http://127.0.0.1:${PORT}`);
