@@ -260,7 +260,7 @@ public class MainActivity extends Activity {
         pairButton.setEnabled(false);
         status.setText("PAIRING…");
         new Thread(() -> {
-            Throwable lastError = null;
+            String lastDetail = "Unable to reach the SMS gateway.";
             for (String base : BASE_URLS) {
                 HttpURLConnection c = null;
                 try {
@@ -270,34 +270,43 @@ public class MainActivity extends Activity {
                     body.put("gatewayName", "FBI Android SMS Gateway");
                     c = (HttpURLConnection) new URL(base + "/api/sms/gateway/pair").openConnection();
                     c.setRequestMethod("POST");
-                    c.setConnectTimeout(10000);
-                    c.setReadTimeout(10000);
+                    c.setConnectTimeout(15000);
+                    c.setReadTimeout(15000);
                     c.setDoOutput(true);
-                    c.setRequestProperty("Content-Type", "application/json");
+                    c.setUseCaches(false);
+                    c.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                    c.setRequestProperty("Accept", "application/json");
+                    c.setRequestProperty("Cache-Control", "no-cache");
+                    c.setRequestProperty("User-Agent", "FBI-SMS-Gateway-Android/6");
                     byte[] bytes = body.toString().getBytes(StandardCharsets.UTF_8);
                     try (OutputStream out = c.getOutputStream()) { out.write(bytes); }
                     int response = c.getResponseCode();
-                    java.io.InputStream in = response >= 200 && response < 300 ? c.getInputStream() : c.getErrorStream();
-                    String raw = in == null ? "" : new java.io.BufferedReader(new java.io.InputStreamReader(in, StandardCharsets.UTF_8)).lines().reduce("", (x,y) -> x+y);
+                    java.io.InputStream in = response >= 200 && response < 400 ? c.getInputStream() : c.getErrorStream();
+                    String raw = in == null ? "" : new java.io.BufferedReader(
+                            new java.io.InputStreamReader(in, StandardCharsets.UTF_8))
+                            .lines().collect(java.util.stream.Collectors.joining());
                     c.disconnect();
-
-                    if (response == 404 && !base.equals(BASE_URLS[BASE_URLS.length - 1])) continue;
                     JSONObject result = raw.isEmpty() ? new JSONObject() : new JSONObject(raw);
                     if (response == 200 && result.optBoolean("ok") && result.optString("token").length() > 20) {
-                        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(KEY_TOKEN, result.getString("token")).apply();
+                        getSharedPreferences(PREFS, MODE_PRIVATE).edit()
+                                .putString(KEY_TOKEN, result.getString("token")).apply();
                         runOnUiThread(() -> { status.setText("PAIRED • READY"); refreshUi(); });
                         return;
                     }
-                    final String msg = result.optString("error", "Pairing failed.");
-                    runOnUiThread(() -> { status.setText(msg.toUpperCase()); pairButton.setEnabled(true); });
-                    return;
+                    lastDetail = base + " → HTTP " + response + " → "
+                            + result.optString("error", raw.isEmpty() ? "No response body." : raw);
+                    if (response >= 400 && response < 500 && response != 404) break;
                 } catch (Throwable t) {
-                    lastError = t;
+                    lastDetail = base + " → " + String.valueOf(t.getMessage());
+                } finally {
                     if (c != null) c.disconnect();
                 }
             }
-            final String detail = lastError == null ? "Unable to reach the SMS gateway." : String.valueOf(lastError.getMessage());
-            runOnUiThread(() -> { status.setText(("NETWORK ERROR • " + detail).toUpperCase()); pairButton.setEnabled(true); });
+            final String detail = lastDetail;
+            runOnUiThread(() -> {
+                status.setText(("PAIRING FAILED • " + detail).toUpperCase());
+                pairButton.setEnabled(true);
+            });
         }, "fbi-pair").start();
     }
 
