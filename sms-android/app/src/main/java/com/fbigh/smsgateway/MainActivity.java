@@ -2,16 +2,20 @@ package com.fbigh.smsgateway;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -26,125 +30,232 @@ public class MainActivity extends Activity {
     private static final String PREFS = "fbi_sms_gateway";
     private static final String KEY_TOKEN = "gateway_token";
     private static final String KEY_GATEWAY_ID = "gateway_id";
+
     private TextView status;
+    private TextView permissionStatus;
+    private Button permissionButton;
     private Button pairButton;
     private Button startButton;
     private EditText codeInput;
 
+    private int gold() { return Color.rgb(212,175,55); }
+    private int bg() { return Color.rgb(10,10,12); }
+    private int card() { return Color.rgb(23,23,27); }
+    private int white() { return Color.rgb(245,245,247); }
+    private int muted() { return Color.rgb(175,175,182); }
+
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
+        getWindow().setStatusBarColor(bg());
+        getWindow().setNavigationBarColor(bg());
         ensureGatewayId();
         buildUi();
-        if (android.os.Build.VERSION.SDK_INT >= 23 &&
-                checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.SEND_SMS}, SMS_PERMISSION);
-        }
         refreshUi();
     }
 
     private void ensureGatewayId() {
         if (!getSharedPreferences(PREFS, MODE_PRIVATE).contains(KEY_GATEWAY_ID)) {
             getSharedPreferences(PREFS, MODE_PRIVATE).edit()
-                    .putString(KEY_GATEWAY_ID, UUID.randomUUID().toString())
-                    .apply();
+                    .putString(KEY_GATEWAY_ID, UUID.randomUUID().toString()).apply();
         }
     }
 
     private boolean isPaired() {
-        return getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_TOKEN, "").trim().length() > 20;
+        return getSharedPreferences(PREFS, MODE_PRIVATE)
+                .getString(KEY_TOKEN, "").trim().length() > 20;
+    }
+
+    private boolean hasSmsPermission() {
+        return android.os.Build.VERSION.SDK_INT < 23 ||
+                checkSelfPermission(Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private GradientDrawable rounded(int color, int strokeColor) {
+        GradientDrawable d = new GradientDrawable();
+        d.setColor(color);
+        d.setCornerRadius(22);
+        d.setStroke(1, strokeColor);
+        return d;
+    }
+
+    private TextView label(String text, int size, int color) {
+        TextView v = new TextView(this);
+        v.setText(text);
+        v.setTextColor(color);
+        v.setTextSize(size);
+        return v;
+    }
+
+    private Button actionButton(String text) {
+        Button b = new Button(this);
+        b.setText(text);
+        b.setTextSize(14);
+        b.setTextColor(bg());
+        b.setAllCaps(false);
+        b.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        b.setMinHeight(54);
+        b.setPadding(18, 8, 18, 8);
+        GradientDrawable d = rounded(gold(), gold());
+        b.setBackground(d);
+        return b;
+    }
+
+    private LinearLayout cardLayout() {
+        LinearLayout c = new LinearLayout(this);
+        c.setOrientation(LinearLayout.VERTICAL);
+        c.setPadding(20,20,20,20);
+        c.setBackground(rounded(card(), Color.rgb(48,48,54)));
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1,-2);
+        p.setMargins(0,0,0,14);
+        c.setLayoutParams(p);
+        return c;
     }
 
     private void buildUi() {
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.setBackgroundColor(bg());
+
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(28, 36, 28, 28);
-        root.setGravity(Gravity.CENTER_HORIZONTAL);
-        root.setBackgroundColor(Color.rgb(11,11,13));
+        int top = 34;
+        root.setPadding(20, top, 20, 28);
 
-        TextView title = new TextView(this);
-        title.setText("FBI SMS GATEWAY");
-        title.setTextColor(Color.rgb(212,175,55));
-        title.setTextSize(24);
+        TextView brand = label("FILM BEYOND IMAGINATION", 12, gold());
+        brand.setGravity(Gravity.CENTER);
+        brand.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        root.addView(brand, new LinearLayout.LayoutParams(-1,28));
+
+        TextView title = label("FBI SMS GATEWAY", 28, white());
         title.setGravity(Gravity.CENTER);
-        root.addView(title, new LinearLayout.LayoutParams(-1, -2));
+        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        root.addView(title, new LinearLayout.LayoutParams(-1,50));
 
-        TextView sub = new TextView(this);
-        sub.setText("Private company SMS gateway\nUses the SIM card in this phone");
-        sub.setTextColor(Color.LTGRAY);
-        sub.setTextSize(14);
+        TextView sub = label("Private company SMS gateway\nThis phone provides the GSM/SIM connection.", 14, muted());
         sub.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(-1,-2);
-        sp.setMargins(0,12,0,18);
+        sp.setMargins(0,0,0,18);
         root.addView(sub, sp);
 
-        status = new TextView(this);
-        status.setText("STATUS: CHECKING");
-        status.setTextColor(Color.WHITE);
-        status.setTextSize(16);
-        status.setGravity(Gravity.CENTER);
-        root.addView(status, new LinearLayout.LayoutParams(-1, 60));
+        LinearLayout statusCard = cardLayout();
+        TextView stitle = label("GATEWAY STATUS", 12, gold());
+        stitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        statusCard.addView(stitle);
+        status = label("CHECKING…", 20, white());
+        status.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        status.setPadding(0,8,0,2);
+        statusCard.addView(status);
+        root.addView(statusCard);
 
-        TextView pairLabel = new TextView(this);
-        pairLabel.setText("PAIR THIS PHONE");
-        pairLabel.setTextColor(Color.rgb(212,175,55));
-        pairLabel.setTextSize(14);
-        pairLabel.setGravity(Gravity.CENTER);
-        root.addView(pairLabel, new LinearLayout.LayoutParams(-1, -2));
+        LinearLayout permCard = cardLayout();
+        TextView pt = label("1. SMS PERMISSION", 15, white());
+        pt.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        permCard.addView(pt);
+        permissionStatus = label("", 13, muted());
+        permissionStatus.setPadding(0,8,0,12);
+        permCard.addView(permissionStatus);
+        permissionButton = actionButton("GRANT SMS ACCESS");
+        permissionButton.setOnClickListener(v -> handlePermission());
+        permCard.addView(permissionButton);
+        TextView hint = label("On this phone, Android may require: Settings → Apps → FBI SMS Gateway → ⋮ → Allow restricted settings → Permissions → SMS → Allow.", 12, muted());
+        hint.setPadding(0,12,0,0);
+        permCard.addView(hint);
+        root.addView(permCard);
+
+        LinearLayout pairCard = cardLayout();
+        TextView pairTitle = label("2. PAIR THIS PHONE", 15, white());
+        pairTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        pairCard.addView(pairTitle);
+
+        TextView pairHint = label("On a computer, sign in to Invoice Studio and open /sms-gateway-pair. Enter the 6-digit code shown there.", 13, muted());
+        pairHint.setPadding(0,8,0,12);
+        pairCard.addView(pairHint);
 
         codeInput = new EditText(this);
-        codeInput.setHint("Enter 6-digit pairing code");
+        codeInput.setHint("6-digit pairing code");
+        codeInput.setHintTextColor(Color.rgb(120,120,126));
+        codeInput.setTextColor(white());
+        codeInput.setTextSize(18);
         codeInput.setInputType(2);
-        codeInput.setTextColor(Color.WHITE);
-        codeInput.setHintTextColor(Color.GRAY);
         codeInput.setGravity(Gravity.CENTER);
-        root.addView(codeInput, new LinearLayout.LayoutParams(-1, 58));
+        codeInput.setSingleLine(true);
+        codeInput.setPadding(16,0,16,0);
+        codeInput.setBackground(rounded(Color.rgb(13,13,16), Color.rgb(70,70,78)));
+        pairCard.addView(codeInput, new LinearLayout.LayoutParams(-1,58));
 
-        pairButton = new Button(this);
-        pairButton.setText("PAIR PHONE");
+        pairButton = actionButton("PAIR PHONE");
         pairButton.setOnClickListener(v -> pairPhone());
-        root.addView(pairButton, new LinearLayout.LayoutParams(-1, 58));
+        LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(-1,58);
+        pp.setMargins(0,12,0,0);
+        pairCard.addView(pairButton, pp);
+        root.addView(pairCard);
 
-        startButton = new Button(this);
-        startButton.setText("START GATEWAY");
+        LinearLayout startCard = cardLayout();
+        TextView startTitle = label("3. START SMS GATEWAY", 15, white());
+        startTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        startCard.addView(startTitle);
+        TextView startHint = label("Once permission and pairing are complete, start the gateway and keep this phone on mobile data and charging.", 13, muted());
+        startHint.setPadding(0,8,0,12);
+        startCard.addView(startHint);
+        startButton = actionButton("START GATEWAY");
         startButton.setOnClickListener(v -> startGateway());
-        LinearLayout.LayoutParams sb = new LinearLayout.LayoutParams(-1, 58);
-        sb.setMargins(0, 10, 0, 0);
-        root.addView(startButton, sb);
+        startCard.addView(startButton);
+        root.addView(startCard);
 
-        TextView info = new TextView(this);
-        info.setText("\nOn your computer, sign in to Invoice Studio and open:\n/sms-gateway-pair\n\nEnter the displayed code here. Then keep this phone connected to mobile data and charging.");
-        info.setTextColor(Color.GRAY);
-        info.setTextSize(12);
-        info.setGravity(Gravity.CENTER);
-        root.addView(info, new LinearLayout.LayoutParams(-1,-2));
+        TextView footer = label("FBI Private SMS Gateway • No third-party SMS provider", 11, Color.rgb(110,110,116));
+        footer.setGravity(Gravity.CENTER);
+        root.addView(footer, new LinearLayout.LayoutParams(-1,42));
 
-        setContentView(root);
+        scroll.addView(root);
+        setContentView(scroll);
+    }
+
+    private void handlePermission() {
+        if (hasSmsPermission()) {
+            refreshUi();
+            return;
+        }
+        if (android.os.Build.VERSION.SDK_INT >= 23) {
+            requestPermissions(new String[]{Manifest.permission.SEND_SMS}, SMS_PERMISSION);
+        }
+    }
+
+    private void openAppSettings() {
+        Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        i.setData(Uri.parse("package:" + getPackageName()));
+        startActivity(i);
     }
 
     private void refreshUi() {
-        if (isPaired()) {
-            status.setText("STATUS: PAIRED");
-            pairButton.setText("PAIRED");
-            pairButton.setEnabled(false);
-            codeInput.setEnabled(false);
-            startButton.setEnabled(true);
+        boolean permitted = hasSmsPermission();
+        permissionStatus.setText(permitted
+                ? "SMS access is enabled. The phone can send SMS."
+                : "SMS access is blocked. Android is protecting this sensitive permission.");
+        permissionButton.setText(permitted ? "SMS ACCESS ENABLED" : "GRANT / OPEN SMS SETTINGS");
+        permissionButton.setEnabled(!permitted);
+
+        if (!permitted) {
+            status.setText("WAITING FOR SMS PERMISSION");
+        } else if (isPaired()) {
+            status.setText("PAIRED • READY");
         } else {
-            status.setText("STATUS: NOT PAIRED");
-            pairButton.setText("PAIR PHONE");
-            pairButton.setEnabled(true);
-            codeInput.setEnabled(true);
-            startButton.setEnabled(false);
+            status.setText("NOT PAIRED");
         }
+
+        pairButton.setEnabled(true);
+        codeInput.setEnabled(true);
+        startButton.setEnabled(permitted && isPaired());
+        startButton.setText(permitted && isPaired() ? "START GATEWAY" : "COMPLETE STEPS 1 + 2");
     }
 
     private void pairPhone() {
         final String code = codeInput.getText().toString().replaceAll("\\D", "");
         if (!code.matches("\\d{6}")) {
-            status.setText("STATUS: ENTER 6 DIGITS");
+            status.setText("ENTER THE 6-DIGIT CODE");
             return;
         }
         pairButton.setEnabled(false);
-        status.setText("STATUS: PAIRING...");
+        status.setText("PAIRING…");
         new Thread(() -> {
             HttpURLConnection c = null;
             try {
@@ -165,16 +276,14 @@ public class MainActivity extends Activity {
                 String raw = new java.io.BufferedReader(new java.io.InputStreamReader(in, StandardCharsets.UTF_8)).lines().reduce("", (a,b) -> a+b);
                 JSONObject result = new JSONObject(raw);
                 if (response == 200 && result.optBoolean("ok") && result.optString("token").length() > 20) {
-                    getSharedPreferences(PREFS, MODE_PRIVATE).edit()
-                            .putString(KEY_TOKEN, result.getString("token"))
-                            .apply();
-                    runOnUiThread(() -> { status.setText("STATUS: PAIRED SUCCESSFULLY"); refreshUi(); });
+                    getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(KEY_TOKEN, result.getString("token")).apply();
+                    runOnUiThread(() -> { status.setText("PAIRED • READY"); refreshUi(); });
                 } else {
                     final String msg = result.optString("error", "Pairing failed.");
-                    runOnUiThread(() -> { status.setText("STATUS: " + msg.toUpperCase()); pairButton.setEnabled(true); });
+                    runOnUiThread(() -> { status.setText(msg.toUpperCase()); pairButton.setEnabled(true); });
                 }
             } catch (Throwable t) {
-                runOnUiThread(() -> { status.setText("STATUS: NETWORK ERROR"); pairButton.setEnabled(true); });
+                runOnUiThread(() -> { status.setText("NETWORK ERROR • CHECK MOBILE DATA / WI-FI"); pairButton.setEnabled(true); });
             } finally {
                 if (c != null) c.disconnect();
             }
@@ -182,26 +291,31 @@ public class MainActivity extends Activity {
     }
 
     private void startGateway() {
-        if (!isPaired()) {
-            status.setText("STATUS: PAIR PHONE FIRST");
+        if (!hasSmsPermission()) {
+            openAppSettings();
             return;
         }
-        if (android.os.Build.VERSION.SDK_INT >= 23 &&
-                checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.SEND_SMS}, SMS_PERMISSION);
+        if (!isPaired()) {
+            status.setText("PAIR PHONE FIRST");
             return;
         }
         startForegroundService(new Intent(this, GatewayService.class));
-        status.setText("STATUS: RUNNING");
+        status.setText("GATEWAY RUNNING");
         startButton.setText("GATEWAY RUNNING");
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (status != null) refreshUi();
     }
 
     @Override public void onRequestPermissionsResult(int r, String[] p, int[] g) {
         super.onRequestPermissionsResult(r,p,g);
-        if (r == SMS_PERMISSION && g.length > 0 && g[0] == PackageManager.PERMISSION_GRANTED) {
-            status.setText("STATUS: SMS PERMISSION READY");
-        } else if (r == SMS_PERMISSION) {
-            status.setText("STATUS: SMS PERMISSION REQUIRED");
+        if (r == SMS_PERMISSION && (g.length == 0 || g[0] != PackageManager.PERMISSION_GRANTED)) {
+            status.setText("SMS ACCESS STILL BLOCKED");
+            permissionButton.setText("OPEN PHONE APP SETTINGS");
+            permissionButton.setEnabled(true);
+            permissionButton.setOnClickListener(v -> openAppSettings());
         }
         refreshUi();
     }
