@@ -14,30 +14,30 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up Java 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '8.10.2'
       - name: Build debug APK
         working-directory: sms-android
         run: gradle assembleDebug --stacktrace
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
-          name: fbi-sms-gateway-apk-v5
+          name: fbi-sms-gateway-apk-v6
           path: sms-android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
       - name: Publish GitHub pre-release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: fbi-sms-gateway-v5
-          name: FBI SMS Gateway v5
+          tag_name: fbi-sms-gateway-v6
+          name: FBI SMS Gateway v6
           prerelease: true
           make_latest: false
           files: sms-android/app/build/outputs/apk/debug/app-debug.apk
