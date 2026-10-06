@@ -17,9 +17,14 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-public class GatewayService extends Service {\n    // Network fallback keeps the phone gateway usable while the custom domain DNS is repaired.
-    private static final String CHANNEL = "fbi_sms_gateway";\n    // Rebuild trigger after correcting the Android pairing fallback.
-    private static final String[] BASE_URLS = {\n            "https://invoice.fbigh.com",\n            "https://czo5a4qo.up.railway.app"\n    };
+public class GatewayService extends Service {
+    // Network fallback keeps the phone gateway usable while the custom domain DNS is repaired.
+    private static final String CHANNEL = "fbi_sms_gateway";
+    // Rebuild trigger after correcting the Android pairing fallback.
+    private static final String[] BASE_URLS = {
+            "https://invoice.fbigh.com",
+            "https://czo5a4qo.up.railway.app"
+    };
     private static final String PREFS = "fbi_sms_gateway";
     private static final String KEY_TOKEN = "gateway_token";
     private static final String KEY_GATEWAY_ID = "gateway_id";
