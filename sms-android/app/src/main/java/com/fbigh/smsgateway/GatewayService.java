@@ -23,7 +23,7 @@ public class GatewayService extends Service {
     // Rebuild trigger after correcting the Android pairing fallback.
     private static final String[] BASE_URLS = {
             "https://invoice.fbigh.com",
-            "https://czo5a4qo.up.railway.app"
+            "https://czo1a4qo.up.railway.app"
     };
     private static final String PREFS = "fbi_sms_gateway";
     private static final String KEY_TOKEN = "gateway_token";
