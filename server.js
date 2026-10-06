@@ -730,45 +730,6 @@ function mergeInvoiceStates(existingState, incomingState) {
   };
 }
 
-async function handleTemporaryClientContactImport(req, res) {
-  try {
-    const expected = String(process.env.TEMP_CLIENT_IMPORT_TOKEN || '');
-    const supplied = String(req.headers['x-fbi-import-token'] || req.url.split('?token=')[1]?.split('&')[0] || '');
-    if (!expected || !supplied || supplied !== expected) return json(res, 401, { ok:false, error:'Unauthorized.' });
-    let incoming=[];
-    if(req.method==='GET'){
-      try{incoming=JSON.parse(String(process.env.TEMP_CLIENT_IMPORT_DATA||'[]'));}catch{incoming=[]}
-    }else{
-      const body = await parseJsonBody(req);
-      incoming = Array.isArray(body?.clients) ? body.clients : [];
-    }
-    if (!incoming.length) return json(res, 400, { ok:false, error:'No clients supplied.' });
-    const currentResult = await pool.query('SELECT state_json FROM app_state WHERE id=1');
-    let state = currentResult.rows[0]?.state_json || null;
-    if (typeof state === 'string') state = JSON.parse(state);
-    state = state || { version:4, savedAt:0, data:{data:[],clients:[],settings:{}} };
-    state.data = state.data || {data:[],clients:[],settings:{}};
-    state.data.clients = Array.isArray(state.data.clients) ? state.data.clients : [];
-    const clients = state.data.clients;
-    let added=0,updated=0;
-    for (const item of incoming) {
-      const name=String(item?.name||'').trim(), phone=String(item?.phone||'').trim(), email=String(item?.email||'').trim();
-      if (!name) continue;
-      const cleanPhone=phone.replace(/\D/g,''), cleanEmail=email.toLowerCase();
-      let existing=clients.find(x => (cleanPhone && String(x?.phone||'').replace(/\D/g,'')===cleanPhone) || (cleanEmail && String(x?.email||'').trim().toLowerCase()===cleanEmail) || String(x?.name||'').trim().toLowerCase()===name.toLowerCase());
-      if (!existing) { existing={id:'av-'+Date.now()+'-'+Math.random().toString(36).slice(2,10),createdAt:new Date().toISOString()}; clients.unshift(existing); added++; } else updated++;
-      Object.assign(existing,{name,phone,email,address:String(item?.address||'').trim(),notes:String(item?.notes||'').trim(),updatedAt:new Date().toISOString()});
-    }
-    state.version=Math.max(Number(state.version)||1,4);
-    state.savedAt=Date.now();
-    await pool.query('INSERT INTO app_state(id,version,saved_at,state_json) VALUES(1,$1,$2,$3::jsonb) ON CONFLICT(id) DO UPDATE SET version=EXCLUDED.version,saved_at=EXCLUDED.saved_at,state_json=EXCLUDED.state_json',[state.version,state.savedAt,JSON.stringify(state)]);
-    return json(res,200,{ok:true,added,updated,clientCount:clients.length});
-  } catch (e) {
-    console.error('Temporary client contact import failed:',e);
-    return json(res,500,{ok:false,error:e.message||'Import failed.'});
-  }
-}
-
 async function handleStateWrite(req, res) {
   const session = await requireAuth(req, res);
   if (!session) return;
@@ -1740,6 +1701,35 @@ async function handleAdminSnapshot(req, res) {
   }
 }
 
+async function importTemporaryClientContactsFromEnv(){
+  const raw=String(process.env.TEMP_CLIENT_IMPORT_DATA||'').trim();
+  if(!raw)return;
+  let incoming=[];
+  try{incoming=JSON.parse(raw)}catch(e){console.error('Temporary client import data is invalid:',e.message);return}
+  if(!Array.isArray(incoming)||!incoming.length)return;
+  try{
+    const currentResult=await pool.query('SELECT state_json FROM app_state WHERE id=1');
+    let state=currentResult.rows[0]?.state_json||null;
+    if(typeof state==='string')state=JSON.parse(state);
+    state=state||{version:4,savedAt:0,data:{data:[],clients:[],settings:{}}};
+    state.data=state.data||{data:[],clients:[],settings:{}};
+    state.data.clients=Array.isArray(state.data.clients)?state.data.clients:[];
+    let added=0,updated=0;
+    for(const item of incoming){
+      const name=String(item?.name||'').trim(),phone=String(item?.phone||'').trim(),email=String(item?.email||'').trim();
+      if(!name)continue;
+      const cp=phone.replace(/\D/g,''),ce=email.toLowerCase();
+      let existing=state.data.clients.find(x=>(cp&&String(x?.phone||'').replace(/\D/g,'')===cp)||(ce&&String(x?.email||'').trim().toLowerCase()===ce)||String(x?.name||'').trim().toLowerCase()===name.toLowerCase());
+      if(!existing){existing={id:'av-'+Date.now()+'-'+Math.random().toString(36).slice(2,10),createdAt:new Date().toISOString()};state.data.clients.unshift(existing);added++}else updated++;
+      Object.assign(existing,{name,phone,email,address:String(item?.address||'').trim(),notes:String(item?.notes||'').trim(),updatedAt:new Date().toISOString()});
+    }
+    state.version=Math.max(Number(state.version)||1,4);
+    state.savedAt=Date.now();
+    await pool.query('INSERT INTO app_state(id,version,saved_at,state_json) VALUES(1,$1,$2,$3::jsonb) ON CONFLICT(id) DO UPDATE SET version=EXCLUDED.version,saved_at=EXCLUDED.saved_at,state_json=EXCLUDED.state_json',[state.version,state.savedAt,JSON.stringify(state)]);
+    console.log('Temporary client contact import completed:',{added,updated,total:state.data.clients.length});
+  }catch(e){console.error('Temporary client contact import failed:',e.message||e)}
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
@@ -1841,7 +1831,8 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-initDb().then(() => {
+initDb().then(async () => {
+  await importTemporaryClientContactsFromEnv();
   server.listen(PORT, HOST, () => {
     console.log('FBI Invoice Studio Cloud server');
     console.log(`Local: http://127.0.0.1:${PORT}`);
