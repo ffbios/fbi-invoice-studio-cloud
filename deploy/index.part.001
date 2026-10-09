@@ -1296,3 +1296,6 @@ html:not([data-theme="dark"]) section#view-dashboard .dashboard-hero{
   color:#17202d!important;
   background:linear-gradient(135deg,#ffffff,#f7f9fc)!important;
 }
+
+/* Use the supplied original FBI logo in the application sidebar. */
+.brand .brand-logo{width:64px;height:34px;object-fit:contain;display:block;flex:0 0 64px;background:transparent}.brand>div{flex:1;min-width:0}
