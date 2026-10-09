@@ -1297,5 +1297,14 @@ html:not([data-theme="dark"]) section#view-dashboard .dashboard-hero{
   background:linear-gradient(135deg,#ffffff,#f7f9fc)!important;
 }
 
+/* Hide day-pricing controls for non-rental IT and surveillance invoices. */
+#invoiceItemsCard.no-days .days-col{display:none!important}
+#invoiceItemsCard.no-days .items-head,
+#invoiceItemsCard.no-days .item{grid-template-columns:minmax(0,2.2fr) .8fr .7fr 1fr 35px}
+@media(max-width:600px){
+  #invoiceItemsCard.no-days .item{grid-template-columns:1fr 1fr}
+  #invoiceItemsCard.no-days .item>div:first-child{grid-column:1/-1}
+}
+
 /* Use the supplied original FBI logo in the application sidebar. */
 .brand .brand-logo{width:64px;height:34px;object-fit:contain;display:block;flex:0 0 64px;background:transparent}.brand>div{flex:1;min-width:0}
