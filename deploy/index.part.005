@@ -381,7 +381,7 @@ function validateMediaEventDate(invoice,focus=true){
   return true;
 }
 function setTemplate(v){settings.template=v;document.querySelectorAll("[data-template-card]").forEach(c=>c.classList.toggle("selected",c.dataset.templateCard===v));persist()}
-const IT_SERVICE_CATEGORIES=["Networking","CCTV","Smart Home Automation"];
+const IT_SERVICE_CATEGORIES=["Networking","CCTV","Smart Home Automation","Data Center & Surveillance Center"];
 function isMediaServiceCategory(category){
   const c=String(category||"").trim();
   if(!c)return false;
