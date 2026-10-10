@@ -933,6 +933,13 @@ function calendarJobStatusPill(x){
   };
   return '<span class="calendar-job-status-pill" style="display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border:1px solid;border-radius:999px;font-size:8px;font-weight:900;line-height:1.1;'+(styles[s]||styles["Not Started"])+'">Job: '+esc(s)+'</span>';
 }
+const CAL_JOB_COLORS={"Completed":"#3ccf8e","In Progress":"#4aa8ff","Scheduled":"#f0b93a","Cancelled":"#ff6b81","Not Started":"#98a2b3"};
+function calendarJobColor(x){return CAL_JOB_COLORS[calendarJobStatus(x)]||CAL_JOB_COLORS["Not Started"]}
+function calendarNewForDate(key){
+  // Start a new invoice already set to the chosen event date.
+  try{newInvoice();if(typeof show==="function")show("create")}catch(e){}
+  setTimeout(function(){const el=$("eventDate");if(el){el.value=key;el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}))}},80);
+}
 function renderCalendar(){
   const grid=$("calendarGrid"),title=$("calendarMonthTitle"),list=$("calendarEventList");
   if(!grid||!title||!list)return;
@@ -942,7 +949,7 @@ function renderCalendar(){
   events.forEach(x=>{
     const s=calendarEventStart(x),e=calendarEventEnd(x)||s;
     if(!s)return;
-    const cursor=new Date(s.getTime()),finish=new Date(e.getTime());
+    const cursor=new Date(s.getTime());let finish=new Date(e.getTime());
     if(finish<s)finish=new Date(s.getTime());
     let guard=0;
     while(cursor<=finish&&guard<370){
@@ -952,20 +959,23 @@ function renderCalendar(){
     }
   });
   const first=new Date(year,month,1),startOffset=first.getDay(),days=new Date(year,month+1,0).getDate(),prevDays=new Date(year,month,0).getDate();
-  const today=new Date(),cells=[];
-  ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>cells.push('<div class="calendar-weekday">'+d+'</div>'));
-  for(let i=0;i<42;i++){
+  const today=new Date(),todayKey=calendarDateKey(today.getFullYear(),today.getMonth(),today.getDate()),cells=[];
+  ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach((d,i)=>cells.push('<div class="calendar-weekday'+(i===0||i===6?' wk':'')+'">'+d+'</div>'));
+  const totalCells=Math.ceil((startOffset+days)/7)*7;
+  for(let i=0;i<totalCells;i++){
     const dayNum=i-startOffset+1;
     let cellYear=year,cellMonth=month,day=dayNum,other=false;
     if(dayNum<1){cellMonth=month-1;if(cellMonth<0){cellMonth=11;cellYear=year-1}day=prevDays+dayNum;other=true}
     else if(dayNum>days){cellMonth=month+1;if(cellMonth>11){cellMonth=0;cellYear=year+1}day=dayNum-days;other=true}
     const key=calendarDateKey(cellYear,cellMonth,day),dayEvents=byDate[key]||[];
-    const isToday=key===calendarDateKey(today.getFullYear(),today.getMonth(),today.getDate());
-    let html='<div class="calendar-day '+(other?'other-month ':'')+(isToday?'today':'')+'"><div class="calendar-day-number">'+day+'</div>';
-    dayEvents.slice(0,3).forEach(x=>{
-      html+='<button type="button" class="calendar-event" onclick="openCalendarInvoice(\''+esc(x.id)+'\')"><span class="event-no">'+esc(x.no||"Invoice")+' · '+esc(fmtMoney(x.total,x.cur))+'</span><span class="event-client">'+esc(x.client||"No client")+'</span><span class="event-cat">'+esc(x.category||"Media")+'</span><span class="event-status">'+calendarStatusPill(x)+' '+calendarJobStatusPill(x)+'</span></button>';
+    const isToday=key===todayKey,isPast=key<todayKey,weekend=(i%7===0||i%7===6);
+    let html='<div class="calendar-day '+(other?'other-month ':'')+(isToday?'today ':'')+(isPast?'past ':'')+(weekend?'weekend ':'')+(dayEvents.length?'has-events':'')+'"><div class="calendar-day-number"><span>'+day+'</span>'+(isToday?'<em class="cal2-todaytag">Today</em>':'')+'</div>';
+    dayEvents.slice(0,2).forEach(x=>{
+      const info=invoiceStatusInfo(x),pay=info.status;
+      html+='<button type="button" class="calendar-event cal2-ev" style="--jc:'+calendarJobColor(x)+'" onclick="openCalendarInvoice(\''+esc(x.id)+'\')" title="'+esc((x.no||"Invoice")+' · '+(x.client||"No client")+' · '+(x.category||"Media"))+'"><span class="cal2-ev-client">'+esc(x.client||"No client")+'</span><span class="cal2-ev-meta">'+esc(fmtMoney(x.total,x.cur))+'</span><span class="cal2-ev-foot"><span class="cal2-ev-job">'+esc(calendarJobStatus(x))+'</span><span class="cal2-ev-pay '+(pay==="Paid"?'paid':pay==="Overdue"?'overdue':'')+'">'+esc(pay)+'</span></span></button>';
     });
-    if(dayEvents.length>3)html+='<div class="calendar-more">+'+(dayEvents.length-3)+' more</div>';
+    if(dayEvents.length>2)html+='<div class="cal2-more">+'+(dayEvents.length-2)+' more</div>';
+    if(!dayEvents.length&&!other&&!isPast)html+='<button type="button" class="cal2-add" onclick="calendarNewForDate(\''+key+'\')" aria-label="New invoice on '+esc(key)+'">+ New invoice</button>';
     cells.push(html+'</div>');
   }
   grid.innerHTML=cells.join("");
@@ -974,10 +984,28 @@ function renderCalendar(){
     const s=calendarEventStart(x),e=calendarEventEnd(x)||s;
     return s&&e&&e>=monthStart&&s<monthEnd;
   });
+  // ---- month summary ----
+  const stats=$("calendarStats");
+  if(stats){
+    const cur=(monthEvents[0]&&monthEvents[0].cur)||(events[0]&&events[0].cur);
+    let booked=0,collected=0,outstanding=0;
+    monthEvents.forEach(x=>{const p=paymentTotals(x);booked+=Number(x.total||0);collected+=Number(p.paid||0);outstanding+=Number(p.balance||0)});
+    const startToday=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+    const next=events.find(x=>{const s=calendarEventStart(x);return s&&s>=startToday&&calendarJobStatus(x)!=="Cancelled"});
+    let nextHtml='<span>Next event</span><b>Nothing booked</b><small>Hover a day to add one</small>';
+    if(next){const s=calendarEventStart(next),dd=Math.round((s-startToday)/864e5);nextHtml='<span>Next event</span><b>'+(dd===0?'Today':dd===1?'Tomorrow':'In '+dd+' days')+'</b><small>'+esc(next.client||"No client")+' · '+esc(s.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"}))+'</small>'}
+    const done=monthEvents.filter(x=>calendarJobStatus(x)==="Completed").length;
+    stats.innerHTML='<div class="cal2-stat"><span>Events this month</span><b>'+monthEvents.length+'</b><small>'+done+' completed</small></div>'+
+      '<div class="cal2-stat"><span>Booked value</span><b>'+esc(fmtMoney(booked,cur))+'</b><small>From this month\'s jobs</small></div>'+
+      '<div class="cal2-stat"><span>Collected</span><b>'+esc(fmtMoney(collected,cur))+'</b><small>'+(booked?Math.round(collected/booked*100):0)+'% of booked</small></div>'+
+      '<div class="cal2-stat"><span>Outstanding</span><b>'+esc(fmtMoney(outstanding,cur))+'</b><small>'+(outstanding>0?'Still to collect':'All settled')+'</small></div>'+
+      '<div class="cal2-stat next">'+nextHtml+'</div>';
+  }
+  const cnt=$("calendarAgendaCount");if(cnt)cnt.textContent=monthEvents.length?monthEvents.length+' event'+(monthEvents.length===1?'':'s'):'';
   list.innerHTML=monthEvents.length?monthEvents.map(x=>{
     const d=calendarEventStart(x),p=paymentTotals(x);
-    return '<button type="button" class="calendar-list-row" style="width:100%;background:none;border:0;color:inherit;text-align:left;cursor:pointer" onclick="openCalendarInvoice(\''+esc(x.id)+'\')"><span class="calendar-list-date"><b>'+d.getDate()+'</b><small>'+d.toLocaleDateString(undefined,{month:"short"})+'</small></span><span class="calendar-list-main"><b>'+esc(x.no||"Invoice")+' · '+esc(x.client||"No client")+'</b><small>'+esc(x.category||"Media")+' · '+calendarStatusPill(x)+' · '+calendarJobStatusPill(x)+' · '+esc(calendarHumanRange(x))+'</small></span><span class="calendar-list-right"><b>'+esc(fmtMoney(x.total,x.cur))+'</b><small>Balance '+esc(fmtMoney(p.balance,x.cur))+'</small></span></button>';
-  }).join(""):'<div style="color:#777;text-align:center;padding:20px">No media events scheduled for this month.</div>';
+    return '<button type="button" class="cal2-row" style="--jc:'+calendarJobColor(x)+'" onclick="openCalendarInvoice(\''+esc(x.id)+'\')"><span class="cal2-date"><b>'+d.getDate()+'</b><small>'+esc(d.toLocaleDateString(undefined,{weekday:"short"}))+'</small></span><span class="cal2-row-main"><b>'+esc(x.client||"No client")+'</b><small>'+esc(x.no||"Invoice")+' · '+esc(x.category||"Media")+' · '+esc(calendarHumanRange(x))+'</small><span class="cal2-ev-foot"><span class="cal2-ev-job" style="--jc:'+calendarJobColor(x)+'">'+esc(calendarJobStatus(x))+'</span>'+calendarStatusPill(x)+'</span></span><span class="cal2-row-right"><b>'+esc(fmtMoney(x.total,x.cur))+'</b><small>'+(Number(p.balance||0)>0?'Balance '+esc(fmtMoney(p.balance,x.cur)):'Fully paid')+'</small></span></button>';
+  }).join(""):'<div class="cal2-empty">No media events this month yet. Hover any upcoming day in the calendar to add one.</div>';
 }
 function closeCalendarModal(){const m=$("calendarModal");if(m){m.classList.remove("show");m.setAttribute("aria-hidden","true")}}
 function openCalendarInvoice(id){
