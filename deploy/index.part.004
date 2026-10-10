@@ -813,23 +813,94 @@ html[data-theme] body :is(.paper,.receipt-paper,.preview-wrap){line-height:norma
   </div>
 </section>
 
+
+<style id="cal2-style">
+/* ===== Lively event calendar ===== */
+.cal2{--cal-brand:var(--u-brand,#d3235f);padding:26px!important}
+.cal2-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.cal2-eyebrow{display:block;font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--cal-brand)}
+html[data-theme] body .cal2 .calendar-month-title,.cal2 .calendar-month-title{font-size:clamp(28px,3.2vw,40px);font-weight:800;letter-spacing:-.02em;line-height:1.1;margin:6px 0 4px;color:var(--text)}
+.cal2-titlebox small{font-size:13.5px;color:var(--muted)}
+.cal2-nav{display:flex;align-items:center;gap:4px;padding:4px;border-radius:14px;border:1px solid var(--border);background:var(--panel2)}
+.cal2-navbtn,.cal2-today{border:0;background:transparent;color:var(--text);cursor:pointer;font:inherit;border-radius:10px;min-height:40px}
+.cal2-navbtn{width:42px;display:grid;place-items:center}
+.cal2-today{padding:0 16px;font-weight:800;font-size:14px;background:var(--cal-brand);color:#fff}
+.cal2-navbtn:hover{background:color-mix(in srgb,var(--cal-brand) 14%,transparent)}
+.cal2-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.cal2-stat{padding:14px 16px;border-radius:14px;border:1px solid var(--border);background:var(--panel2);min-width:0}
+.cal2-stat span{display:block;font-size:12.5px;font-weight:700;color:var(--muted)}
+.cal2-stat b{display:block;font-size:clamp(17px,1.5vw,21px);font-weight:800;letter-spacing:-.01em;margin-top:4px;color:var(--text);line-height:1.2;overflow-wrap:anywhere}
+.cal2-stat small{display:block;font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal2-stat.next{background:color-mix(in srgb,var(--cal-brand) 12%,var(--panel2));border-color:color-mix(in srgb,var(--cal-brand) 40%,var(--border))}
+.cal2-stat.next b{color:var(--cal-brand)}
+.cal2-legend{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-bottom:14px;font-size:12.5px;color:var(--muted)}
+.cal2-legend span{display:inline-flex;align-items:center;gap:6px;font-weight:700}
+.cal2-legend span::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--jc)}
+.cal2-legend em{font-style:normal;margin-left:auto}
+html[data-theme] body .cal2-grid,.cal2-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+html[data-theme] body .cal2 .calendar-weekday{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:left;padding:4px 10px}
+html[data-theme] body .cal2 .calendar-weekday.wk{color:color-mix(in srgb,var(--cal-brand) 70%,var(--muted))}
+html[data-theme] body .cal2 .calendar-day{position:relative;min-height:128px;padding:10px;border-radius:14px;border:1px solid var(--border);background:var(--panel);display:flex;flex-direction:column;gap:6px;transition:border-color .15s,transform .15s,box-shadow .15s}
+html[data-theme] body .cal2 .calendar-day.weekend{background:color-mix(in srgb,var(--cal-brand) 3.5%,var(--panel))}
+html[data-theme] body .cal2 .calendar-day:hover{border-color:color-mix(in srgb,var(--cal-brand) 45%,var(--border))}
+html[data-theme] body .cal2 .calendar-day.other-month{opacity:.42}
+html[data-theme] body .cal2 .calendar-day.past .calendar-day-number{opacity:.55}
+html[data-theme] body .cal2 .calendar-day.has-events{background:color-mix(in srgb,var(--cal-brand) 5%,var(--panel))}
+html[data-theme] body .cal2 .calendar-day-number{display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:800;color:var(--text)}
+html[data-theme] body .cal2 .calendar-day.today{border-color:var(--cal-brand);box-shadow:0 0 0 1px var(--cal-brand),0 10px 30px -10px color-mix(in srgb,var(--cal-brand) 70%,transparent)}
+html[data-theme] body .cal2 .calendar-day.today .calendar-day-number span{display:inline-grid;place-items:center;min-width:28px;height:28px;border-radius:50%;background:var(--cal-brand);color:#fff}
+.cal2-todaytag{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--cal-brand)}
+.cal2-add{position:absolute;left:8px;right:8px;bottom:8px;display:none;align-items:center;justify-content:center;gap:6px;min-height:34px;border-radius:10px;border:1px dashed color-mix(in srgb,var(--cal-brand) 60%,var(--border));background:color-mix(in srgb,var(--cal-brand) 8%,transparent);color:var(--cal-brand);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+html[data-theme] body .cal2 .calendar-day:hover .cal2-add,.cal2-add:focus-visible{display:flex}
+html[data-theme] body .cal2 .calendar-event.cal2-ev{position:relative;display:flex;flex-direction:column;gap:3px;width:100%;padding:9px 10px 8px;border-radius:11px;border:1px solid color-mix(in srgb,var(--jc) 40%,var(--border));background:color-mix(in srgb,var(--jc) 12%,var(--panel));color:var(--text);text-align:left;cursor:pointer;overflow:hidden;font:inherit;transition:transform .15s,box-shadow .15s}
+html[data-theme] body .cal2 .calendar-event.cal2-ev::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--jc)}
+html[data-theme] body .cal2 .calendar-event.cal2-ev:hover{transform:translateY(-2px);box-shadow:0 10px 24px -12px color-mix(in srgb,var(--jc) 80%,transparent)}
+.cal2-ev-client{font-size:13px;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal2-ev-meta{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal2-ev-foot{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px}
+.cal2-ev-job{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;color:var(--jc)}
+.cal2-ev-job::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--jc)}
+.cal2-ev-pay{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:99px;background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--muted)}
+.cal2-ev-pay.paid{background:color-mix(in srgb,#3ccf8e 18%,transparent);color:#3ccf8e}
+.cal2-ev-pay.overdue{background:color-mix(in srgb,#ff6b81 18%,transparent);color:#ff6b81}
+html[data-theme="light"] .cal2-ev-pay.paid{color:#127a52}html[data-theme="light"] .cal2-ev-pay.overdue{color:#b4233b}
+html[data-theme="light"] .cal2-ev-job{filter:brightness(.8)}
+.cal2-more{font-size:12px;font-weight:800;color:var(--cal-brand);padding:2px 4px}
+.cal2-agenda-head{display:flex;align-items:baseline;gap:10px;margin:26px 0 12px}
+.cal2-agenda-head h3{margin:0;font-size:20px;font-weight:800;color:var(--text)}
+.cal2-agenda-head small{font-size:13px;color:var(--muted)}
+.cal2-agenda{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:12px}
+.cal2-agenda .cal2-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px;border-radius:16px;border:1px solid var(--border);background:var(--panel);color:var(--text);text-align:left;cursor:pointer;font:inherit;width:100%;transition:border-color .15s,transform .15s}
+.cal2-agenda .cal2-row:hover{border-color:color-mix(in srgb,var(--jc) 60%,var(--border));transform:translateY(-2px)}
+.cal2-date{width:56px;height:60px;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:color-mix(in srgb,var(--jc) 16%,var(--panel2));color:var(--text)}
+.cal2-date b{font-size:22px;font-weight:800;line-height:1}
+.cal2-date small{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--jc);margin-top:3px}
+.cal2-row-main{min-width:0;display:flex;flex-direction:column;gap:4px}
+.cal2-row-main b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal2-row-main small{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal2-row-right{text-align:right;display:flex;flex-direction:column;gap:3px}
+.cal2-row-right b{font-size:15px;white-space:nowrap}
+.cal2-row-right small{font-size:12px;color:var(--muted);white-space:nowrap}
+.cal2-empty{grid-column:1/-1;padding:30px;text-align:center;border:1px dashed var(--border);border-radius:16px;color:var(--muted);font-size:14px}
+@media(max-width:1100px){.cal2-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.cal2-stat.next{grid-column:span 3}}
+@media(max-width:760px){.cal2{padding:16px!important}.cal2-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.cal2-stat.next{grid-column:span 2}.cal2-legend em{display:none}html[data-theme] body .cal2-grid,.cal2-grid{gap:4px}html[data-theme] body .cal2 .calendar-day{min-height:70px;padding:6px;border-radius:10px}html[data-theme] body .cal2 .calendar-weekday{padding:2px;text-align:center;font-size:10.5px;letter-spacing:.04em}.cal2-ev-meta,.cal2-ev-foot,.cal2-todaytag{display:none}html[data-theme] body .cal2 .calendar-event.cal2-ev{padding:5px 5px 4px}.cal2-ev-client{font-size:10.5px}.cal2-add{display:none!important}.cal2-agenda{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){html[data-theme] body .cal2 .calendar-event.cal2-ev,.cal2-agenda .cal2-row{transition:none}html[data-theme] body .cal2 .calendar-event.cal2-ev:hover,.cal2-agenda .cal2-row:hover{transform:none}}
+</style>
 <section class="view" id="view-calendar">
-  <div class="card calendar-main-card">
-    <div class="calendar-head">
-      <div><h3 style="margin-bottom:3px">Event Calendar</h3><small>Media invoices with an event date. IT invoices are excluded from this calendar.</small></div>
-      <div class="calendar-actions">
-        <button type="button" class="btn" onclick="calendarPrevMonth()">← Previous</button>
-        <button type="button" class="btn" onclick="calendarToday()">Today</button>
-        <button type="button" class="btn" onclick="calendarNextMonth()">Next →</button>
+  <div class="card calendar-main-card cal2">
+    <div class="cal2-head">
+      <div class="cal2-titlebox"><span class="cal2-eyebrow">Event calendar</span><h2 id="calendarMonthTitle" class="calendar-month-title">Event Calendar</h2><small>Media jobs by event date. IT invoices are not shown here.</small></div>
+      <div class="cal2-nav" role="group" aria-label="Change month">
+        <button type="button" class="cal2-navbtn" onclick="calendarPrevMonth()" aria-label="Previous month"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button type="button" class="cal2-today" onclick="calendarToday()">Today</button>
+        <button type="button" class="cal2-navbtn" onclick="calendarNextMonth()" aria-label="Next month"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
       </div>
     </div>
-    <div class="calendar-title-row">
-      <button type="button" class="btn calendar-title-btn" onclick="calendarPrevMonth()">‹</button>
-      <div id="calendarMonthTitle" class="calendar-month-title">Event Calendar</div>
-      <button type="button" class="btn calendar-title-btn" onclick="calendarNextMonth()">›</button>
-    </div>
-    <div class="calendar-grid-wrap"><div id="calendarGrid" class="calendar-grid"></div></div>
-    <div id="calendarEventList" class="calendar-event-list"></div>
+    <div id="calendarStats" class="cal2-stats"></div>
+    <div class="cal2-legend" aria-label="Job status colours"><span style="--jc:#3ccf8e">Completed</span><span style="--jc:#4aa8ff">In progress</span><span style="--jc:#f0b93a">Scheduled</span><span style="--jc:#98a2b3">Not started</span><span style="--jc:#ff6b81">Cancelled</span><em>Tip: hover an empty day to add an invoice for that date</em></div>
+    <div class="calendar-grid-wrap"><div id="calendarGrid" class="calendar-grid cal2-grid"></div></div>
+    <div class="cal2-agenda-head"><h3>This month's events</h3><small id="calendarAgendaCount"></small></div>
+    <div id="calendarEventList" class="calendar-event-list cal2-agenda"></div>
   </div>
   <div class="card">
     <h3>Calendar Information</h3>
