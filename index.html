@@ -2979,87 +2979,379 @@ html[data-theme] body :is(.paper,.receipt-paper,.preview-wrap){line-height:norma
   </div>
 </div>
 
-<section class="view" id="view-create">
-<div class="card service-selector-card" id="catalogPanel">
-  <h3>Invoice Category & Quick Equipment / Service Selection</h3>
-  <div class="grid2">
-    <div>
-      <label>Service Category</label>
-      <select id="serviceCategory"><option value="">Select a service category...</option></select>
-    </div>
-    <div>
-      <label>Brand / Model Group</label>
-      <select id="brandModelFilter"><option value="">All Brands / Models</option></select>
-      <label>Search Item</label>
-      <input id="itemSearch" type="search" placeholder="Type to filter items..." autocomplete="off">
-      <label>Select Item</label>
-      <select id="catalogItemSelect" size="6" style="width:100%;min-height:150px"><option value="">Select a category first...</option></select>
-    </div>
-  </div>
-  <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">
-    <button type="button" class="btn primary" id="addSelectedCatalogBtn">＋ Add Selected Item</button>
-    <button type="button" class="btn" id="addCategoryItemsBtn">＋ Add 25 From Group</button>
-  </div>
-  <small id="catalogCount" style="display:block;color:#777;margin-top:7px"></small>
-</div>
+<section class="view cx" id="view-create">
+<!-- Create Invoice — v3 workspace layout (UI only). Every input keeps its original id,
+     so saving, loading, printing and the database are untouched. -->
+<nav class="cx-steps no-print" id="cxSteps" aria-label="Invoice sections">
+  <a href="#cxClient" data-cx-step="cxClient"><i>1</i>Client &amp; details</a>
+  <a href="#invoiceItemsCard" data-cx-step="invoiceItemsCard"><i>2</i>Items</a>
+  <a href="#cxJob" data-cx-step="cxJob" id="cxJobStep"><i>3</i>Event / rental</a>
+  <a href="#cxPayment" data-cx-step="cxPayment"><i>4</i>Payment terms</a>
+  <a href="#paymentReceivedCard" data-cx-step="paymentReceivedCard"><i>5</i>Receipt</a>
+</nav>
 
-  <div class="card" id="eventDateCard" style="display:none">
-    <h3>Event Details <span style="font-size:9px;color:#858e9f;font-weight:600;text-transform:none">(Media invoices only — required)</span></h3>
-    <div class="grid2">
-      <div>
-        <label>Event Start Date</label>
-        <input id="eventDate" type="date">
-      </div>
-      <div>
-        <label>Event End Date</label>
-        <input id="eventEndDate" type="date">
-      </div>
-      <div style="grid-column:1/-1">
-        <label>Event Date Status</label>
-        <div id="eventDateHint" style="padding:9px 10px;border:1px solid #303642;border-radius:7px;background:#0b0d12;color:#858e9f;font-size:12px">
-          Select the start and end dates for this event.
+<div class="cx-layout">
+<div class="cx-main">
+
+  <!-- 1 · CLIENT + INVOICE DETAILS -->
+  <div class="card cx-card" id="cxClient">
+    <div class="cx-head"><h3><span class="cx-num">1</span>Client &amp; invoice details</h3></div>
+    <div class="cx-split">
+      <div class="cx-col">
+        <div class="cx-sub">Bill to</div>
+        <div class="cx-inline">
+          <div class="cx-f cx-grow"><label for="clientSelect">Existing client</label><select id="clientSelect" onchange="applySelectedClient()"><option value="">— New / Manual Client —</option></select></div>
+          <button class="btn" type="button" onclick="saveCurrentClient()" title="Save these client details to the database">Save client</button>
+          <button class="btn cx-icon" type="button" onclick="show('clients')" title="Open the client database">＋</button>
+        </div>
+        <div class="cx-grid2">
+          <div class="cx-f"><label for="client">Client name</label><input id="client" placeholder="Client or company name"></div>
+          <div class="cx-f"><label for="clientPhone">Phone</label><input id="clientPhone"></div>
+          <div class="cx-f"><label for="clientEmail">Email</label><input id="clientEmail"></div>
+          <div class="cx-f"><label for="clientAddress">Address</label><textarea id="clientAddress" rows="1"></textarea></div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>Invoice Header</h3>
-    <div class="grid2">
-      <div><label>Invoice Number</label><input id="no" readonly aria-readonly="true" title="Invoice numbers are assigned automatically"><div class="row"><div><label>Date</label><input id="date" type="date"></div><div><label>Due</label><input id="due" type="text" value="On Receipt"></div></div></div>
-      <div><label>Status</label><select id="status"><option>Draft</option><option>Sent</option><option>Paid</option><option>Partially Paid</option><option>Overdue</option></select><label>Currency</label><select id="cur"><option>GHS</option><option>USD</option><option>EUR</option><option>GBP</option></select><label>Invoice Template</label><select id="template"><option value="classic">Classic Professional</option><option value="modern">Modern Studio</option><option value="minimal">Minimal Executive</option><option value="bold">Bold Premium</option><option value="elegant">Elegant Creative</option></select><div class="template-picker no-print">
+      <div class="cx-col">
+        <div class="cx-sub">Invoice</div>
+        <div class="cx-grid2">
+          <div class="cx-f"><label for="no">Invoice number</label><input id="no" readonly aria-readonly="true" title="Invoice numbers are assigned automatically"></div>
+          <div class="cx-f"><label for="status">Status</label><select id="status"><option>Draft</option><option>Sent</option><option>Paid</option><option>Partially Paid</option><option>Overdue</option></select></div>
+          <div class="cx-f"><label for="date">Invoice date</label><input id="date" type="date"></div>
+          <div class="cx-f"><label for="due">Due</label><input id="due" type="text" value="On Receipt"></div>
+          <div class="cx-f"><label for="cur">Currency</label><select id="cur"><option>GHS</option><option>USD</option><option>EUR</option><option>GBP</option></select></div>
+          <div class="cx-f"><label for="template">Invoice design</label><select id="template"><option value="classic">Classic Professional</option><option value="modern">Modern Studio</option><option value="minimal">Minimal Executive</option><option value="bold">Bold Premium</option><option value="elegant">Elegant Creative</option></select></div>
+        </div>
+        <details class="cx-more">
+          <summary>Quick design styles</summary>
+          <div class="template-picker no-print">
 <div class="template-card" data-template-card="classic"><b>Classic</b><span>Clean business layout</span></div>
 <div class="template-card" data-template-card="modern"><b>Modern</b><span>Contemporary studio look</span></div>
 <div class="template-card" data-template-card="minimal"><b>Minimal</b><span>Quiet executive style</span></div>
 <div class="template-card" data-template-card="bold"><b>Bold</b><span>Strong premium header</span></div>
 <div class="template-card" data-template-card="elegant"><b>Elegant</b><span>Refined creative style</span></div>
-</div></div>
+          </div>
+        </details>
+      </div>
     </div>
   </div>
-  <div class="card"><h3>Bill To</h3>
-    <div style="display:flex;gap:8px;align-items:end;margin-bottom:4px"><div style="flex:1"><label>Select Existing Client</label><select id="clientSelect" onchange="applySelectedClient()"><option value="">— New / Manual Client —</option></select></div><button class="btn" onclick="show('clients')">＋ Client Database</button><button class="btn" onclick="saveCurrentClient()">Save Client</button></div>
-    <div class="grid2"><div><label>Client Name</label><input id="client" placeholder="Chris"><label>Client Address</label><textarea id="clientAddress" rows="2"></textarea></div><div><label>Phone</label><input id="clientPhone"><label>Email</label><input id="clientEmail"></div></div>
-  </div>
-  <div class="card" id="rentalDetailsCard" style="display:none">
-    <h3>Equipment Rental Details</h3>
-    <div class="grid2">
-      <div><label>Rental Start</label><input id="rentalStart" type="date"><label>Rental End / Return</label><input id="rentalEnd" type="date"><label>Job / Delivery Location</label><input id="jobLocation" placeholder="Event venue / production location"></div>
-      <div><label>Rental Agreement / Reference</label><input id="rentalRef" placeholder="Agreement or booking reference"><label>Pricing Unit</label><select id="rentalUnit"><option>Per Hour</option><option selected>Per Day</option><option>Per Week</option><option>Per Month</option><option>Per Event</option></select><label>Security Deposit</label><input id="deposit" type="number" min="0" step=".01" value="0"></div>
+
+  <!-- 2 · ITEMS (catalog picker + line items together) -->
+  <div class="card cx-card" id="invoiceItemsCard">
+    <div class="cx-head"><h3><span class="cx-num">2</span>Services &amp; items</h3><small id="catalogCount" class="cx-count"></small></div>
+
+    <div class="cx-catalog service-selector-card" id="catalogPanel">
+      <div class="cx-catalog-filters">
+        <div class="cx-f"><label for="serviceCategory">Service category</label><select id="serviceCategory"><option value="">Select a service category...</option></select></div>
+        <div class="cx-f"><label for="brandModelFilter">Brand / model</label><select id="brandModelFilter"><option value="">All Brands / Models</option></select></div>
+        <div class="cx-f"><label for="itemSearch">Search</label><input id="itemSearch" type="search" placeholder="Type to filter items..." autocomplete="off"></div>
+      </div>
+      <div class="cx-catalog-pick">
+        <div class="cx-f cx-grow"><label for="catalogItemSelect">Catalogue <span class="cx-hint">— double-click an item to add it</span></label><select id="catalogItemSelect" size="6"><option value="">Select a category first...</option></select></div>
+        <div class="cx-catalog-actions">
+          <button type="button" class="btn primary" id="addSelectedCatalogBtn">＋ Add Selected Item</button>
+          <button type="button" class="btn" id="addCategoryItemsBtn">＋ Add 25 From Group</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cx-lines">
+      <div class="items-head"><div>Description</div><div id="rateHeader">Rate / Day</div><div class="days-col">Days</div><div>Qty</div><div>Amount</div><div></div></div>
+      <div id="items"></div>
+      <button class="btn cx-add" type="button" onclick="addItem()">＋ Add custom line</button>
+    </div>
+
+    <div class="cx-totals">
+      <div class="cx-f"><label for="tax">Tax (%)</label><input id="tax" type="number" min="0" step=".01" value="20" oninput="calc()"></div>
+      <div class="cx-f"><label for="discount">Discount</label><input id="discount" type="number" min="0" step=".01" value="0" oninput="calc()"></div>
+      <div class="cx-grand"><span>Total</span><b id="total">GHS 0.00</b></div>
     </div>
   </div>
-  <div class="card" id="invoiceItemsCard">
-    <h3>Invoice Items</h3>
-    <div class="items-head"><div>Description</div><div id="rateHeader">Rate / Day</div><div class="days-col">Days</div><div>Qty</div><div>Amount</div><div></div></div>
-    <div id="items"></div><button class="btn" onclick="addItem()">＋ Add Item</button>
-    <div style="max-width:330px;margin:16px 0 0 auto">
-      <div class="row"><label style="flex:1">Tax (%)<input id="tax" type="number" min="0" step=".01" value="20" oninput="calc()"></label><label style="flex:1">Discount<input id="discount" type="number" min="0" step=".01" value="0" oninput="calc()"></label></div>
-      <div style="display:flex;justify-content:space-between;border-top:1px solid #343a46;padding-top:10px;font-size:16px;font-weight:900"><span>Total</span><span id="total">GHS 0.00</span></div>
+
+  <!-- 3 · EVENT / RENTAL (shown automatically for the categories that need them) -->
+  <div id="cxJob" class="cx-job">
+    <div class="card cx-card" id="eventDateCard" style="display:none">
+      <div class="cx-head"><h3><span class="cx-num">3</span>Event details <small>Required for media invoices</small></h3></div>
+      <div class="cx-grid3">
+        <div class="cx-f"><label for="eventDate">Event start date</label><input id="eventDate" type="date"></div>
+        <div class="cx-f"><label for="eventEndDate">Event end date</label><input id="eventEndDate" type="date"></div>
+        <div class="cx-note" id="eventDateHint">Select the start and end dates for this event.</div>
+      </div>
+    </div>
+    <div class="card cx-card" id="rentalDetailsCard" style="display:none">
+      <div class="cx-head"><h3><span class="cx-num">3</span>Equipment rental details</h3></div>
+      <div class="cx-grid3">
+        <div class="cx-f"><label for="rentalStart">Rental start</label><input id="rentalStart" type="date"></div>
+        <div class="cx-f"><label for="rentalEnd">Rental end / return</label><input id="rentalEnd" type="date"></div>
+        <div class="cx-f"><label for="rentalUnit">Pricing unit</label><select id="rentalUnit"><option>Per Hour</option><option selected>Per Day</option><option>Per Week</option><option>Per Month</option><option>Per Event</option></select></div>
+        <div class="cx-f"><label for="jobLocation">Job / delivery location</label><input id="jobLocation" placeholder="Event venue / production location"></div>
+        <div class="cx-f"><label for="rentalRef">Agreement / reference</label><input id="rentalRef" placeholder="Agreement or booking reference"></div>
+        <div class="cx-f"><label for="deposit">Security deposit</label><input id="deposit" type="number" min="0" step=".01" value="0"></div>
+      </div>
     </div>
   </div>
-  <div class="card"><h3>Payment Info</h3><textarea id="payment" rows="6" placeholder="Bank Name: Cal Bank&#10;Account Name: FILM BEYOND IMAGINATION (FBI)&#10;Account Number: 1400010238562&#10;Branch: Dansoman&#10;&#10;Momo service Name: MTN&#10;Momo Number: 0257407350&#10;Account Name: Jerbel Mark Addeh"></textarea><label>Additional Notes</label><textarea id="notes" rows="3"></textarea><label style="display:flex;align-items:center;gap:8px;margin-top:12px"><input id="vatInclusive" type="checkbox" style="width:auto" checked> Show note: <b>This invoice is VAT inclusive.</b></label>
-    <div class="no-print" style="display:flex;gap:7px;margin-top:12px"><button class="btn" onclick="save()">💾 Save Invoice</button><button class="btn primary" onclick="preview()">👁 Preview</button><button class="btn" onclick="printInvoice()">🖨 Print / PDF</button><button class="btn primary no-print" type="button" onclick="savePdfToDrive()">Print / Save Invoice PDF</button></div>
+
+  <!-- 4 · PAYMENT TERMS & NOTES -->
+  <div class="card cx-card" id="cxPayment">
+    <div class="cx-head"><h3><span class="cx-num">4</span>Payment terms &amp; notes</h3></div>
+    <div class="cx-split">
+      <div class="cx-f"><label for="payment">Payment info (bank / MoMo)</label><textarea id="payment" rows="6" placeholder="Bank Name: Cal Bank&#10;Account Name: FILM BEYOND IMAGINATION (FBI)&#10;Account Number: 1400010238562&#10;Branch: Dansoman&#10;&#10;Momo service Name: MTN&#10;Momo Number: 0257407350&#10;Account Name: Jerbel Mark Addeh"></textarea></div>
+      <div class="cx-f"><label for="notes">Additional notes</label><textarea id="notes" rows="4" placeholder="Optional — shown on the invoice"></textarea>
+        <label class="cx-check"><input id="vatInclusive" type="checkbox" checked> Show note: <b>This invoice is VAT inclusive.</b></label>
+      </div>
+    </div>
   </div>
-  <div class="card" id="paymentReceivedCard"><h3>Payment Received & Official Receipt</h3><div class="grid2"><div><label>Amount Paid</label><input id="amountPaid" type="number" min="0" step="0.01" value="0" placeholder="0.00"><label>Payment Date</label><input id="paymentDate" type="date"><label>Payment Method</label><select id="paymentMethod"><option>Cash</option><option selected>Mobile Money</option><option>Bank Transfer</option><option>Card</option><option>Cheque</option><option>Other</option></select></div><div><label>Transaction / Payment Reference</label><input id="transactionRef" placeholder="Bank / MoMo / card / payment reference"><label>Received By</label><input id="receivedBy" placeholder="Accounts / Cashier"><label>Receipt Number</label><input id="receiptNo" readonly placeholder="Generated when payment is recorded"></div></div><div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:12px;padding:11px 12px;border:1px solid #303642;background:#0e1117;border-radius:8px"><div><div style="font-size:9px;color:#858e9f;text-transform:uppercase;letter-spacing:.7px">Remaining Balance</div><b id="paymentBalancePreview" style="font-size:15px">GHS₵0.00</b></div><button class="btn primary" onclick="recordPayment()">🧾 Record Payment & Generate Receipt</button></div><small style="display:block;color:#727b89;font-size:9px;line-height:1.5;margin-top:8px">Each time you receive another part-payment, enter only the new amount here and click <b>Record Payment & Generate Receipt</b>. The system creates a new receipt number and keeps the previous receipts.</small><div id="paymentHistoryPanel" style="margin-top:12px;padding:10px 11px;border:1px solid #303642;background:#0b0e13;border-radius:8px"></div></div>
+
+  <!-- 5 · PAYMENT RECEIVED & RECEIPT (opened when you need it) -->
+  <details class="card cx-card cx-collapsible" id="paymentReceivedCard">
+    <summary class="cx-head"><h3><span class="cx-num">5</span>Payment received &amp; official receipt</h3><span class="cx-summary-meta">Balance <b id="paymentBalancePreview">GHS₵0.00</b></span></summary>
+    <div class="cx-grid3">
+      <div class="cx-f"><label for="amountPaid">Amount paid (new payment)</label><input id="amountPaid" type="number" min="0" step="0.01" value="0" placeholder="0.00"></div>
+      <div class="cx-f"><label for="paymentDate">Payment date</label><input id="paymentDate" type="date"></div>
+      <div class="cx-f"><label for="paymentMethod">Payment method</label><select id="paymentMethod"><option>Cash</option><option selected>Mobile Money</option><option>Bank Transfer</option><option>Card</option><option>Cheque</option><option>Other</option></select></div>
+      <div class="cx-f"><label for="transactionRef">Transaction reference</label><input id="transactionRef" placeholder="Bank / MoMo / card / payment reference"></div>
+      <div class="cx-f"><label for="receivedBy">Received by</label><input id="receivedBy" placeholder="Accounts / Cashier"></div>
+      <div class="cx-f"><label for="receiptNo">Receipt number</label><input id="receiptNo" readonly placeholder="Generated when payment is recorded"></div>
+    </div>
+    <div class="cx-receipt-bar">
+      <small>For a part-payment, enter only the <b>new</b> amount and click <b>Record Payment &amp; Generate Receipt</b>. A new receipt number is created and previous receipts are kept.</small>
+      <button class="btn primary" type="button" onclick="recordPayment()">🧾 Record Payment &amp; Generate Receipt</button>
+    </div>
+    <div id="paymentHistoryPanel" class="cx-history"></div>
+  </details>
+
+</div>
+
+<!-- STICKY SUMMARY + ACTIONS -->
+<aside class="cx-aside no-print" aria-label="Invoice summary and actions">
+  <div class="cx-sum">
+    <div class="cx-sum-top"><span id="cxSumNo">—</span><em id="cxSumStatus" class="cx-pill">Draft</em></div>
+    <div class="cx-sum-client" id="cxSumClient">No client yet</div>
+    <div class="cx-sum-rows">
+      <div><span>Line items</span><b id="cxSumItems">0</b></div>
+      <div><span>Category</span><b id="cxSumCat">—</b></div>
+      <div><span>Balance due</span><b id="cxSumBal">—</b></div>
+    </div>
+    <div class="cx-sum-total"><span>Total</span><b id="cxSumTotal">0.00</b></div>
+  </div>
+  <div class="cx-actions">
+    <button class="btn primary cx-big" type="button" onclick="save()">💾 Save<span class="cx-x"> Invoice</span></button>
+    <div class="cx-actions-row">
+      <button class="btn" type="button" onclick="preview()">👁 Preview</button>
+      <button class="btn" type="button" onclick="printInvoice()">🖨 Print / PDF</button>
+    </div>
+    <button class="btn cx-ghost" type="button" onclick="savePdfToDrive()">⬇ Print / Save Invoice PDF</button>
+  </div>
+</aside>
+</div>
+
+<style id="fbi-create-v3">
+/* Create Invoice v3 — layout only. Scoped to #view-create.cx so nothing else changes. */
+html body #view-create.cx{--cx-top:84px}
+/* the entrance animation must not keep holding a transform, or it traps the fixed action bar */
+html body #view-create.cx.active{animation-fill-mode:none!important}
+html body #view-create.cx .cx-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+html body #view-create.cx .cx-main{min-width:0}
+html body #view-create.cx .card.cx-card{padding:20px 22px;margin-bottom:16px;scroll-margin-top:calc(var(--cx-top) + 64px)}
+html body #view-create.cx .cx-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+html body #view-create.cx .cx-head h3{margin:0!important;font-size:15px}
+html body #view-create.cx .cx-head h3 small{font-size:12px;font-weight:500;color:var(--muted);margin-left:4px}
+html body #view-create.cx .cx-num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;background:var(--u-ring,rgba(211,35,95,.2));color:var(--u-brand,#d3235f);font-size:12px;font-weight:800;flex:none}
+html body #view-create.cx .cx-count{color:var(--muted);font-size:12px;margin:0!important}
+html body #view-create.cx .cx-sub{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+html body #view-create.cx .cx-hint{font-weight:500;color:var(--muted);opacity:.8}
+/* fields */
+html body #view-create.cx .cx-f{min-width:0}
+html body #view-create.cx .cx-f>label,html body #view-create.cx .cx-f label[for]{margin:0 0 6px!important;font-size:12.5px}
+html body #view-create.cx .cx-grow{flex:1}
+html body #view-create.cx .cx-split{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+html body #view-create.cx .cx-split>.cx-col+.cx-col{border-left:1px solid var(--border);padding-left:22px}
+html body #view-create.cx .cx-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+html body #view-create.cx .cx-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 14px}
+html body #view-create.cx .cx-inline{display:flex;gap:8px;align-items:flex-end;margin-bottom:12px}
+html body #view-create.cx .cx-inline .btn{height:42px;white-space:nowrap}
+html body #view-create.cx .cx-icon{width:42px;padding:0;font-size:18px}
+html body #view-create.cx textarea#clientAddress{min-height:42px;resize:vertical}
+html body #view-create.cx .cx-note{align-self:end;padding:10px 12px;border:1px dashed var(--border);border-radius:10px;color:var(--muted);font-size:12.5px;line-height:1.45;background:transparent!important}
+html body #view-create.cx .cx-check{display:flex!important;align-items:center;gap:8px;margin:12px 0 0!important;color:var(--text)!important;font-weight:500!important}
+html body #view-create.cx .cx-check input{width:auto}
+/* collapsible bits */
+html body #view-create.cx details.cx-more{margin-top:12px}
+html body #view-create.cx details.cx-more>summary{cursor:pointer;color:var(--muted);font-size:12.5px;font-weight:600;list-style:none}
+html body #view-create.cx details.cx-more>summary::-webkit-details-marker{display:none}
+html body #view-create.cx details.cx-more>summary:before{content:"▸ ";}
+html body #view-create.cx details.cx-more[open]>summary:before{content:"▾ ";}
+html body #view-create.cx .template-picker{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:10px}
+html body #view-create.cx .template-card{padding:8px 9px}
+html body #view-create.cx .template-card span{font-size:11px;line-height:1.3}
+html body #view-create.cx details.cx-collapsible>summary{cursor:pointer;list-style:none;margin:0}
+html body #view-create.cx details.cx-collapsible>summary::-webkit-details-marker{display:none}
+html body #view-create.cx details.cx-collapsible[open]>summary{margin-bottom:14px}
+html body #view-create.cx details.cx-collapsible>summary h3:after{content:"Show";margin-left:8px;font-size:11px;font-weight:600;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:1px 8px}
+html body #view-create.cx details.cx-collapsible[open]>summary h3:after{content:"Hide"}
+html body #view-create.cx .cx-summary-meta{color:var(--muted);font-size:12.5px;white-space:nowrap}
+html body #view-create.cx .cx-summary-meta b{color:var(--text);font-size:14px;margin-left:4px}
+html body #view-create.cx .cx-receipt-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--u-row)}
+html body #view-create.cx .cx-receipt-bar small{color:var(--muted);font-size:12px;line-height:1.5}
+html body #view-create.cx .cx-receipt-bar .btn{white-space:nowrap;flex:none}
+html body #view-create.cx .cx-history{margin-top:12px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--u-row)}
+/* catalogue picker */
+html body #view-create.cx .cx-catalog{padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--u-row);margin:0 0 16px!important;box-shadow:none}
+html body #view-create.cx .cx-catalog-filters{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:12px}
+html body #view-create.cx .cx-catalog-pick{display:flex;gap:12px;align-items:stretch;margin-top:12px}
+html body #view-create.cx #catalogItemSelect{width:100%;height:168px;min-height:0;padding:4px}
+html body #view-create.cx #catalogItemSelect option{padding:5px 8px;border-radius:6px}
+html body #view-create.cx .cx-catalog-actions{display:flex;flex-direction:column;gap:8px;justify-content:flex-end;width:200px;flex:none}
+html body #view-create.cx .cx-catalog-actions .btn{width:100%;justify-content:center}
+/* line items */
+html body #view-create.cx .cx-lines .items-head{display:grid}
+html body #view-create.cx #invoiceItemsCard .items-head,html body #view-create.cx #invoiceItemsCard .item{grid-template-columns:minmax(0,2.6fr) .9fr .6fr .6fr 1fr 38px}
+html body #view-create.cx #invoiceItemsCard.no-days .items-head,html body #view-create.cx #invoiceItemsCard.no-days .item{grid-template-columns:minmax(0,2.6fr) .9fr .6fr 1fr 38px}
+html body #view-create.cx #invoiceItemsCard .item{padding:8px;margin-bottom:6px;align-items:center}
+html body #view-create.cx #invoiceItemsCard .item .rm{height:38px;width:38px}
+html body #view-create.cx .cx-add{margin-top:4px}
+html body #view-create.cx .cx-totals{display:grid;grid-template-columns:120px 140px minmax(200px,auto);justify-content:end;align-items:end;gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+html body #view-create.cx .cx-grand{display:flex;flex-direction:column;align-items:flex-end;padding:6px 4px}
+html body #view-create.cx .cx-grand span{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.8px}
+html body #view-create.cx .cx-grand b{font-size:24px;font-weight:800;letter-spacing:-.3px}
+/* section stepper */
+html body #view-create.cx .cx-steps{position:sticky;top:var(--cx-top);z-index:6;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:8px;margin:0 0 16px;border:1px solid var(--border);border-radius:14px;background:var(--panel);box-shadow:var(--u-shadow)}
+html body #view-create.cx .cx-steps::-webkit-scrollbar{display:none}
+html body #view-create.cx .cx-steps a{display:flex;align-items:center;gap:8px;white-space:nowrap;padding:7px 12px;border-radius:10px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none}
+html body #view-create.cx .cx-steps a i{font-style:normal;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;border:1px solid var(--border);font-size:11px}
+html body #view-create.cx .cx-steps a:hover{background:var(--u-row);color:var(--text)}
+html body #view-create.cx .cx-steps a.on{background:var(--u-row);color:var(--text)}
+html body #view-create.cx .cx-steps a.on i{background:var(--u-brand);border-color:var(--u-brand);color:#fff}
+html body #view-create.cx .cx-steps a.cx-off{display:none}
+/* summary aside */
+html body #view-create.cx .cx-aside{position:sticky;top:calc(var(--cx-top) + 66px);display:flex;flex-direction:column;gap:12px}
+html body #view-create.cx .cx-sum{background:var(--panel);border:1px solid var(--border);border-radius:var(--u-r,14px);padding:18px;box-shadow:var(--u-shadow)}
+html body #view-create.cx .cx-sum-top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700;font-size:13px;color:var(--muted)}
+html body #view-create.cx .cx-pill{font-style:normal;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--u-neutral-bg);color:var(--u-neutral)}
+html body #view-create.cx .cx-pill[data-s="Paid"]{background:var(--u-ok-bg);color:var(--u-ok)}
+html body #view-create.cx .cx-pill[data-s="Sent"]{background:var(--u-info-bg);color:var(--u-info)}
+html body #view-create.cx .cx-pill[data-s="Partially Paid"]{background:var(--u-warn-bg);color:var(--u-warn)}
+html body #view-create.cx .cx-pill[data-s="Overdue"]{background:var(--u-bad-bg);color:var(--u-bad)}
+html body #view-create.cx .cx-sum-client{margin:8px 0 12px;font-size:17px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body #view-create.cx .cx-sum-client.empty{color:var(--muted);font-weight:500;font-size:14px}
+html body #view-create.cx .cx-sum-rows div{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--border);font-size:13px}
+html body #view-create.cx .cx-sum-rows span{color:var(--muted)}
+html body #view-create.cx .cx-sum-rows b{font-weight:600;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%}
+html body #view-create.cx .cx-sum-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;padding-top:12px;border-top:1px solid var(--border)}
+html body #view-create.cx .cx-sum-total span{font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+html body #view-create.cx .cx-sum-total b{font-size:24px;font-weight:800;letter-spacing:-.4px;color:var(--text)}
+html body #view-create.cx .cx-actions{display:flex;flex-direction:column;gap:8px}
+html body #view-create.cx .cx-actions .btn{width:100%;justify-content:center;height:42px}
+html body #view-create.cx .cx-actions .cx-big{height:48px;font-size:15px}
+html body #view-create.cx .cx-actions-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+html body #view-create.cx .cx-ghost{background:transparent!important;color:var(--muted)!important}
+/* medium screens: summary becomes a bottom action bar */
+@media(max-width:1180px){
+  html body #view-create.cx .cx-layout{grid-template-columns:1fr}
+  html body #view-create.cx .cx-main{padding-bottom:84px}
+  html body #view-create.cx .cx-aside{position:fixed;left:var(--cx-l,0);right:0;bottom:0;top:auto;z-index:30;flex-direction:row;align-items:center;gap:10px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--panel) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--border);box-shadow:0 -8px 24px -12px rgba(0,0,0,.35)}
+  html body #view-create.cx .cx-sum{flex:1;min-width:0;padding:0;border:0;box-shadow:none;background:transparent;display:flex;align-items:center;gap:14px}
+  html body #view-create.cx .cx-sum-top,html body #view-create.cx .cx-sum-rows{display:none}
+  html body #view-create.cx .cx-sum-client{margin:0;font-size:14px;flex:1;min-width:0}
+  html body #view-create.cx .cx-sum-total{margin:0;padding:0;border:0;gap:8px}
+  html body #view-create.cx .cx-sum-total b{font-size:19px}
+  html body #view-create.cx .cx-actions{flex-direction:row;gap:8px}
+  html body #view-create.cx .cx-actions .btn{width:auto;height:42px;padding:0 14px}
+  html body #view-create.cx .cx-actions .cx-big{height:42px;font-size:14px}
+  html body #view-create.cx .cx-actions-row{display:flex}
+  html body #view-create.cx .cx-ghost,html body #view-create.cx .cx-sum-client{display:none}
+  html body #view-create.cx .cx-sum{justify-content:flex-start}
+}
+@media(max-width:820px){
+  html body #view-create.cx .cx-steps{position:static}
+  html body #view-create.cx .card.cx-card{scroll-margin-top:calc(var(--cx-top) + 8px)}
+  html body #view-create.cx .cx-split,html body #view-create.cx .cx-catalog-filters{grid-template-columns:1fr}
+  html body #view-create.cx .cx-split>.cx-col+.cx-col{border-left:0;padding-left:0;border-top:1px solid var(--border);padding-top:16px}
+  html body #view-create.cx .cx-grid3{grid-template-columns:1fr 1fr}
+  html body #view-create.cx .cx-catalog-pick{flex-direction:column}
+  html body #view-create.cx .cx-catalog-actions{width:auto;flex-direction:row}
+  html body #view-create.cx .template-picker{grid-template-columns:repeat(3,minmax(0,1fr))}
+  html body #view-create.cx .cx-receipt-bar{flex-direction:column;align-items:stretch}
+  html body #view-create.cx .cx-sum-client{display:none}
+  html body #view-create.cx .cx-actions-row .btn:last-child,html body #view-create.cx .cx-ghost{display:none}
+}
+@media(max-width:600px){
+  html body #view-create.cx .card.cx-card{padding:16px}
+  html body #view-create.cx .cx-grid2,html body #view-create.cx .cx-grid3{grid-template-columns:1fr}
+  html body #view-create.cx .cx-lines .items-head{display:none}
+  html body #view-create.cx #invoiceItemsCard .item,html body #view-create.cx #invoiceItemsCard.no-days .item{grid-template-columns:1fr 1fr}
+  html body #view-create.cx #invoiceItemsCard .item>div:first-child{grid-column:1/-1}
+  html body #view-create.cx .cx-totals{grid-template-columns:1fr 1fr}
+  html body #view-create.cx .cx-grand{grid-column:1/-1;flex-direction:row;justify-content:space-between;align-items:baseline}
+  html body #view-create.cx .cx-actions .cx-big{padding:0 14px}
+  html body #view-create.cx .cx-aside{padding-left:12px;padding-right:12px;gap:8px}
+  html body #view-create.cx .cx-sum-total span,html body #view-create.cx .cx-x{display:none}
+  html body #view-create.cx .cx-sum-total b{font-size:17px;white-space:nowrap}
+  html body #view-create.cx .cx-actions .btn{padding:0 12px}
+}
+@media print{html body #view-create.cx .cx-aside,html body #view-create.cx .cx-steps{display:none!important}}
+</style>
+<script id="fbi-create-v3-js">
+/* UI helpers for the Create Invoice layout. Read-only mirrors + navigation; no data logic. */
+(function(){
+  var root=document.getElementById("view-create");if(!root)return;
+  function $(id){return document.getElementById(id)}
+  function txt(el,v){if(el&&el.textContent!==v)el.textContent=v}
+  // Sticky offsets follow the real height of the app header.
+  function measure(){
+    var top=document.querySelector(".top");
+    var h=top&&getComputedStyle(top).position.match(/sticky|fixed/)?top.getBoundingClientRect().height:0;
+    root.style.setProperty("--cx-top",Math.round(h+12)+"px");
+    var host=root.parentElement||root;root.style.setProperty("--cx-l",Math.max(0,Math.round(host.getBoundingClientRect().left))+"px");
+  }
+  // Summary panel mirrors what is already on the form.
+  function refresh(){
+    if(!root.classList.contains("active"))return;
+    txt($("cxSumNo"),$("no")&&$("no").value||"New invoice");
+    var st=$("status")?$("status").value:"Draft",pill=$("cxSumStatus");txt(pill,st);if(pill)pill.setAttribute("data-s",st);
+    var c=($("client")&&$("client").value.trim())||"",cl=$("cxSumClient");txt(cl,c||"No client yet");if(cl)cl.classList.toggle("empty",!c);
+    var n=0;root.querySelectorAll("#items .item").forEach(function(r){var d=r.querySelector(".desc"),p=r.querySelector(".rate");if((d&&d.value.trim())||(p&&+p.value>0))n++});
+    txt($("cxSumItems"),String(n));
+    var cat=$("serviceCategory");txt($("cxSumCat"),cat&&cat.value?cat.options[cat.selectedIndex].text:"—");
+    txt($("cxSumTotal"),$("total")?$("total").textContent:"0.00");
+    txt($("cxSumBal"),$("paymentBalancePreview")?$("paymentBalancePreview").textContent:"—");
+    var ev=$("eventDateCard"),re=$("rentalDetailsCard"),step=$("cxJobStep");
+    if(step)step.classList.toggle("cx-off",!((ev&&ev.style.display!=="none")||(re&&re.style.display!=="none")));
+    var pr=$("paymentReceivedCard");
+    if(pr&&!pr.dataset.cxTouched){var paid=+($("amountPaid")&&$("amountPaid").value)||0,hist=$("paymentHistoryPanel");var hasHist=hist&&/receipt|RCT|paid/i.test(hist.textContent)&&!/No payments recorded/i.test(hist.textContent);var want=paid>0||hasHist||st==="Partially Paid"||st==="Paid";if(pr.open!==want){pr.open=want}}
+  }
+  var queued=false;function schedule(){if(queued)return;queued=true;requestAnimationFrame(function(){queued=false;refresh()})}
+  root.addEventListener("input",schedule,true);root.addEventListener("change",schedule,true);root.addEventListener("click",function(){setTimeout(schedule,30)},true);
+  try{new MutationObserver(schedule).observe(root,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:["style","class","value"]})}catch(e){}
+  setInterval(schedule,1500); // catches programmatic value changes (loading a saved invoice)
+  // Remember when the user opens/closes the receipt section themselves.
+  var pr=$("paymentReceivedCard");
+  if(pr){
+    pr.querySelector("summary").addEventListener("click",function(){pr.dataset.cxTouched="1"});
+    // Existing code scrolls to this card when taking a new payment — open it first.
+    pr.scrollIntoView=function(o){pr.open=true;pr.dataset.cxTouched="1";HTMLElement.prototype.scrollIntoView.call(pr,o)};
+  }
+  // Double-click or Enter on the catalogue list adds the item.
+  var list=$("catalogItemSelect"),add=$("addSelectedCatalogBtn");
+  if(list&&add){list.addEventListener("dblclick",function(){if(list.value)add.click()});list.addEventListener("keydown",function(e){if(e.key==="Enter"&&list.value){e.preventDefault();add.click()}})}
+  // Section stepper: smooth jump + highlight the section in view.
+  var links=[].slice.call(root.querySelectorAll("[data-cx-step]"));
+  links.forEach(function(a){a.addEventListener("click",function(e){e.preventDefault();var t=$(a.getAttribute("data-cx-step"));if(!t)return;if(t.id==="cxJob"){t=[$("eventDateCard"),$("rentalDetailsCard")].filter(function(x){return x&&x.style.display!=="none"})[0]||t}if(t.tagName==="DETAILS")t.open=true;t.scrollIntoView({behavior:"smooth",block:"start"})})});
+  function spy(){
+    if(!root.classList.contains("active"))return;
+    var line=(parseFloat(getComputedStyle(root).getPropertyValue("--cx-top"))||80)+90,cur=links[0];
+    links.forEach(function(a){if(a.classList.contains("cx-off"))return;var t=$(a.getAttribute("data-cx-step"));if(t&&t.getBoundingClientRect().top<=line)cur=a});
+    if((window.innerHeight+window.scrollY)>=document.documentElement.scrollHeight-4){var vis=links.filter(function(a){return !a.classList.contains("cx-off")});cur=vis[vis.length-1]}
+    links.forEach(function(a){a.classList.toggle("on",a===cur)});
+  }
+  window.addEventListener("scroll",spy,{passive:true});document.addEventListener("scroll",spy,{passive:true,capture:true});
+  window.addEventListener("resize",function(){measure();spy()});
+  function boot(){measure();refresh();spy()}
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
+  setTimeout(boot,600);window.addEventListener("fbi-authenticated",function(){setTimeout(boot,300)});
+  window.addEventListener("hashchange",function(){setTimeout(boot,50)});
+  try{new MutationObserver(function(){if(root.classList.contains("active"))setTimeout(boot,30)}).observe(root,{attributes:true,attributeFilter:["class"]})}catch(e){}
+})();
+</script>
 </section>
 
 <section class="view" id="view-receipts"><div class="card"><div class="dashboard-section-head"><div><h3 style="margin-bottom:3px">Official Payment Receipts</h3><small>Print a professional receipt for every payment recorded against an invoice.</small></div><button class="btn" onclick="show('saved')">View Invoices →</button></div><div id="receiptList" class="receipt-list"></div></div></section>
