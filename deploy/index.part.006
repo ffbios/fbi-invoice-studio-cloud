@@ -81,7 +81,7 @@ function renderPaper(){
  let x=get(),s=settings,logo=s.logo?`<div class="logo" style="background-image:url('${s.logo}')"></div>`:`<div class="logo"></div>`;
  const showDays=requiresEventDate(x.category),itemColumnCount=showDays?5:4;
  let rows=x.items.map(i=>{const days=showDays?Math.max(1,Number(i.days)||1):1,qty=Number(i.qty)||0,rate=Number(i.rate)||0;return '<tr><td>'+esc(i.desc)+'</td><td>'+esc(money(rate))+'</td>'+(showDays?'<td>'+days+'</td>':'')+'<td>'+qty+'</td><td>'+esc(money(rate*days*qty))+'</td></tr>'}).join("");
- let vat=x.vatInclusive?`<div class="vat-note">This invoice is VAT inclusive.</div>`:"";
+ let vat=invoiceHasVat(x)?`<div class="vat-note">This invoice is VAT inclusive.</div>`:"";
  let status=(x.status||"Draft").toLowerCase();
  let statusClass=status.includes("paid")&&!status.includes("partial")?"status-paid":status.includes("overdue")?"status-overdue":status.includes("partial")?"status-partial":status.includes("sent")?"status-sent":"status-draft";
  let rental=x.category==="Equipment Rentals"?`<div class="rental-box"><div class="rental-title">Equipment Rental Details</div><div class="rental-grid"><div>Period<b>${esc(x.rentalStart||"—")} → ${esc(x.rentalEnd||"—")}</b></div><div>Rate Unit<b>${esc(x.rentalUnit||"Per Day")}</b></div><div>Job Location<b>${esc(x.jobLocation||"—")}</b></div><div>Reference / Deposit<b>${esc(x.rentalRef||"—")}${x.deposit?" · "+esc(money(x.deposit))+" deposit":""}</b></div></div></div>`:"";
@@ -507,7 +507,7 @@ window.addEventListener("load",function(){
 
 /* ===== FBI COMMAND-CENTER VISUALS — READ-ONLY FROM EXISTING APP STATE ===== */
 (function(){
-  function money(n,cur){return (cur||"GHS")+"₵"+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
+  function money(n,cur){return curSym(cur||($("cur")?.value)||"GHS")+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
   function humanDate(v){if(!v)return "No date";const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}
   function validData(){return typeof data!=="undefined"&&Array.isArray(data)}
   function renderHero(){

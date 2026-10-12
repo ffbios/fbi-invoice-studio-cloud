@@ -6,7 +6,7 @@ function initTemplates(){
 }
 function selectedTemplate(){return Math.max(1,Math.min(100,Number($("template")?.value||1)))}
 
-function money(n){return ($("cur")?.value||"GHS")+"₵"+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
+function money(n){return curSym($("cur")?.value||"GHS")+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 function reportStatusFor(x){return invoiceStatusInfo(x).status}
 function reportCategories(){
@@ -148,6 +148,7 @@ function persist(){
       if(!res.ok)throw new Error('HTTP '+res.status);
       const body=await res.json().catch(()=>({}));
       if(body.ok===false)throw new Error(body.error||'Database save failed');
+      try{applyServerSaveResult(body)}catch(e){console.warn('Could not apply server updates',e)}
       serverDbOnline=true;
       lastServerPersistAt=envelope.savedAt;
       if(deleteIds.length) pendingInvoiceDeletes=pendingInvoiceDeletes.filter(id=>!deleteIds.includes(id));
@@ -165,7 +166,38 @@ function persist(){
   });
   return serverPersistQueue;
 }
+/* After a save the server tells this device about invoices that changed elsewhere
+   (staff portal, another computer) and about any invoice number it had to correct. */
+function applyServerSaveResult(body){
+  if(!body||typeof body!=="object")return;
+  const updated=Array.isArray(body.updatedInvoices)?body.updatedInvoices:[];
+  let changed=false;
+  updated.forEach(inv=>{
+    if(!inv||!inv.id)return;
+    const i=data.findIndex(a=>a.id===inv.id);
+    if(i<0){data.push(inv);changed=true;return;}
+    data[i]=inv;changed=true;
+    if(current&&current.id===inv.id){
+      current=inv;
+      if($("no")&&inv.no)$("no").value=inv.no;
+      if(typeof invoiceNumberReserved!=="undefined")invoiceNumberReserved=inv.no||"";
+      if(typeof updatePaymentBalancePreview==="function")updatePaymentBalancePreview();
+    }
+  });
+  if(Number(body.invoiceSequence)>0&&settings&&Number(settings.invoiceSequence||0)<Number(body.invoiceSequence))settings.invoiceSequence=Number(body.invoiceSequence);
+  if(changed){
+    try{if(typeof dashboard==="function")dashboard()}catch(e){}
+    try{if(typeof renderSaved==="function")renderSaved()}catch(e){}
+    try{if(typeof renderReceipts==="function")renderReceipts()}catch(e){}
+  }
+  const ren=Array.isArray(body.renumbered)?body.renumbered:[];
+  if(ren.length){
+    const msg=ren.map(r=>r.from+" was already used, so this invoice is now "+r.to).join(". ");
+    setTimeout(()=>{if(typeof toast==="function")toast("Invoice number updated: "+msg)},1400);
+  }
+}
 function readPersistentPayload(){
+
   return fetch('/api/state',{cache:'no-store'})
     .then(async res=>{
       if(!res.ok)throw new Error('HTTP '+res.status);
@@ -599,7 +631,12 @@ function newInvoice(){
   $("items").innerHTML="";addItem("",1,0);setTemplate($("template").value);clearRentalDetails();clearEventDate();toggleRentalDetails();toggleEventDate();show("create");updatePaymentBalancePreview();
 }
 function addItem(desc="",qty=1,rate=0,days=1){let d=document.createElement("div");d.className="item";d.innerHTML=`<div><input class="desc" list="itemOptions" placeholder="Description" value="${esc(desc)}"></div><div class="rate-col"><input class="rate" type="number" min="0" step=".01" value="${rate}"></div><div class="days-col"><input class="days" type="number" min="1" step="1" value="${days||1}"></div><div><input class="qty" type="number" min="0" step=".01" value="${qty}"></div><div><input class="amt" readonly value="${money((Number(qty)||0)*(Number(rate)||0)*(Number(days)||1))}"></div><button class="rm" onclick="this.parentElement.remove();calc()">✕</button>`;$("items").appendChild(d);d.querySelectorAll("input").forEach(i=>i.oninput=calc);calc()}
-function calc(){let sub=0,showDays=requiresEventDate($("serviceCategory")?.value||"");document.querySelectorAll(".item").forEach(r=>{let q=+r.querySelector(".qty").value||0,p=+r.querySelector(".rate").value||0,d=showDays?Math.max(1,+r.querySelector(".days")?.value||1):1,a=q*p*d;sub+=a;r.querySelector(".amt").value=money(a)});let dis=+$("discount").value||0,tax=Math.max(0,sub-dis)*(+$("tax").value||0)/100,total=Math.max(0,sub-dis)+tax;$("total").textContent=money(total);updatePaymentBalancePreview(total);return{sub,dis,tax,total}}
+/* VAT note follows the tax field: ticked when VAT (tax %) is added, unticked at 0%. */
+/* Proper currency symbols: GH₵, $, €, £ (was "GHS₵" / "USD₵"). */
+function curSym(c){const k=String(c||"GHS").toUpperCase();return {GHS:"GH₵",USD:"$",EUR:"€",GBP:"£"}[k]||(k+" ")}
+function syncVatNote(){const box=$("vatInclusive");if(!box)return;box.checked=(+$("tax")?.value||0)>0;box.disabled=true;box.title="Set automatically: ticked when a tax/VAT percentage is added"}
+function invoiceHasVat(x){return (+x?.taxRate||0)>0||(+x?.tax||0)>0}
+function calc(){let sub=0,showDays=requiresEventDate($("serviceCategory")?.value||"");document.querySelectorAll(".item").forEach(r=>{let q=+r.querySelector(".qty").value||0,p=+r.querySelector(".rate").value||0,d=showDays?Math.max(1,+r.querySelector(".days")?.value||1):1,a=q*p*d;sub+=a;r.querySelector(".amt").value=money(a)});let dis=+$("discount").value||0,tax=Math.max(0,sub-dis)*(+$("tax").value||0)/100,total=Math.max(0,sub-dis)+tax;syncVatNote();$("total").textContent=money(total);updatePaymentBalancePreview(total);return{sub,dis,tax,total}}
 function get(){
   let c=calc();
   const inputPaid=Math.max(0,Number($("amountPaid")?.value||0));
@@ -890,7 +927,7 @@ function renderSaved(){
     const opts=["Not Started","Scheduled","In Progress","Completed","Cancelled"].map(s=>`<option value="${esc(s)}" ${js===s?"selected":""}>${esc(s)}</option>`).join("");
     return `<div class="saved" data-invoice-row="${esc(x.id)}" style="align-items:center;flex-wrap:wrap">
       <span class="grow">${esc(x.no)} <span class="meta">${esc(x.client||"No client")} · ${esc(x.status)}</span></span>
-      <b>${x.cur}₵${Number(x.total||0).toLocaleString(undefined,{minimumFractionDigits:2})}</b>
+      <b>${curSym(x.cur)}${Number(x.total||0).toLocaleString(undefined,{minimumFractionDigits:2})}</b>
       <label style="display:flex;align-items:center;gap:6px;margin:0;color:#7f8897;font-size:9px;font-weight:800;white-space:nowrap">Job Status
         <select class="job-status-select" data-job-status-id="${esc(x.id)}" aria-label="Job status for ${esc(x.no)}">${opts}</select>
       </label>
@@ -1070,7 +1107,7 @@ function previewSaved(id){loadInvoice(id);setTimeout(preview,30)}
 function invoiceStatusInfo(x){const st=String(x.status||"Draft");const due=String(x.due||"");let dueDate=/^\d{4}-\d{2}-\d{2}$/.test(due)?new Date(due+"T23:59:59"):null;const today=new Date();today.setHours(23,59,59,999);let effective=st;if(st!=="Paid"&&dueDate&&dueDate<today)effective="Overdue";let cls=effective==="Paid"?"status-paid":effective==="Overdue"?"status-overdue":effective==="Partially Paid"?"status-partial":effective==="Sent"?"status-sent":"status-draft";return{status:effective,cls,dueDate}}
 function amountCollected(x){const total=Math.max(0,Number(x.total||0));const received=Math.max(0,Number(x.amountPaid||0));if(received>0)return Math.min(received,total);return x.status==="Paid"?total:0}
 function invoiceBalance(x){const total=Math.max(0,Number(x.total||0));if(x.status==="Paid")return 0;const received=Math.max(0,Number(x.amountPaid||0));if(received>0)return Math.max(0,total-Math.min(received,total));return Number(x.balanceDue!=null?x.balanceDue:total||0)}
-function fmtMoney(v,c="GHS"){return String(c||"GHS")+"₵"+Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtMoney(v,c="GHS"){return curSym(c||"GHS")+Number(v||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
 function daysFromToday(d){if(!d)return null;const a=new Date();a.setHours(0,0,0,0);const b=new Date(d);b.setHours(0,0,0,0);return Math.round((b-a)/86400000)}
 function dashboard(){
   const infos=data.map(x=>({x,...invoiceStatusInfo(x)}));
