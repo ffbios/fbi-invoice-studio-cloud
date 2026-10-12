@@ -901,13 +901,25 @@ async function importClientsFile(evt){
   reader.readAsText(f);
 }
 
+let clientListLimit=60;
 function renderClients(){
   const el=$("clientList");if(!el)return;
   const q=$("clientSearch")?.value||"";
   const qq=String(q).trim().toLowerCase();
-  const list=clients.filter(c=>[c.name,c.phone,c.email,c.address].join(" ").toLowerCase().includes(qq)).sort((a,b)=>a.name.localeCompare(b.name));
-  el.innerHTML=list.length?list.map(c=>`<div class="saved" style="align-items:flex-start"><div class="grow"><div style="font-weight:900">${esc(c.name)}</div><div class="meta">${esc(c.phone||"")}${c.email?" · "+esc(c.email):""}</div><div class="meta">${esc(c.address||"")}</div></div><button type="button" class="btn" data-client-action="use" data-client-id="${esc(c.id)}">Use</button><button type="button" class="btn" data-client-action="edit" data-client-id="${esc(c.id)}">Edit</button><button type="button" class="btn danger" data-client-action="delete" data-client-id="${esc(c.id)}">Delete</button></div>`).join(""):'<div style="color:#777;text-align:center;padding:20px">No clients found.</div>';
+  const list=clients.filter(c=>[c.name,c.phone,c.email,c.address].join(" ").toLowerCase().includes(qq)).sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
+  // Per-client totals from saved invoices (display only)
+  const byId={},byName={};
+  const add=(map,key,x)=>{if(!key)return;const s=map[key]||(map[key]={count:0,total:0,owed:0});s.count++;if(String(x.cur||"GHS")==="GHS"){s.total+=Number(x.total||0);const st=invoiceStatusInfo(x).status;if(st!=="Paid"&&st!=="Draft")s.owed+=invoiceBalance(x)}};
+  data.forEach(x=>{add(byId,String(x.clientId||""),x);add(byName,String(x.client||"").trim().toLowerCase(),x)});
+  const statOf=c=>byId[String(c.id)]||byName[String(c.name||"").trim().toLowerCase()]||{count:0,total:0,owed:0};
+  const shown=list.slice(0,clientListLimit);
+  const cnt=$("clientCount");if(cnt)cnt.textContent=list.length===clients.length?clients.length.toLocaleString()+" clients":list.length.toLocaleString()+" of "+clients.length.toLocaleString()+" clients";
+  el.innerHTML=list.length?shown.map(c=>{const s=statOf(c);const initials=String(c.name||"?").trim().split(/\s+/).slice(0,2).map(w=>w[0]||"").join("").toUpperCase();
+    return `<div class="saved cl-row"><span class="cl-avatar" aria-hidden="true">${esc(initials)}</span><div class="cl-main"><b>${esc(c.name)}</b><small>${esc([c.phone,c.email].filter(Boolean).join(" · ")||"No contact details")}</small>${c.address?`<small>${esc(c.address)}</small>`:""}</div>
+      <div class="cl-stats">${s.count?`<span>${s.count} invoice${s.count===1?"":"s"} · ${esc(fmtMoney(s.total,"GHS"))}</span>${s.owed>0.005?`<b class="cl-owed">Owes ${esc(fmtMoney(s.owed,"GHS"))}</b>`:`<b class="cl-clear">Nothing owed</b>`}`:`<span>No invoices yet</span>`}</div>
+      <div class="cl-actions"><button type="button" class="btn primary" data-client-action="use" data-client-id="${esc(c.id)}">New invoice</button><button type="button" class="btn" data-client-action="edit" data-client-id="${esc(c.id)}">Edit</button><button type="button" class="btn cl-del" data-client-action="delete" data-client-id="${esc(c.id)}" aria-label="Delete ${esc(c.name)}">Delete</button></div></div>`}).join("")+(list.length>shown.length?`<button type="button" class="btn cl-more" data-client-more="1">Show more (${(list.length-shown.length).toLocaleString()} more)</button>`:""):'<div class="ui-empty"><b>No clients found</b><span>Check the spelling, or add this client with the form.</span></div>';
   el.onclick=function(e){
+    if(e.target.closest("[data-client-more]")){clientListLimit+=120;renderClients();return}
     const btn=e.target.closest("button[data-client-action][data-client-id]");
     if(!btn)return;
     e.preventDefault();e.stopPropagation();

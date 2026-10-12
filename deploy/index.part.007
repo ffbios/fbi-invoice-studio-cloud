@@ -1857,3 +1857,128 @@ html[data-theme] body .ui-palette-input input:focus-visible,html[data-theme] bod
   document.addEventListener("click",function(ev){document.querySelectorAll("details.inv-more[open]").forEach(function(d){if(!d.contains(ev.target))d.open=false})});
 })();
 </script>
+<style id="fbi-ui-v3-pages">
+/* ---------- shared page pieces ---------- */
+html[data-theme] body .page-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 16px}
+html[data-theme] body .page-actions p{margin:0;color:var(--muted);font-size:14px}
+html[data-theme] body .page-actions>div{display:flex;gap:8px;flex-wrap:wrap}
+html[data-theme] body .stats{gap:12px!important}
+html[data-theme] body .stats .stat{background:var(--panel)!important;color:var(--text)!important;border:1px solid var(--border)!important;border-radius:var(--r-lg)!important;box-shadow:var(--shadow-1)!important;padding:16px 18px!important}
+html[data-theme] body .stats .stat:before,html[data-theme] body .stats .stat:after{display:none!important}
+html[data-theme] body .stats .stat span{font-size:13px!important;font-weight:600!important;color:var(--muted)!important;text-transform:none!important;letter-spacing:0!important}
+html[data-theme] body .stats .stat b{font-size:22px!important;font-weight:650!important;letter-spacing:-.4px;color:var(--text)!important}
+html[data-theme] body .stats .stat small{font-size:12.5px!important;color:var(--faint)!important}
+html[data-theme] body .report-filters{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px!important}
+html[data-theme] body .report-filters label{margin:0 0 6px!important;font-size:12.5px}
+html[data-theme] body :is(#completedJobsTable,.report-preview,.fbi-payroll-table-wrap) table{width:100%;border-collapse:collapse;font-size:13.5px}
+html[data-theme] body :is(#completedJobsTable,.report-preview,.fbi-payroll-table-wrap) th{background:transparent!important;color:var(--muted)!important;font-size:12.5px!important;font-weight:600!important;text-transform:none!important;letter-spacing:0!important;padding:9px 10px!important;border:0!important;border-bottom:1px solid var(--border)!important;text-align:left}
+html[data-theme] body :is(#completedJobsTable,.report-preview,.fbi-payroll-table-wrap) td{padding:10px!important;border:0!important;border-bottom:1px solid var(--line)!important;color:var(--text)!important;font-size:13.5px!important;background:transparent!important}
+html[data-theme] body :is(#completedJobsTable,.fbi-payroll-table-wrap) tr:hover td{background:var(--u-row)!important}
+html[data-theme] body :is(.status-pill,.status-badge,.fbi-payroll-badge){border-radius:999px!important;font-size:12px!important;font-weight:650!important;padding:3px 10px!important;text-transform:none!important;letter-spacing:0!important}
+html[data-theme] body .status-paid{background:var(--u-ok-bg)!important;color:var(--u-ok)!important;border-color:transparent!important}
+html[data-theme] body .status-partial{background:var(--u-warn-bg)!important;color:var(--u-warn)!important;border-color:transparent!important}
+html[data-theme] body .status-overdue{background:var(--u-bad-bg)!important;color:var(--u-bad)!important;border-color:transparent!important}
+html[data-theme] body :is(.status-sent,.status-draft){border-color:transparent!important}
+
+/* ---------- clients ---------- */
+html[data-theme] body #view-clients .cl-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(300px,1fr);gap:16px;align-items:start}
+html[data-theme] body #view-clients .cl-list-card{padding:20px!important;margin:0!important}
+html[data-theme] body #view-clients .cl-search{margin:0 0 10px}
+html[data-theme] body #view-clients .cl-search{position:relative}
+html[data-theme] body #view-clients .cl-search svg{position:absolute;left:12px;top:50%;width:17px;height:17px;transform:translateY(-50%);fill:none;stroke:var(--faint);stroke-width:1.8;stroke-linecap:round;pointer-events:none}
+html[data-theme] body #view-clients .cl-search input{width:100%;height:42px;padding-left:38px!important}
+html[data-theme] body #view-clients .saved.cl-row{display:grid;grid-template-columns:40px minmax(0,1fr) minmax(150px,auto) auto;gap:14px;align-items:center;margin:0!important;padding:12px 6px!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+html[data-theme] body #view-clients .saved.cl-row:hover{background:var(--u-row)!important}
+html[data-theme] body #view-clients .cl-avatar{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand-hi);font-size:13px;font-weight:700;letter-spacing:.3px}
+html[data-theme="light"] body #view-clients .cl-avatar{color:var(--brand)}
+html[data-theme] body #view-clients .cl-main{display:flex;flex-direction:column;min-width:0}
+html[data-theme] body #view-clients .cl-main b{font-size:14.5px;font-weight:650;color:var(--text)}
+html[data-theme] body #view-clients .cl-main small{color:var(--muted);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html[data-theme] body #view-clients .cl-stats{display:flex;flex-direction:column;align-items:flex-end;font-size:12.5px;color:var(--muted);text-align:right}
+html[data-theme] body #view-clients .cl-owed{color:var(--u-bad);font-weight:650;font-size:13.5px}
+html[data-theme] body #view-clients .cl-clear{color:var(--u-ok);font-weight:600;font-size:12.5px}
+html[data-theme] body #view-clients .cl-actions{display:flex;gap:6px}
+html[data-theme] body #view-clients .cl-actions .btn{min-height:34px;height:34px;padding:0 12px;font-size:13px;white-space:nowrap}
+html[data-theme] body #view-clients .cl-del{color:var(--muted)!important}
+html[data-theme] body #view-clients .cl-del:hover{color:var(--u-bad)!important}
+html[data-theme] body #view-clients .cl-more{width:100%;margin-top:12px}
+html[data-theme] body #view-clients #clAddBtn{display:none}
+html[data-theme] body #view-clients .cl-list-card .ov-panel-head{align-items:center}
+html[data-theme] body #view-clients .cl-side{display:flex;flex-direction:column;gap:16px;position:sticky;top:96px}
+html[data-theme] body #view-clients .cl-form{padding:20px!important;margin:0!important}
+html[data-theme] body #view-clients .cl-form label{margin:12px 0 6px!important;font-size:12.5px}
+html[data-theme] body #view-clients .cl-form h3{margin:0 0 4px!important}
+html[data-theme] body #view-clients .cl-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+html[data-theme] body #view-clients .cl-btns{display:flex;gap:8px;margin-top:14px}
+html[data-theme] body #view-clients .cl-import{padding:16px 20px!important;margin:0!important}
+html[data-theme] body #view-clients .cl-import summary{cursor:pointer;display:flex;flex-direction:column;gap:2px}
+html[data-theme] body #view-clients .cl-import summary small{color:var(--muted);font-size:12.5px}
+html[data-theme] body #view-clients .cl-import input{margin-top:12px}
+
+/* ---------- receipts ---------- */
+html[data-theme] body #view-receipts .card{padding:20px!important}
+html[data-theme] body #view-receipts .receipt-list{display:flex;flex-direction:column}
+html[data-theme] body #view-receipts .receipt-row{display:grid!important;grid-template-columns:minmax(0,1fr) 150px 140px auto auto;gap:14px;align-items:center;margin:0!important;padding:12px 6px!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;background:transparent!important}
+html[data-theme] body #view-receipts .receipt-row:hover{background:var(--u-row)!important}
+html[data-theme] body #view-receipts .receipt-row .main{font-size:14.5px!important;font-weight:650!important;color:var(--text)!important}
+html[data-theme] body #view-receipts .receipt-row .meta{font-size:12.5px!important;color:var(--muted)!important;margin-top:2px}
+html[data-theme] body #view-receipts .receipt-row .amount{font-size:14.5px!important;font-weight:650!important;text-align:right;color:var(--text)!important}
+html[data-theme] body #view-receipts .receipt-row .status-pill{justify-self:start}
+html[data-theme] body #view-receipts .receipt-row .btn{min-height:34px;height:34px;padding:0 12px;font-size:13px}
+html[data-theme] body #view-receipts .receipt-empty{padding:36px 16px;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:var(--r-lg)}
+
+/* ---------- jobs ---------- */
+html[data-theme] body #view-completed>.card{padding:20px!important}
+
+/* ---------- calendar ---------- */
+html[data-theme] body #view-calendar [class*="eyebrow"],html[data-theme] body #view-calendar .cal2-kicker{text-transform:none!important;letter-spacing:0!important;font-size:13px!important;color:var(--muted)!important}
+html[data-theme] body #view-calendar .cal2-stat{border-radius:var(--r-md)!important;border:1px solid var(--border)!important;background:var(--panel2)!important}
+html[data-theme] body #view-calendar .cal2-navbtn{border-radius:var(--r-md)!important}
+
+/* ---------- payroll (look only) ---------- */
+html[data-theme] body :is(.fbi-payroll-card,.fbi-payroll-widget,.fbi-payroll-panel,.fbi-payroll-stat,.fbi-payroll-summary-item){border-radius:var(--r-lg)!important;border-color:var(--border)!important;box-shadow:var(--shadow-1)!important}
+html[data-theme] body .fbi-payroll-stat{background:var(--panel)!important}
+html[data-theme] body .fbi-payroll-tabs{gap:4px!important;border-radius:12px!important}
+html[data-theme] body .fbi-payroll-tab{border-radius:9px!important;font-weight:600!important;text-transform:none!important;letter-spacing:0!important}
+html[data-theme] body :is(.fbi-payroll-section-head,.fbi-payroll-widget-head) :is(small,span)[class*="kicker"],html[data-theme] body #fbiPayrollView [class*="eyebrow"]{text-transform:none!important;letter-spacing:0!important}
+
+/* ---------- settings & WhatsApp ---------- */
+html[data-theme] body :is(#view-settings,#view-whatsapp) .card{padding:20px 22px!important}
+html[data-theme] body :is(#view-settings,#view-whatsapp) .grid2{gap:16px!important}
+
+/* ---------- preview toolbars & report window ---------- */
+html[data-theme] body :is(#view-preview,#view-receipt-preview)>.no-print:first-child{position:sticky;top:72px;z-index:5;display:flex;gap:8px;flex-wrap:wrap;padding:12px 28px!important;background:color-mix(in srgb,var(--bg) 90%,transparent)!important;backdrop-filter:blur(10px);border-bottom:1px solid var(--line)!important}
+html[data-theme] body :is(#view-preview,#view-receipt-preview) .preview-wrap{background:transparent!important}
+@media screen{html[data-theme] body :is(.paper,.receipt-paper){box-shadow:0 30px 60px -30px rgba(0,0,0,.6)!important;border-radius:4px}}
+html[data-theme] body .report-dialog{border-radius:18px!important;border:1px solid var(--border)!important;background:var(--panel)!important;box-shadow:0 40px 80px -30px rgba(0,0,0,.7)!important}
+html[data-theme] body .report-head{border-bottom:1px solid var(--line)!important}
+
+@media(max-width:1100px){
+  html[data-theme] body #view-clients .cl-layout{grid-template-columns:1fr}
+  html[data-theme] body #view-clients .cl-side{position:static}
+  html[data-theme] body #view-clients .cl-form{display:none}
+  html[data-theme] body #view-clients #clAddBtn{display:inline-flex}
+  html[data-theme] body #view-clients .cl-side.editing .cl-form{display:block}
+}
+@media(max-width:800px){
+  html[data-theme] body #view-clients .saved.cl-row{grid-template-columns:40px minmax(0,1fr);grid-template-areas:"av main" "av stats" "act act"}
+  html[data-theme] body #view-clients .cl-avatar{grid-area:av;align-self:start}
+  html[data-theme] body #view-clients .cl-main{grid-area:main}
+  html[data-theme] body #view-clients .cl-stats{grid-area:stats;align-items:flex-start;text-align:left}
+  html[data-theme] body #view-clients .cl-actions{grid-area:act}
+  html[data-theme] body #view-receipts .receipt-row{display:flex!important;flex-wrap:wrap;gap:8px 10px}
+  html[data-theme] body #view-receipts .receipt-row .grow{flex:1 1 60%}
+  html[data-theme] body #view-receipts .receipt-row .status-pill{margin-right:auto}
+  html[data-theme] body #view-receipts .receipt-row .btn{width:auto!important;flex:none}
+  html[data-theme] body :is(#view-preview,#view-receipt-preview)>.no-print:first-child{padding:10px 14px!important;top:60px}
+}
+</style>
+<script id="fbi-ui-v3-pages-js">
+/* Clients: on smaller screens the form opens only when adding or editing. */
+(function(){
+  var side=document.querySelector("#view-clients .cl-side");if(!side)return;
+  var head=document.querySelector("#view-clients .cl-list-card .ov-panel-head");
+  if(head&&!document.getElementById("clAddBtn")){var b=document.createElement("button");b.type="button";b.className="btn primary";b.id="clAddBtn";b.textContent="＋ Add client";b.onclick=function(){if(typeof clearClientForm==="function")clearClientForm();side.classList.add("editing");var n=document.getElementById("dbClientName");if(n){n.scrollIntoView({behavior:"smooth",block:"center"});setTimeout(function(){n.focus()},250)}};head.appendChild(b)}
+  document.getElementById("clientList")&&document.getElementById("clientList").addEventListener("click",function(e){if(e.target.closest('[data-client-action="edit"]')){side.classList.add("editing");setTimeout(function(){var n=document.getElementById("dbClientName");n&&n.scrollIntoView({behavior:"smooth",block:"center"})},50)}},true);
+})();
+</script>
