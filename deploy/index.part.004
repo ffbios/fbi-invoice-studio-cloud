@@ -530,117 +530,90 @@ html[data-theme] body :is(.paper,.receipt-paper,.preview-wrap){line-height:norma
 <aside class="side" id="side">
   <div class="brand"><img class="brand-logo" src="/assets/fbi-logo.png" alt="Film Beyond Imagination logo"><div>Invoice Studio<small>Professional invoicing system</small></div></div>
   <div class="nav">
+    <div class="nav-group" role="group" aria-label="Invoicing"><div class="nav-heading">Invoicing</div>
     <button type="button" class="nav-link active" data-v="dashboard" onclick="show('dashboard')"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Overview</span></button>
+    <button type="button" class="nav-link" data-v="create" onclick="show('create')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11.5v6M9 14.5h6"/></svg><span>Create invoice</span></button>
+    <button type="button" class="nav-link" data-v="saved" onclick="show('saved')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2.5h6.5A2.5 2.5 0 0 1 21 10v7.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/></svg><span>Invoices</span></button>
+    <button type="button" class="nav-link" data-v="receipts" onclick="show('receipts')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18l-2.3-1.6L14.3 21 12 19.4 9.7 21l-2.4-1.6L5 21z"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg><span>Receipts</span></button>
+    <button type="button" class="nav-link" data-v="completed" onclick="show('completed')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.3 2.6 2.6L16 9.5"/></svg><span>Jobs</span></button>
     <button type="button" class="nav-link" data-v="calendar" onclick="show('calendar')"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/></svg><span>Calendar</span></button>
-    <button type="button" class="nav-link" data-v="create" onclick="show('create')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11.5v6M9 14.5h6"/></svg><span>Create Invoice</span></button>
-    <button type="button" class="nav-link" data-v="clients" onclick="show('clients')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.7a3.5 3.5 0 0 1 0 6.6M18.5 14.4c1.7.8 3 2.6 3 5.6"/></svg><span>Client Database</span></button>
-    <button type="button" class="nav-link" data-v="saved" onclick="show('saved')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2.5h6.5A2.5 2.5 0 0 1 21 10v7.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/></svg><span>Saved Invoices</span></button>
-    <button type="button" class="nav-link" data-v="completed" onclick="show('completed')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.3 2.6 2.6L16 9.5"/></svg><span>Completed Jobs</span></button>
-    <button type="button" class="nav-link" data-v="receipts" onclick="show('receipts')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18l-2.3-1.6L14.3 21 12 19.4 9.7 21l-2.4-1.6L5 21z"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg><span>Official Receipts</span></button>
+    </div>
+    <div class="nav-group" role="group" aria-label="People"><div class="nav-heading">People</div>
+    <button type="button" class="nav-link" data-v="clients" onclick="show('clients')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.7a3.5 3.5 0 0 1 0 6.6M18.5 14.4c1.7.8 3 2.6 3 5.6"/></svg><span>Clients</span></button>
     <button type="button" class="nav-link" data-v="payroll" onclick="window.__FBI_NAV__ ? window.__FBI_NAV__('payroll') : (window.__FBI_PAYROLL_OPEN__ && window.__FBI_PAYROLL_OPEN__())"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18"/><circle cx="16.5" cy="14.5" r="1.2"/></svg><span>Payroll</span></button>
-    <button type="button" class="nav-link" data-v="settings" onclick="show('settings')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span>Business Settings</span></button>
-    <button type="button" class="nav-link" data-v="whatsapp" onclick="show('whatsapp')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span>WhatsApp Alerts</span></button>
+    </div>
+    <div class="nav-group" role="group" aria-label="Setup"><div class="nav-heading">Setup</div>
+    <button type="button" class="nav-link" data-v="settings" onclick="show('settings')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span>Business settings</span></button>
+    <button type="button" class="nav-link" data-v="whatsapp" onclick="show('whatsapp')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span>WhatsApp alerts</span></button>
+    </div>
   </div>
-  <div class="sidefoot">Invoices are stored securely in the cloud database.<br>Install this app on your phone or PC for quick access.</div>
+  <div class="sidefoot"><span class="sf-dot" aria-hidden="true"></span><span>Saved to the cloud · backed up daily</span></div>
 </aside>
 <main class="main">
 <header class="top no-print">
   <div style="display:flex;align-items:center;gap:10px"><button class="btn hamb" style="display:none" onclick="side.classList.toggle('open')">☰</button><div><h1 id="title">Overview</h1><small id="subtitle">Your invoicing control center</small></div></div>
-  <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><button id="installAppBtn" class="btn install-app-btn" type="button" onclick="installFBIApp()">⬇ Install App</button><button class="btn" onclick="newInvoice()">New Invoice</button><button class="btn primary" onclick="newInvoice()">＋ Create Invoice</button><div class="theme-switcher no-print" role="group" aria-label="Appearance"><button type="button" class="theme-choice" data-theme-choice="light" onclick="setThemePreference('light')" aria-label="Light mode" title="Light mode">☀️<span>Light</span></button><button type="button" class="theme-choice" data-theme-choice="dark" onclick="setThemePreference('dark')" aria-label="Dark mode" title="Dark mode">🌙<span>Dark</span></button><button type="button" class="theme-choice" data-theme-choice="system" onclick="setThemePreference('system')" aria-label="System mode" title="Follow device theme">⚙️<span>System</span></button></div><button id="fbiSignOutBtn" class="btn no-print" type="button" onclick="fbiSignOut()" aria-label="Sign out" title="Sign out" style="width:38px;height:38px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;font-size:0"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4"/><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/></svg></button></div>
+  <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><button id="installAppBtn" class="btn install-app-btn" type="button" onclick="installFBIApp()">⬇ Install App</button><button class="btn ui-search-btn" type="button" onclick="openCommandPalette()" aria-label="Search invoices and clients"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span>Search invoices, clients…</span><kbd>Ctrl K</kbd></button><button class="btn primary ui-new-btn" type="button" onclick="newInvoice()">＋ New invoice</button><div class="theme-switcher no-print" role="group" aria-label="Appearance"><button type="button" class="theme-choice" data-theme-choice="light" onclick="setThemePreference('light')" aria-label="Light mode" title="Light mode">☀️<span>Light</span></button><button type="button" class="theme-choice" data-theme-choice="dark" onclick="setThemePreference('dark')" aria-label="Dark mode" title="Dark mode">🌙<span>Dark</span></button><button type="button" class="theme-choice" data-theme-choice="system" onclick="setThemePreference('system')" aria-label="System mode" title="Follow device theme">⚙️<span>System</span></button></div><button id="fbiSignOutBtn" class="btn no-print" type="button" onclick="fbiSignOut()" aria-label="Sign out" title="Sign out" style="width:38px;height:38px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;font-size:0"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4"/><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/></svg></button></div>
 </header>
 <script>window.fbiSignOut=async function(){var b=document.getElementById("fbiSignOutBtn");if(b)b.disabled=true;try{var r=await fetch("/api/auth/logout",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},cache:"no-store"});if(!r.ok)throw new Error("Sign out failed");window.location.reload();}catch(e){if(b)b.disabled=false;try{toast(e.message||"Sign out failed");}catch(_){} }};</script>
 
 <section class="view active" id="view-dashboard">
-  <div class="dashboard-hero">
-  <div>
-    <div class="eyebrow">FBI INVOICE STUDIO · BUSINESS OVERVIEW</div>
-    <h2>Your financial command center</h2>
-    <p>See invoicing, collections, outstanding balances and client activity in one workspace.</p>
-  </div>
-  <div class="hero-metrics">
-    <div class="hero-metric"><span>Collected</span><b id="heroCollected">GH₵0.00</b></div>
-    <div class="hero-metric"><span>Open invoices</span><b id="heroOpen">0</b></div>
-  </div>
-</div>
-<div class="dashboard-quickstrip">
-  <button class="quick-action" type="button" onclick="newInvoice()"><span class="qa-icon">＋</span><span><b>Create invoice</b><small>Start a new bill</small></span></button>
-  <button class="quick-action" type="button" onclick="show('clients')"><span class="qa-icon">👥</span><span><b>Add client</b><small>Manage customer records</small></span></button>
-  <button class="quick-action" type="button" onclick="show('receipts')"><span class="qa-icon">🧾</span><span><b>Receipts</b><small>Review recorded payments</small></span></button>
-  <button class="quick-action" type="button" onclick="openReportModal()"><span class="qa-icon">↗</span><span><b>Business report</b><small>Generate financial reports</small></span></button>
-</div>
-<div class="report-toolbar"><button class="btn primary" type="button" onclick="openReportModal()">📊 Generate Report</button></div>
-  <div class="stats dashboard-stats">
-    <div class="stat"><span>Total Invoices</span><b id="sCount">0</b><small id="sCountMeta">All records</small></div>
-    <div class="stat"><span>Total Invoiced</span><b id="sInvoiced">GH₵0.00</b><small id="sInvoicedMeta">All saved invoices</small></div>
-    <div class="stat"><span>Total Collected</span><b id="sPaid">GH₵0.00</b><small id="sPaidMeta">0 received</small></div>
-    <div class="stat"><span>Outstanding</span><b class="accent" id="sDue">GH₵0.00</b><small id="sDueMeta">0 invoices</small></div>
-    <div class="stat"><span>Overdue</span><b id="sOverdue">GH₵0.00</b><small id="sOverdueMeta">0 invoices</small></div>
-    <div class="stat"><span>Due Soon</span><b id="sDueSoon">GH₵0.00</b><small id="sDueSoonMeta">Next 7 days</small></div>
-    <div class="stat"><span>Drafts</span><b id="sDraft">0</b><small id="sDraftMeta">Not yet sent</small></div>
-    <div class="stat"><span>Clients</span><b id="sClients">0</b><small id="sClientsMeta">Client database</small></div>
-  </div>
-
-  <div class="dashboard-analytics">
-    <div class="card visual-card visual-revenue">
-      <div class="card-headline"><div><h3>Revenue Pulse</h3><div class="visual-meta" id="pulseMeta">Six-month invoiced volume</div></div><span style="font-size:9px;color:#8994a3">Last 6 months</span></div>
-      <div id="revenuePulse" class="pulse-bars" aria-label="Six month revenue pulse"></div>
-    </div>
-    <div class="card visual-card">
-      <div class="card-headline"><div><h3>Recent Activity</h3><div class="visual-meta">Latest invoice movement</div></div></div>
-      <div id="dashboardActivity" class="activity-list"></div>
-    </div>
-    <div class="card visual-card">
-      <div class="card-headline"><div><h3>Attention Center</h3><div class="visual-meta">Items requiring follow-up</div></div></div>
-      <div id="dashboardAlerts" class="alert-list"></div>
+  <div class="ov-head">
+    <div><h2 class="ov-greet" id="ovGreeting">Welcome back</h2><p class="ov-date" id="ovToday"></p></div>
+    <div class="ov-actions no-print">
+      <button class="btn" type="button" onclick="openReportModal()">Business report</button>
+      <button class="btn" type="button" onclick="show('clients')">Add client</button>
+      <button class="btn primary" type="button" onclick="newInvoice()">＋ New invoice</button>
     </div>
   </div>
 
-  <div class="grid2 dashboard-main-grid">
-    <div class="card">
-      <h3>System Overview</h3>
-      <div class="overview-grid">
-        <div class="overview-item"><span>Sent / Awaiting Payment</span><b id="ovSent">0</b></div>
-        <div class="overview-item"><span>Partially Paid</span><b id="ovPartial">0</b></div>
-        <div class="overview-item"><span>Paid Invoices</span><b id="ovPaid">0</b></div>
-        <div class="overview-item"><span>Overdue Invoices</span><b id="ovOverdue">0</b></div>
-        <div class="overview-item"><span>Draft Invoices</span><b id="ovDraft">0</b></div>
-        <div class="overview-item"><span>Collection Rate</span><b id="ovCollection">0%</b></div>
-        <div class="overview-item"><span>Average Invoice</span><b id="ovAverage">GH₵0.00</b></div>
-        <div class="overview-item"><span>Equipment Rental Invoices</span><b id="ovRentals">0</b></div>
-      </div>
+  <div class="ov-money">
+    <div class="card ov-owed">
+      <div class="ov-owed-top"><span>Money owed to FBI</span><button class="ov-link" type="button" onclick="openInvoicesFiltered('open')">See open invoices</button></div>
+      <b class="ov-owed-amt" id="sDue">GH₵0.00</b>
+      <small class="ov-owed-meta" id="sDueMeta">0 invoices</small>
+      <div class="ov-reel" id="ovReel" role="img" aria-label="Who owes the most"></div>
+      <ul class="ov-reel-legend" id="ovReelLegend"></ul>
     </div>
-    <div class="card">
-      <h3>Needs Attention</h3>
+    <div class="ov-tiles">
+      <button class="ov-tile" type="button" onclick="openInvoicesFiltered('Paid')"><span>Collected</span><b id="sPaid">GH₵0.00</b><small id="sPaidMeta">0 received</small></button>
+      <button class="ov-tile" type="button" onclick="openInvoicesFiltered('')"><span>Invoiced</span><b id="sInvoiced">GH₵0.00</b><small id="sInvoicedMeta">All saved invoices</small></button>
+      <button class="ov-tile ov-tile-bad" type="button" onclick="openInvoicesFiltered('Overdue')"><span>Overdue</span><b id="sOverdue">GH₵0.00</b><small id="sOverdueMeta">0 invoices</small></button>
+      <button class="ov-tile" type="button" onclick="openInvoicesFiltered('open')"><span>Due in the next 7 days</span><b id="sDueSoon">GH₵0.00</b><small id="sDueSoonMeta">Next 7 days</small></button>
+    </div>
+  </div>
+
+  <div class="ov-grid">
+    <div class="card ov-panel">
+      <div class="ov-panel-head"><h3>Needs attention</h3></div>
       <div id="attentionList" class="attention-list"></div>
     </div>
+    <div class="card ov-panel">
+      <div class="ov-panel-head"><h3>Payments due</h3><button class="ov-link" type="button" onclick="openInvoicesFiltered('open')">All open</button></div>
+      <div id="dueList" class="due-list"></div>
+    </div>
+    <div class="card ov-panel">
+      <div class="ov-panel-head"><h3>Invoiced by month</h3><small id="pulseMeta">Six-month invoiced volume</small></div>
+      <div id="revenuePulse" class="pulse-bars" aria-label="Invoiced amount over the last six months"></div>
+    </div>
   </div>
 
-  <div class="card recent">
-    <div class="dashboard-section-head"><div><h3 style="margin-bottom:3px">Recent Invoices</h3><small>Every invoice shows its current status, client, dates, amount and outstanding position.</small></div><button class="btn" onclick="show('saved')">View All Invoices →</button></div>
+  <div class="card recent ov-recent">
+    <div class="ov-panel-head"><h3>Recent invoices</h3><button class="ov-link" type="button" onclick="show('saved')">View all invoices</button></div>
     <div class="invoice-table-wrap">
       <table class="dashboard-table">
-        <thead><tr><th>Invoice</th><th>Client</th><th>Date</th><th>Due</th><th>Status</th><th>Amount</th><th>Balance</th><th></th></tr></thead>
+        <thead><tr><th>Invoice</th><th>Client</th><th>Date</th><th>Due</th><th>Status</th><th class="num">Amount</th><th class="num">Balance</th><th></th></tr></thead>
         <tbody id="recent"></tbody>
       </table>
     </div>
   </div>
 
-  <div class="grid2">
-    <div class="card">
-      <h3>Upcoming & Overdue</h3>
-      <div id="dueList" class="due-list"></div>
-    </div>
-    <div class="card">
-      <h3>Client & Activity Summary</h3>
-      <div class="summary-lines">
-        <div><span>Clients in Database</span><b id="sumClients">0</b></div>
-        <div><span>Invoices With Clients</span><b id="sumClientInvoices">0</b></div>
-        <div><span>Invoices Without Client</span><b id="sumNoClient">0</b></div>
-        <div><span>Latest Invoice</span><b id="sumLatest">—</b></div>
-        <div><span>Latest Client</span><b id="sumLatestClient">—</b></div>
-        <div><span>Data Stored</span><b>Cloud database (daily backups)</b></div>
-      </div>
-    </div>
+  <!-- Figures still calculated by the app but not shown in this layout -->
+  <div hidden aria-hidden="true">
+    <b id="heroCollected"></b><b id="heroOpen"></b>
+    <b id="sCount"></b><small id="sCountMeta"></small><b id="sDraft"></b><small id="sDraftMeta"></small><b id="sClients"></b><small id="sClientsMeta"></small>
+    <div id="dashboardActivity"></div><div id="dashboardAlerts"></div>
+    <b id="ovSent"></b><b id="ovPartial"></b><b id="ovPaid"></b><b id="ovOverdue"></b><b id="ovDraft"></b><b id="ovCollection"></b><b id="ovAverage"></b><b id="ovRentals"></b>
+    <b id="sumClients"></b><b id="sumClientInvoices"></b><b id="sumNoClient"></b><b id="sumLatest"></b><b id="sumLatestClient"></b>
   </div>
 </section>
 
@@ -1049,38 +1022,53 @@ html body #view-create.cx .cx-ghost{background:transparent!important;color:var(-
 <section class="view" id="view-receipts"><div class="card"><div class="dashboard-section-head"><div><h3 style="margin-bottom:3px">Official Payment Receipts</h3><small>Print a professional receipt for every payment recorded against an invoice.</small></div><button class="btn" onclick="show('saved')">View Invoices →</button></div><div id="receiptList" class="receipt-list"></div></div></section>
 
 <section class="view" id="view-clients">
-  <div class="grid2">
-    <div class="card">
-      <h3>Client Database</h3>
-      <label>Search Clients</label><input id="clientSearch" placeholder="Search name, phone or email" oninput="renderClients()">
-      <div style="margin-top:10px;padding:10px;border:1px dashed #343a46;border-radius:8px;background:#0b0e13">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-          <div><b style="color:#fff">Import Client Data</b><div style="font-size:9px;color:#7f8794;margin-top:3px">Upload CSV or JSON. CSV columns: Name, Phone, Email, Address, Notes.</div></div>
-          <input id="clientImportFile" type="file" accept=".csv,.txt,.json" onchange="importClientsFile(event)" style="max-width:230px">
-        </div>
-        <div id="clientImportStatus" style="font-size:9px;color:#8e97a6;margin-top:7px"></div>
-      </div>
-      <div id="clientList" style="margin-top:12px"></div>
+  <div class="cl-layout">
+    <div class="card cl-list-card">
+      <div class="ov-panel-head"><h3>All clients</h3><small id="clientCount"></small></div>
+      <div class="inv-search cl-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input id="clientSearch" type="search" placeholder="Search by name, phone, email or address" oninput="clientListLimit=60;renderClients()" autocomplete="off"></div>
+      <div id="clientList"></div>
     </div>
-    <div class="card">
-      <h3 id="clientFormTitle">Add Client</h3>
-      <input id="clientId" type="hidden">
-      <label>Client / Company Name *</label><input id="dbClientName" placeholder="Client or company name">
-      <label>Phone</label><input id="dbClientPhone" placeholder="0250000000">
-      <label>Email</label><input id="dbClientEmail" type="email" placeholder="client@example.com">
-      <label>Address</label><textarea id="dbClientAddress" rows="3" placeholder="Client address"></textarea>
-      <label>Notes</label><textarea id="dbClientNotes" rows="3" placeholder="Additional client notes"></textarea>
-      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn primary" onclick="saveClient()">Save Client</button><button class="btn" onclick="clearClientForm()">Clear</button></div>
+    <div class="cl-side">
+      <div class="card cl-form">
+        <h3 id="clientFormTitle">Add Client</h3>
+        <input id="clientId" type="hidden">
+        <label for="dbClientName">Client or company name *</label><input id="dbClientName" placeholder="Client or company name">
+        <div class="cl-two"><div><label for="dbClientPhone">Phone</label><input id="dbClientPhone" placeholder="0250000000"></div><div><label for="dbClientEmail">Email</label><input id="dbClientEmail" type="email" placeholder="client@example.com"></div></div>
+        <label for="dbClientAddress">Address</label><textarea id="dbClientAddress" rows="2" placeholder="Client address"></textarea>
+        <label for="dbClientNotes">Notes</label><textarea id="dbClientNotes" rows="2" placeholder="Additional client notes"></textarea>
+        <div class="cl-btns"><button class="btn primary" type="button" onclick="saveClient()">Save client</button><button class="btn" type="button" onclick="clearClientForm()">Clear</button></div>
+      </div>
+      <details class="card cl-import">
+        <summary><b>Import clients from a file</b><small>CSV or JSON. CSV columns: Name, Phone, Email, Address, Notes.</small></summary>
+        <input id="clientImportFile" type="file" accept=".csv,.txt,.json" onchange="importClientsFile(event)">
+        <div id="clientImportStatus" class="st-note"></div>
+      </details>
     </div>
   </div>
 </section>
 
-<section class="view" id="view-saved"><div class="card"><div class="sv-head"><h3>Saved Invoices</h3><small id="savedCount"></small></div>
-<div class="sv-tools"><input id="savedSearch" type="search" placeholder="Search invoice number, client, phone or amount…" autocomplete="off"><select id="savedStatus"><option value="">All statuses</option><option>Draft</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Overdue</option></select><select id="savedCurrency"><option value="">All currencies</option><option>GHS</option><option>USD</option><option>EUR</option><option>GBP</option></select></div>
-<div id="saved"></div><div id="savedEmpty" class="sv-empty" hidden>No invoices match your search.</div></div>
-<style>#view-saved .sv-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}#view-saved .sv-head small{color:var(--muted)}#view-saved .sv-tools{display:grid;grid-template-columns:minmax(0,1fr) 170px 150px;gap:8px;margin:0 0 14px}#view-saved .sv-empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:12px}@media(max-width:700px){#view-saved .sv-tools{grid-template-columns:1fr 1fr}#view-saved .sv-tools input{grid-column:1/-1}}</style>
+<section class="view" id="view-saved"><div class="card inv-card">
+<div class="inv-toolbar">
+  <div class="inv-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input id="savedSearch" type="search" placeholder="Search by invoice number, client, phone or amount" autocomplete="off"></div>
+  <select id="savedCurrency" aria-label="Currency"><option value="">All currencies</option><option>GHS</option><option>USD</option><option>EUR</option><option>GBP</option></select>
+  <button class="btn primary" type="button" onclick="newInvoice()">＋ New invoice</button>
+</div>
+<div class="inv-chips" id="savedChips" role="tablist" aria-label="Filter by status"></div>
+<select id="savedStatus" hidden><option value="">All</option><option value="open">Open</option><option>Draft</option><option>Sent</option><option>Partially Paid</option><option>Paid</option><option>Overdue</option></select>
+<div class="inv-head" aria-hidden="true"><span>Invoice</span><span>Date</span><span class="num">Amount</span><span>Status</span><span>Job</span><span></span></div>
+<div id="saved"></div><div id="savedEmpty" class="ui-empty" hidden><b>No invoices match</b><span>Try a different search or clear the filters.</span><button class="btn" type="button" onclick="openInvoicesFiltered('')">Clear filters</button></div>
+<small id="savedCount" class="inv-count"></small>
+</div>
 <script>(function(){
   function el(id){return document.getElementById(id)}
+  function statusOf(x){try{return invoiceStatusInfo(x).status||x.status||"Draft"}catch(e){return x.status||"Draft"}}
+  function isOpen(x){const st=statusOf(x);return st!=="Paid"&&st!=="Draft"&&invoiceBalance(x)>0.005}
+  const CHIPS=[["","All"],["open","Open"],["Overdue","Overdue"],["Partially Paid","Part paid"],["Paid","Paid"],["Draft","Drafts"]];
+  function match(x,st){if(!st)return true;if(st==="open")return isOpen(x);return statusOf(x)===st}
+  function chips(){
+    const box=el("savedChips");if(!box||typeof data==="undefined")return;const cur=el("savedStatus").value;
+    box.innerHTML=CHIPS.map(function(c){const n=data.filter(function(x){return match(x,c[0])}).length;return '<button type="button" role="tab" aria-selected="'+(cur===c[0])+'" data-chip="'+c[0]+'">'+c[1]+' <span>'+n+'</span></button>'}).join("");
+  }
   function apply(){
     const box=el("saved");if(!box||typeof data==="undefined")return;
     const q=(el("savedSearch").value||"").trim().toLowerCase(),st=el("savedStatus").value,cu=el("savedCurrency").value;
@@ -1088,28 +1076,25 @@ html body #view-create.cx .cx-ghost{background:transparent!important;color:var(-
     box.querySelectorAll("[data-invoice-row]").forEach(function(r){
       total++;
       const x=data.find(function(a){return String(a.id)===r.getAttribute("data-invoice-row")})||{};
-      const hay=[x.no,x.client,x.clientPhone,x.clientEmail,x.total,x.date,x.category].join(" ").toLowerCase();
-      const ok=(!q||hay.indexOf(q)>=0)&&(!st||String(x.status||"")===st)&&(!cu||String(x.cur||"GHS")===cu);
+      const hay=[x.no,x.client,x.clientPhone,x.clientEmail,x.total,x.date,x.category,x.eventDate].join(" ").toLowerCase();
+      const ok=(!q||hay.indexOf(q)>=0)&&match(x,st)&&(!cu||String(x.cur||"GHS")===cu);
       r.style.display=ok?"":"none";if(ok)shown++;
     });
     el("savedEmpty").hidden=!(total&&!shown);
-    el("savedCount").textContent=total?(shown===total?total+" invoices":shown+" of "+total+" invoices"):"";
+    el("savedCount").textContent=total?(shown===total?"Showing all "+total+" invoices":"Showing "+shown+" of "+total+" invoices"):"";
+    chips();
   }
-  ["savedSearch","savedStatus","savedCurrency"].forEach(function(id){const n=el(id);if(n){n.addEventListener("input",apply);n.addEventListener("change",apply)}});
+  window.openInvoicesFiltered=function(st){show("saved");el("savedStatus").value=st||"";if(!st){el("savedSearch").value="";el("savedCurrency").value=""}apply();window.scrollTo(0,0)};
+  el("savedChips").addEventListener("click",function(e){const b=e.target.closest("[data-chip]");if(!b)return;el("savedStatus").value=b.getAttribute("data-chip");apply()});
+  ["savedSearch","savedCurrency"].forEach(function(id){const n=el(id);n.addEventListener("input",apply);n.addEventListener("change",apply)});
   try{new MutationObserver(apply).observe(el("saved"),{childList:true})}catch(e){}
 })();</script>
 </section>
 
 <section class="view" id="view-completed">
-  <div class="card completed-jobs-head">
-    <div>
-      <h3>Jobs</h3>
-      <p style="margin:4px 0 0;color:#7d8593">Every job is linked to its invoice. Payment status and job status are tracked separately.</p>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn" type="button" onclick="exportCompletedJobsCsv()">⬇ Export CSV</button>
-      <button class="btn primary" type="button" onclick="printCompletedJobsReport()">🖨 Print / Save PDF</button>
-    </div>
+  <div class="page-actions completed-jobs-head">
+    <p>Every job is linked to its invoice. Payment and job progress are tracked separately.</p>
+    <div><button class="btn" type="button" onclick="exportCompletedJobsCsv()">Export CSV</button><button class="btn primary" type="button" onclick="printCompletedJobsReport()">Print / save PDF</button></div>
   </div>
   <div class="stats dashboard-stats completed-job-stats">
     <div class="stat"><span>Total Jobs</span><b id="completedCount">0</b><small id="completedCountMeta">Linked to invoices</small></div>

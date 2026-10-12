@@ -60,7 +60,7 @@ function printOverviewReport(){
 }
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("reportModal")?.classList.contains("show"))closeReportModal()});
 
-function show(v){document.body.classList.remove("receipt-print-mode");document.querySelectorAll(".view").forEach(x=>x.classList.remove("active","print-view"));$("view-"+v).classList.add("active");document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.v===v));let t={dashboard:["Overview","Your invoicing control center"],create:["Create Invoice","Build and print invoices"],clients:["Client Database","Manage your clients and billing contacts"],saved:["Saved Invoices","View and manage saved invoices"],calendar:["Calendar","View media event dates and invoice details"],receipts:["Official Receipts","Print professional payment receipts"],settings:["Business Settings","Business identity and payment details"],whatsapp:["WhatsApp Alerts","Automatic invoice notifications"],preview:["Invoice Preview","Preview and print your invoice"],"receipt-preview":["Official Receipt","Preview and print your receipt"]}[v]||["Invoice Studio",""];$("title").textContent=t[0];$("subtitle").textContent=t[1];if(v==="saved")renderSaved();if(v==="calendar")renderCalendar();if(v==="receipts")renderReceipts();if(v==="clients")renderClients();if(v==="dashboard")dashboard();if(v==="create"){populateClientSelect();initServiceCatalog();}$("side").classList.remove("open")}
+function show(v){document.body.classList.remove("receipt-print-mode");document.querySelectorAll(".view").forEach(x=>x.classList.remove("active","print-view"));$("view-"+v).classList.add("active");document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.v===v));let t={dashboard:["Overview","Where FBI's money stands today"],create:["Create invoice","Build, save and print an invoice"],clients:["Clients","Contacts, billing details and history"],saved:["Invoices","Find, open and follow up every invoice"],completed:["Jobs","Track every job linked to an invoice"],calendar:["Calendar","View media event dates and invoice details"],receipts:["Receipts","Every payment recorded against an invoice"],settings:["Business settings","Business details, staff access and backups"],whatsapp:["WhatsApp Alerts","Automatic invoice notifications"],preview:["Invoice Preview","Preview and print your invoice"],"receipt-preview":["Official Receipt","Preview and print your receipt"]}[v]||["Invoice Studio",""];$("title").textContent=t[0];$("subtitle").textContent=t[1];if(v==="saved")renderSaved();if(v==="calendar")renderCalendar();if(v==="receipts")renderReceipts();if(v==="clients")renderClients();if(v==="dashboard")dashboard();if(v==="create"){populateClientSelect();initServiceCatalog();}$("side").classList.remove("open")}
 document.querySelectorAll(".nav button").forEach(b=>{b.addEventListener("click",function(e){e.preventDefault();if(window.__FBI_NAV__)window.__FBI_NAV__(b.dataset.v);else show(b.dataset.v);});});$("template").onchange=()=>setTemplate($("template").value);["amountPaid","paymentDate","paymentMethod","transactionRef","receivedBy"].forEach(id=>$(id)?.addEventListener("input",()=>{if(id==="amountPaid")updatePaymentBalancePreview()}));
 function toast(x){let t=$("toast");t.textContent=x;t.classList.add("show");clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove("show"),2000)}
 const DRAFT_KEY=KEY+":draft-v3";
@@ -901,13 +901,25 @@ async function importClientsFile(evt){
   reader.readAsText(f);
 }
 
+let clientListLimit=60;
 function renderClients(){
   const el=$("clientList");if(!el)return;
   const q=$("clientSearch")?.value||"";
   const qq=String(q).trim().toLowerCase();
-  const list=clients.filter(c=>[c.name,c.phone,c.email,c.address].join(" ").toLowerCase().includes(qq)).sort((a,b)=>a.name.localeCompare(b.name));
-  el.innerHTML=list.length?list.map(c=>`<div class="saved" style="align-items:flex-start"><div class="grow"><div style="font-weight:900">${esc(c.name)}</div><div class="meta">${esc(c.phone||"")}${c.email?" · "+esc(c.email):""}</div><div class="meta">${esc(c.address||"")}</div></div><button type="button" class="btn" data-client-action="use" data-client-id="${esc(c.id)}">Use</button><button type="button" class="btn" data-client-action="edit" data-client-id="${esc(c.id)}">Edit</button><button type="button" class="btn danger" data-client-action="delete" data-client-id="${esc(c.id)}">Delete</button></div>`).join(""):'<div style="color:#777;text-align:center;padding:20px">No clients found.</div>';
+  const list=clients.filter(c=>[c.name,c.phone,c.email,c.address].join(" ").toLowerCase().includes(qq)).sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
+  // Per-client totals from saved invoices (display only)
+  const byId={},byName={};
+  const add=(map,key,x)=>{if(!key)return;const s=map[key]||(map[key]={count:0,total:0,owed:0});s.count++;if(String(x.cur||"GHS")==="GHS"){s.total+=Number(x.total||0);const st=invoiceStatusInfo(x).status;if(st!=="Paid"&&st!=="Draft")s.owed+=invoiceBalance(x)}};
+  data.forEach(x=>{add(byId,String(x.clientId||""),x);add(byName,String(x.client||"").trim().toLowerCase(),x)});
+  const statOf=c=>byId[String(c.id)]||byName[String(c.name||"").trim().toLowerCase()]||{count:0,total:0,owed:0};
+  const shown=list.slice(0,clientListLimit);
+  const cnt=$("clientCount");if(cnt)cnt.textContent=list.length===clients.length?clients.length.toLocaleString()+" clients":list.length.toLocaleString()+" of "+clients.length.toLocaleString()+" clients";
+  el.innerHTML=list.length?shown.map(c=>{const s=statOf(c);const initials=String(c.name||"?").trim().split(/\s+/).slice(0,2).map(w=>w[0]||"").join("").toUpperCase();
+    return `<div class="saved cl-row"><span class="cl-avatar" aria-hidden="true">${esc(initials)}</span><div class="cl-main"><b>${esc(c.name)}</b><small>${esc([c.phone,c.email].filter(Boolean).join(" · ")||"No contact details")}</small>${c.address?`<small>${esc(c.address)}</small>`:""}</div>
+      <div class="cl-stats">${s.count?`<span>${s.count} invoice${s.count===1?"":"s"} · ${esc(fmtMoney(s.total,"GHS"))}</span>${s.owed>0.005?`<b class="cl-owed">Owes ${esc(fmtMoney(s.owed,"GHS"))}</b>`:`<b class="cl-clear">Nothing owed</b>`}`:`<span>No invoices yet</span>`}</div>
+      <div class="cl-actions"><button type="button" class="btn primary" data-client-action="use" data-client-id="${esc(c.id)}">New invoice</button><button type="button" class="btn" data-client-action="edit" data-client-id="${esc(c.id)}">Edit</button><button type="button" class="btn cl-del" data-client-action="delete" data-client-id="${esc(c.id)}" aria-label="Delete ${esc(c.name)}">Delete</button></div></div>`}).join("")+(list.length>shown.length?`<button type="button" class="btn cl-more" data-client-more="1">Show more (${(list.length-shown.length).toLocaleString()} more)</button>`:""):'<div class="ui-empty"><b>No clients found</b><span>Check the spelling, or add this client with the form.</span></div>';
   el.onclick=function(e){
+    if(e.target.closest("[data-client-more]")){clientListLimit+=120;renderClients();return}
     const btn=e.target.closest("button[data-client-action][data-client-id]");
     if(!btn)return;
     e.preventDefault();e.stopPropagation();
@@ -925,19 +937,30 @@ function renderSaved(){
   el.innerHTML=data.length?data.map(x=>{
     const js=String(x.jobStatus||"Not Started")==="Done"?"Completed":String(x.jobStatus||"Not Started");
     const opts=["Not Started","Scheduled","In Progress","Completed","Cancelled"].map(s=>`<option value="${esc(s)}" ${js===s?"selected":""}>${esc(s)}</option>`).join("");
-    return `<div class="saved" data-invoice-row="${esc(x.id)}" style="align-items:center;flex-wrap:wrap">
-      <span class="grow">${esc(x.no)} <span class="meta">${esc(x.client||"No client")} · ${esc(x.status)}</span></span>
-      <b>${curSym(x.cur)}${Number(x.total||0).toLocaleString(undefined,{minimumFractionDigits:2})}</b>
-      <label style="display:flex;align-items:center;gap:6px;margin:0;color:#7f8897;font-size:9px;font-weight:800;white-space:nowrap">Job Status
-        <select class="job-status-select" data-job-status-id="${esc(x.id)}" aria-label="Job status for ${esc(x.no)}">${opts}</select>
-      </label>
-      <button type="button" class="btn" data-invoice-action="edit" data-invoice-id="${esc(x.id)}">Edit</button>
-      <button type="button" class="btn" data-invoice-action="view" data-invoice-id="${esc(x.id)}">View</button>
-      ${x.status!=="Draft"&&invoiceBalance(x)>0.005?`<button type="button" class="btn primary" data-invoice-action="add-payment" data-invoice-id="${esc(x.id)}">＋ Add Payment</button>`:""}
-      ${Number(x.amountPaid||0)>0?`<button type="button" class="btn primary" data-invoice-action="receipt" data-invoice-id="${esc(x.id)}">Receipt</button>`:""}
-      <button type="button" class="btn danger" data-invoice-action="delete" data-invoice-id="${esc(x.id)}">Delete</button>
+    const info=invoiceStatusInfo(x),st=info.status||x.status||"Draft",bal=invoiceBalance(x),sym=curSym(x.cur);
+    const fmt=n=>sym+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+    const humanDate=v=>{if(!v)return "—";const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})};
+    const chip={"Paid":"ok","Overdue":"bad","Partially Paid":"warn","Sent":"info"}[st]||"neutral";
+    const when=x.eventDate?("Event "+humanDate(x.eventDate)):(x.due&&/^\d{4}-/.test(x.due)?"Due "+humanDate(x.due):(x.due||"On receipt"));
+    return `<div class="saved inv-row" data-invoice-row="${esc(x.id)}">
+      <button type="button" class="inv-main" data-invoice-action="edit" data-invoice-id="${esc(x.id)}" title="Open ${esc(x.no)}"><b class="inv-no">${esc(x.no)}</b><span class="inv-client">${esc(x.client||"No client")}</span></button>
+      <div class="inv-date">${esc(x.date?humanDate(x.date):"—")}<small>${esc(when)}</small></div>
+      <div class="inv-amt"><b>${fmt(x.total)}</b><small>${bal>0.005&&st!=="Draft"?"Balance "+fmt(bal):(st==="Paid"?"Fully paid":"&nbsp;")}</small></div>
+      <span class="ui-chip ${chip}">${esc(st)}</span>
+      <label class="inv-job"><span>Job</span><select class="job-status-select" data-job-status-id="${esc(x.id)}" aria-label="Job status for ${esc(x.no)}">${opts}</select></label>
+      <div class="inv-actions">
+        <button type="button" class="btn" data-invoice-action="view" data-invoice-id="${esc(x.id)}">View</button>
+        ${st!=="Draft"&&bal>0.005?`<button type="button" class="btn primary" data-invoice-action="add-payment" data-invoice-id="${esc(x.id)}">Record payment</button>`:""}
+        <details class="inv-more"><summary class="btn" aria-label="More actions for ${esc(x.no)}">•••</summary><div class="inv-menu">
+          <button type="button" data-invoice-action="edit" data-invoice-id="${esc(x.id)}">Edit invoice</button>
+          ${Number(x.amountPaid||0)>0?`<button type="button" data-invoice-action="receipt" data-invoice-id="${esc(x.id)}">Print latest receipt</button>`:""}
+          <button type="button" data-invoice-action="duplicate" data-invoice-id="${esc(x.id)}">Duplicate as new invoice</button>
+          <button type="button" data-invoice-action="share" data-invoice-id="${esc(x.id)}">Send to client on WhatsApp</button>
+          <button type="button" class="danger" data-invoice-action="delete" data-invoice-id="${esc(x.id)}">Delete invoice</button>
+        </div></details>
+      </div>
     </div>`;
-  }).join(""):'<div style="color:#777;text-align:center;padding:20px">No saved invoices.</div>';
+  }).join(""):'<div class="ui-empty"><b>No invoices yet</b><span>Invoices you save will appear here.</span><button class="btn primary" type="button" onclick="newInvoice()">＋ New invoice</button></div>';
   el.onclick=function(e){
     const btn=e.target.closest("button[data-invoice-action][data-invoice-id]");
     if(!btn)return;
@@ -949,6 +972,9 @@ function renderSaved(){
     else if(action==="add-payment")openInvoicePayment(id);
     else if(action==="receipt")showReceipt(id);
     else if(action==="delete")del(id);
+    else if(action==="duplicate")duplicateInvoice(id);
+    else if(action==="share")shareInvoiceWhatsApp(id);
+    const more=btn.closest("details.inv-more");if(more)more.open=false;
   };
   el.onchange=function(e){
     const sel=e.target.closest("select[data-job-status-id]");

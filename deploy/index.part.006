@@ -8,7 +8,7 @@
   $("sCount").textContent=data.length;$("sCountMeta").textContent=paidCount+" paid · "+drafts+" drafts";
   $("sInvoiced").textContent=fmtMoney(total,"GHS");$("sInvoicedMeta").textContent=data.length+" saved invoice"+(data.length===1?"":"s");
   $("sPaid").textContent=fmtMoney(collected,"GHS");$("sPaidMeta").textContent=paidCount+" fully paid · "+partial+" partial";
-  $("sDue").textContent=fmtMoney(outstanding,"GHS");$("sDueMeta").textContent=(sent+partial+overdue)+" open invoice"+((sent+partial+overdue)===1?"":"s");
+  $("sDue").textContent=fmtMoney(outstanding,"GHS");$("sDueMeta").textContent=(sent+partial+overdueCount)+" open invoice"+((sent+partial+overdueCount)===1?"":"s");
   $("sOverdue").textContent=fmtMoney(overdue,"GHS");$("sOverdueMeta").textContent=overdueCount+" overdue";
   $("sDueSoon").textContent=fmtMoney(dueSoonAmt,"GHS");$("sDueSoonMeta").textContent=dueSoon.length+" due within 7 days";
   $("sDraft").textContent=drafts;$("sDraftMeta").textContent="Not yet sent";
