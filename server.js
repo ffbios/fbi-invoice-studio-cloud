@@ -1394,6 +1394,9 @@ async function ensureSafetyTables() {
   await pool.query('ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS reviewed_by TEXT');
   await pool.query('ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS last_login_at BIGINT');
   await pool.query(`UPDATE portal_users SET status='disabled' WHERE active=false AND status='active'`);
+  // Quotations / pro-forma invoices live in their own table: they never touch invoice numbers or totals.
+  await pool.query(`CREATE TABLE IF NOT EXISTS quotes (id TEXT PRIMARY KEY, no TEXT UNIQUE NOT NULL, status TEXT NOT NULL DEFAULT 'Draft', data JSONB NOT NULL, created_at BIGINT NOT NULL, updated_at BIGINT NOT NULL, deleted BOOLEAN NOT NULL DEFAULT false)`);
+  await pool.query('ALTER TABLE app_state_backups ADD COLUMN IF NOT EXISTS quotes_json JSONB');
 }
 
 async function backupStateIfDue(db, reason, force = false) {
@@ -1403,11 +1406,12 @@ async function backupStateIfDue(db, reason, force = false) {
     const last = await db.query('SELECT created_at FROM app_state_backups ORDER BY created_at DESC LIMIT 1');
     if (last.rows[0] && Date.now() - Number(last.rows[0].created_at) < BACKUP_EVERY_MS) return false;
   }
-  await db.query(`INSERT INTO app_state_backups (created_at,reason,invoice_count,client_count,state_json,payroll_json)
+  await db.query(`INSERT INTO app_state_backups (created_at,reason,invoice_count,client_count,state_json,payroll_json,quotes_json)
     SELECT $1, $2,
       CASE WHEN jsonb_typeof(s.state_json->'data'->'data')='array' THEN jsonb_array_length(s.state_json->'data'->'data') END,
       CASE WHEN jsonb_typeof(s.state_json->'data'->'clients')='array' THEN jsonb_array_length(s.state_json->'data'->'clients') END,
-      s.state_json, (SELECT p.state_json FROM payroll_state p WHERE p.id=1)
+      s.state_json, (SELECT p.state_json FROM payroll_state p WHERE p.id=1),
+      (SELECT jsonb_agg(jsonb_build_object('id',q.id,'no',q.no,'status',q.status,'deleted',q.deleted,'createdAt',q.created_at,'updatedAt',q.updated_at,'data',q.data)) FROM quotes q)
     FROM app_state s WHERE s.id=1`, [Date.now(), reason]);
   await db.query('DELETE FROM app_state_backups WHERE id NOT IN (SELECT id FROM app_state_backups ORDER BY created_at DESC LIMIT $1)', [BACKUP_KEEP]);
   return true;
@@ -1458,17 +1462,68 @@ async function handleBackupDownload(req, res, id) {
   if (id === 'current') {
     const s = await pool.query('SELECT state_json FROM app_state WHERE id=1');
     const p = await pool.query('SELECT state_json FROM payroll_state WHERE id=1').catch(() => ({ rows: [] }));
-    row = { created_at: Date.now(), state_json: s.rows[0]?.state_json || null, payroll_json: p.rows[0]?.state_json || null, reason: 'manual download' };
+    const qs = await pool.query("SELECT jsonb_agg(jsonb_build_object('id',id,'no',no,'status',status,'deleted',deleted,'createdAt',created_at,'updatedAt',updated_at,'data',data)) AS j FROM quotes").catch(() => ({ rows: [] }));
+    row = { created_at: Date.now(), state_json: s.rows[0]?.state_json || null, payroll_json: p.rows[0]?.state_json || null, quotes_json: qs.rows[0]?.j || null, reason: 'manual download' };
   } else {
     if (!/^\d+$/.test(id)) return json(res, 400, { ok: false, error: 'Invalid backup id.' });
-    const q = await pool.query('SELECT created_at,reason,state_json,payroll_json FROM app_state_backups WHERE id=$1', [id]);
+    const q = await pool.query('SELECT created_at,reason,state_json,payroll_json,quotes_json FROM app_state_backups WHERE id=$1', [id]);
     row = q.rows[0];
   }
   if (!row || !row.state_json) return json(res, 404, { ok: false, error: 'Backup not found.' });
   const stamp = new Date(Number(row.created_at)).toISOString().slice(0, 16).replace(/[:T]/g, '-');
-  const body = JSON.stringify({ application: 'FBI Invoice Studio', exportedAt: new Date().toISOString(), backupTakenAt: new Date(Number(row.created_at)).toISOString(), reason: row.reason || '', state: row.state_json, payroll: row.payroll_json || null }, null, 1);
+  const body = JSON.stringify({ application: 'FBI Invoice Studio', exportedAt: new Date().toISOString(), backupTakenAt: new Date(Number(row.created_at)).toISOString(), reason: row.reason || '', state: row.state_json, payroll: row.payroll_json || null, quotes: row.quotes_json || [] }, null, 1);
   res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Content-Disposition': `attachment; filename="fbi-invoice-studio-backup-${stamp}.json"`, 'Cache-Control': 'no-store' });
   return res.end(body);
+}
+
+// ---- Quotations / pro-forma invoices (admin only) ----
+const QUOTE_LOCK = 492040;
+const QUOTE_STATUSES = ['Draft', 'Sent', 'Accepted', 'Declined', 'Converted', 'Expired'];
+function quoteRow(r) { return { id: r.id, no: r.no, status: r.status, createdAt: Number(r.created_at), updatedAt: Number(r.updated_at), ...(r.data || {}), quoteStatus: r.status }; }
+function cleanQuoteData(b) {
+  const d = b && typeof b.data === 'object' && b.data ? b.data : {};
+  const out = {};
+  for (const [k, v] of Object.entries(d)) if (!['id', 'no', 'payments', 'amountPaid', 'receiptNo'].includes(k)) out[k] = v;
+  return out;
+}
+async function handleQuotesList(req, res) {
+  if (!(await requireAuth(req, res))) return;
+  const q = await pool.query('SELECT * FROM quotes WHERE deleted=false ORDER BY created_at DESC');
+  return json(res, 200, { ok: true, quotes: q.rows.map(quoteRow) });
+}
+async function handleQuoteCreate(req, res) {
+  if (!(await requireAuth(req, res))) return;
+  const b = await parseJsonBody(req);
+  const status = QUOTE_STATUSES.includes(b.status) ? b.status : 'Draft';
+  const db = await pool.connect();
+  try {
+    await db.query('BEGIN');
+    await db.query('SELECT pg_advisory_xact_lock($1)', [QUOTE_LOCK]);
+    const m = await db.query("SELECT COALESCE(MAX(NULLIF(regexp_replace(no,'\\D','','g'),'')::int),0) AS n FROM quotes");
+    const no = 'QT' + String(Number(m.rows[0].n) + 1).padStart(4, '0');
+    const id = 'qt-' + Date.now().toString(36) + '-' + crypto.randomBytes(4).toString('hex');
+    const now = Date.now();
+    const r = await db.query('INSERT INTO quotes (id,no,status,data,created_at,updated_at) VALUES ($1,$2,$3,$4::jsonb,$5,$5) RETURNING *', [id, no, status, JSON.stringify(cleanQuoteData(b)), now]);
+    await db.query('COMMIT');
+    return json(res, 200, { ok: true, quote: quoteRow(r.rows[0]) });
+  } catch (err) { try { await db.query('ROLLBACK'); } catch {} throw err; } finally { db.release(); }
+}
+async function handleQuoteUpdate(req, res, id) {
+  if (!(await requireAuth(req, res))) return;
+  const b = await parseJsonBody(req);
+  const cur = await pool.query('SELECT * FROM quotes WHERE id=$1 AND deleted=false', [id]);
+  if (!cur.rowCount) return json(res, 404, { ok: false, error: 'Quotation not found.' });
+  const status = QUOTE_STATUSES.includes(b.status) ? b.status : cur.rows[0].status;
+  const data = b.data ? cleanQuoteData(b) : cur.rows[0].data;
+  if (b.convertedInvoiceNo) data.convertedInvoiceNo = String(b.convertedInvoiceNo);
+  const r = await pool.query('UPDATE quotes SET status=$2,data=$3::jsonb,updated_at=$4 WHERE id=$1 RETURNING *', [id, status, JSON.stringify(data), Date.now()]);
+  return json(res, 200, { ok: true, quote: quoteRow(r.rows[0]) });
+}
+async function handleQuoteDelete(req, res, id) {
+  if (!(await requireAuth(req, res))) return;
+  const r = await pool.query('UPDATE quotes SET deleted=true,updated_at=$2 WHERE id=$1 AND deleted=false', [id, Date.now()]);
+  if (!r.rowCount) return json(res, 404, { ok: false, error: 'Quotation not found.' });
+  return json(res, 200, { ok: true });
 }
 
 // ---- Staff portal accounts (admin only) ----
@@ -1551,6 +1606,9 @@ const server = http.createServer(async (req, res) => {
 
     if (url.pathname === '/api/backups' && req.method === 'GET') return handleBackupsList(req, res);
     { const m = url.pathname.match(/^\/api\/backups\/(current|\d+)\/download$/); if (m && req.method === 'GET') return handleBackupDownload(req, res, m[1]); }
+    if (url.pathname === '/api/quotes' && req.method === 'GET') return handleQuotesList(req, res);
+    if (url.pathname === '/api/quotes' && req.method === 'POST') return handleQuoteCreate(req, res);
+    { const m = url.pathname.match(/^\/api\/quotes\/([A-Za-z0-9-]+)$/); if (m && req.method === 'PUT') return handleQuoteUpdate(req, res, m[1]); if (m && req.method === 'DELETE') return handleQuoteDelete(req, res, m[1]); }
     if (url.pathname === '/api/staff-portal/users' && req.method === 'GET') return handleStaffUsersList(req, res);
     if (url.pathname === '/api/staff-portal/users' && req.method === 'POST') return handleStaffUserCreate(req, res);
     { const m = url.pathname.match(/^\/api\/staff-portal\/users\/(\d+)\/(approve|disable|password)$/); if (m && req.method === 'POST') return handleStaffUserAction(req, res, m[1], m[2]); }

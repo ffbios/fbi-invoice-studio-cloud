@@ -226,6 +226,8 @@
 (function(){
   window.__FBI_NAV__=function(v){
     try{
+      // Use the app's own page switcher (one set of page titles); fall back to the old logic below
+      if(typeof window.show==='function'&&document.getElementById('view-'+v)){window.show(v);var sd=document.getElementById('side');if(sd)sd.classList.remove('open');try{if(v==='dashboard'&&typeof window.dashboard==='function')window.dashboard();if(v==='create'&&typeof window.populateClientSelect==='function')window.populateClientSelect();}catch(e){}return false;}
       document.querySelectorAll('.view').forEach(function(el){el.classList.remove('active','print-view');});
       var target=document.getElementById('view-'+v);
       if(target) target.classList.add('active');
@@ -534,6 +536,7 @@ html[data-theme] body :is(.paper,.receipt-paper,.preview-wrap){line-height:norma
     <button type="button" class="nav-link active" data-v="dashboard" onclick="show('dashboard')"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Overview</span></button>
     <button type="button" class="nav-link" data-v="create" onclick="show('create')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11.5v6M9 14.5h6"/></svg><span>Create invoice</span></button>
     <button type="button" class="nav-link" data-v="saved" onclick="show('saved')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2.5h6.5A2.5 2.5 0 0 1 21 10v7.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/></svg><span>Invoices</span></button>
+    <button type="button" class="nav-link" data-v="quotes" onclick="show('quotes')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M14 3v5h5M8.5 13h7M8.5 17h4"/></svg><span>Quotations</span></button>
     <button type="button" class="nav-link" data-v="receipts" onclick="show('receipts')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18l-2.3-1.6L14.3 21 12 19.4 9.7 21l-2.4-1.6L5 21z"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg><span>Receipts</span></button>
     <button type="button" class="nav-link" data-v="completed" onclick="show('completed')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.3 2.6 2.6L16 9.5"/></svg><span>Jobs</span></button>
     <button type="button" class="nav-link" data-v="calendar" onclick="show('calendar')"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/></svg><span>Calendar</span></button>
@@ -647,6 +650,15 @@ html[data-theme] body :is(.paper,.receipt-paper,.preview-wrap){line-height:norma
 <section class="view cx" id="view-create">
 <!-- Create Invoice — v3 workspace layout (UI only). Every input keeps its original id,
      so saving, loading, printing and the database are untouched. -->
+<div class="qt-banner no-print" id="quoteBanner" hidden>
+  <div class="qt-banner-main"><b id="qtBannerTitle">New quotation</b><small id="qtBannerMeta">Not saved yet — it gets a quotation number when you save.</small></div>
+  <div class="qt-banner-fields">
+    <label>Print as<select id="qtDocType"><option value="QUOTATION">Quotation</option><option value="PRO-FORMA INVOICE">Pro-forma invoice</option></select></label>
+    <label>Valid until<input id="qtValidUntil" type="date"></label>
+    <label>Status<select id="qtStatus"><option>Draft</option><option>Sent</option><option>Accepted</option><option>Declined</option><option>Expired</option></select></label>
+  </div>
+  <div class="qt-banner-actions"><button class="btn primary" type="button" onclick="convertCurrentQuote()">Convert to invoice</button><button class="btn" type="button" onclick="exitQuoteMode(true)">Close</button></div>
+</div>
 <nav class="cx-steps no-print" id="cxSteps" aria-label="Invoice sections">
   <a href="#cxClient" data-cx-step="cxClient"><i>1</i>Client &amp; details</a>
   <a href="#invoiceItemsCard" data-cx-step="invoiceItemsCard"><i>2</i>Items</a>
@@ -707,14 +719,14 @@ html[data-theme] body :is(.paper,.receipt-paper,.preview-wrap){line-height:norma
     <div class="cx-catalog service-selector-card" id="catalogPanel">
       <div class="cx-catalog-filters">
         <div class="cx-f"><label for="serviceCategory">Service category</label><select id="serviceCategory"><option value="">Select a service category...</option></select></div>
-        <div class="cx-f"><label for="brandModelFilter">Brand / model</label><select id="brandModelFilter"><option value="">All Brands / Models</option></select></div>
-        <div class="cx-f"><label for="itemSearch">Search</label><input id="itemSearch" type="search" placeholder="Type to filter items..." autocomplete="off"></div>
+        <div class="cx-f"><label for="brandModelFilter">Section</label><select id="brandModelFilter"><option value="">All sections</option></select></div>
+        <div class="cx-f"><label for="itemSearch">Search the catalogue</label><input id="itemSearch" type="search" placeholder="e.g. FX6, softbox, PoE switch, smart lock" autocomplete="off"></div>
       </div>
       <div class="cx-catalog-pick">
-        <div class="cx-f cx-grow"><label for="catalogItemSelect">Catalogue <span class="cx-hint">— double-click an item to add it</span></label><select id="catalogItemSelect" size="6"><option value="">Select a category first...</option></select></div>
+        <div class="cx-f cx-grow"><label for="catalogItemSelect">Catalogue <span class="cx-hint">— double-click an item, or press Enter in search, to add it</span></label><select id="catalogItemSelect" size="10"><option value="">Select a category first...</option></select></div>
         <div class="cx-catalog-actions">
           <button type="button" class="btn primary" id="addSelectedCatalogBtn">＋ Add Selected Item</button>
-          <button type="button" class="btn" id="addCategoryItemsBtn">＋ Add 25 From Group</button>
+          <button type="button" class="btn" id="addCategoryItemsBtn">＋ Add whole section</button>
         </div>
       </div>
     </div>
@@ -863,7 +875,11 @@ html body #view-create.cx .cx-history{margin-top:12px;padding:10px 12px;border:1
 html body #view-create.cx .cx-catalog{padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--u-row);margin:0 0 16px!important;box-shadow:none}
 html body #view-create.cx .cx-catalog-filters{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:12px}
 html body #view-create.cx .cx-catalog-pick{display:flex;gap:12px;align-items:stretch;margin-top:12px}
-html body #view-create.cx #catalogItemSelect{width:100%;height:168px;min-height:0;padding:4px}
+html body #view-create.cx #catalogItemSelect{width:100%;height:270px;min-height:0;padding:4px}
+html body #view-create.cx #catalogItemSelect optgroup{font-weight:700;color:var(--muted);font-style:normal;padding-top:6px}
+html body #view-create.cx #catalogItemSelect optgroup option{font-weight:500;color:var(--text);padding-left:10px}
+html body #view-create.cx #addCategoryItemsBtn:disabled{opacity:.5}
+html body #view-create.cx #catalogCustomBtn{white-space:normal;height:auto;min-height:42px;line-height:1.3;padding:8px 12px}
 html body #view-create.cx #catalogItemSelect option{padding:5px 8px;border-radius:6px}
 html body #view-create.cx .cx-catalog-actions{display:flex;flex-direction:column;gap:8px;justify-content:flex-end;width:200px;flex:none}
 html body #view-create.cx .cx-catalog-actions .btn{width:100%;justify-content:center}
@@ -972,7 +988,7 @@ html body #view-create.cx .cx-ghost{background:transparent!important;color:var(-
   function refresh(){
     if(!root.classList.contains("active"))return;
     txt($("cxSumNo"),$("no")&&$("no").value||"New invoice");
-    var st=$("status")?$("status").value:"Draft",pill=$("cxSumStatus");txt(pill,st);if(pill)pill.setAttribute("data-s",st);
+    var qm=window.FBI_DOC_MODE==="quote";var st=qm?(($("qtStatus")&&$("qtStatus").value)||"Draft"):($("status")?$("status").value:"Draft"),pill=$("cxSumStatus");txt(pill,st);if(pill)pill.setAttribute("data-s",st);
     var c=($("client")&&$("client").value.trim())||"",cl=$("cxSumClient");txt(cl,c||"No client yet");if(cl)cl.classList.toggle("empty",!c);
     var n=0;root.querySelectorAll("#items .item").forEach(function(r){var d=r.querySelector(".desc"),p=r.querySelector(".rate");if((d&&d.value.trim())||(p&&+p.value>0))n++});
     txt($("cxSumItems"),String(n));
@@ -982,7 +998,7 @@ html body #view-create.cx .cx-ghost{background:transparent!important;color:var(-
     var ev=$("eventDateCard"),re=$("rentalDetailsCard"),step=$("cxJobStep");
     if(step)step.classList.toggle("cx-off",!((ev&&ev.style.display!=="none")||(re&&re.style.display!=="none")));
     var pr=$("paymentReceivedCard");
-    if(pr&&!pr.dataset.cxTouched){var paid=+($("amountPaid")&&$("amountPaid").value)||0,hist=$("paymentHistoryPanel");var hasHist=hist&&/receipt|RCT|paid/i.test(hist.textContent)&&!/No payments recorded/i.test(hist.textContent);var want=paid>0||hasHist||st==="Partially Paid"||st==="Paid";if(pr.open!==want){pr.open=want}}
+    if(pr&&!pr.dataset.cxTouched&&!qm){var paid=+($("amountPaid")&&$("amountPaid").value)||0,hist=$("paymentHistoryPanel");var hasHist=hist&&/receipt|RCT|paid/i.test(hist.textContent)&&!/No payments recorded/i.test(hist.textContent);var want=paid>0||hasHist||st==="Partially Paid"||st==="Paid";if(pr.open!==want){pr.open=want}}
   }
   var queued=false;function schedule(){if(queued)return;queued=true;requestAnimationFrame(function(){queued=false;refresh()})}
   root.addEventListener("input",schedule,true);root.addEventListener("change",schedule,true);root.addEventListener("click",function(){setTimeout(schedule,30)},true);
@@ -1090,6 +1106,17 @@ html body #view-create.cx .cx-ghost{background:transparent!important;color:var(-
   try{new MutationObserver(apply).observe(el("saved"),{childList:true})}catch(e){}
 })();</script>
 </section>
+<section class="view" id="view-quotes"><div class="card inv-card">
+<div class="inv-toolbar">
+  <div class="inv-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input id="quoteSearch" type="search" placeholder="Search by quotation number, client or amount" autocomplete="off"></div>
+  <span></span>
+  <button class="btn primary" type="button" onclick="newQuote()">＋ New quotation</button>
+</div>
+<div class="inv-chips" id="quoteChips" role="tablist" aria-label="Filter quotations by status"></div>
+<div class="inv-head qt-head" aria-hidden="true"><span>Quotation</span><span>Date</span><span class="num">Amount</span><span>Status</span><span>Valid until</span><span></span></div>
+<div id="quoteList"></div>
+<div id="quoteEmpty" class="ui-empty" hidden><b>No quotations yet</b><span>Send a client a quotation or pro-forma invoice, then turn it into an invoice with one click when they accept.</span><button class="btn primary" type="button" onclick="newQuote()">＋ New quotation</button></div>
+</div></section>
 
 <section class="view" id="view-completed">
   <div class="page-actions completed-jobs-head">
