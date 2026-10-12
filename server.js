@@ -224,6 +224,8 @@ async function initDb() {
   await pool.query('ALTER TABLE auth_account ADD COLUMN IF NOT EXISTS security_a2_salt TEXT');
   await pool.query('ALTER TABLE auth_account ADD COLUMN IF NOT EXISTS security_a2_hash TEXT');
 
+  await ensureSafetyTables();
+
   const state = await pool.query('SELECT id FROM app_state WHERE id=1');
   if (state.rowCount === 0 && process.env.SEED_ON_EMPTY !== 'false' && fs.existsSync(SEED_FILE)) {
     try {
@@ -643,18 +645,22 @@ async function handleStateGet(req, res) {
   return json(res, 200, { ok: true, state });
 }
 
-function mergeInvoiceStates(existingState, incomingState) {
+function mergeInvoiceStates(existingState, incomingState, info = { renumbered: [], updatedKeys: new Set() }) {
   const existingData = existingState && existingState.data && Array.isArray(existingState.data.data)
     ? existingState.data.data : [];
   const incomingData = incomingState.data.data;
 
   const invoiceMap = new Map();
+  const storedNo = new Map();   // invoice key -> number already saved in the database
   for (const item of existingData) {
     const key = String(item.id || item.no || ('existing-' + invoiceMap.size));
     invoiceMap.set(key, item);
+    storedNo.set(key, String(item.no || '').trim());
   }
+  const incomingKeys = new Set();
   for (const item of incomingData) {
     const key = String(item.id || item.no || ('incoming-' + invoiceMap.size));
+    incomingKeys.add(key);
     const existing = invoiceMap.get(key);
     if (!existing) {
       invoiceMap.set(key, item);
@@ -668,6 +674,23 @@ function mergeInvoiceStates(existingState, incomingState) {
         if (Object.prototype.hasOwnProperty.call(existing, 'jobCompletedDate')) mergedItem.jobCompletedDate = existing.jobCompletedDate;
         else delete mergedItem.jobCompletedDate;
         mergedItem.jobStatusUpdatedAt = existing.jobStatusUpdatedAt;
+      }
+      // A payment recorded elsewhere (staff portal or another device) must never be lost
+      // because this device was still showing an older copy of the invoice.
+      const payKey = p => String((p && (p.id || p.receiptNo)) || '').trim();
+      const incomingPays = Array.isArray(item.payments) ? item.payments : (Array.isArray(mergedItem.payments) ? mergedItem.payments : []);
+      const seen = new Set(incomingPays.map(payKey).filter(Boolean));
+      const missing = (Array.isArray(existing.payments) ? existing.payments : []).filter(p => payKey(p) && !seen.has(payKey(p)));
+      if (missing.length) {
+        const all = incomingPays.concat(missing).sort((a, b) => String(a.createdAt || a.date || '').localeCompare(String(b.createdAt || b.date || '')));
+        mergedItem.payments = all;
+        const paid = all.reduce((sum, p) => sum + Math.max(0, Number(p.amount) || 0), 0);
+        mergedItem.amountPaid = Math.round(paid * 100) / 100;
+        for (const f of ['receiptNo', 'paymentDate', 'paymentMethod', 'transactionRef', 'receivedBy']) if (existing[f] !== undefined) mergedItem[f] = existing[f];
+        const total = Number(mergedItem.total) || 0;
+        if (total > 0 && paid >= total - 0.005) mergedItem.status = 'Paid';
+        else if (paid > 0.005 && mergedItem.status !== 'Paid') mergedItem.status = 'Partially Paid';
+        info.updatedKeys.add(key);
       }
       invoiceMap.set(key, mergedItem);
     }
@@ -712,8 +735,36 @@ function mergeInvoiceStates(existingState, incomingState) {
     }
   }
 
+  // Invoice numbers must stay unique. An invoice that is already saved keeps its number;
+  // a new invoice that arrives with a number someone else has just used gets the next free one.
+  const seqOf = no => { const m = String(no || '').match(/(\d+)$/); return m ? Number(m[1]) : 0; };
+  let maxSeq = 0;
+  for (const item of invoiceMap.values()) maxSeq = Math.max(maxSeq, seqOf(item.no));
+  const taken = new Map();
+  for (const [key, no] of storedNo) if (no && invoiceMap.has(key) && !taken.has(no.toUpperCase())) taken.set(no.toUpperCase(), key);
+  for (const [key, item] of invoiceMap) {
+    const no = String(item.no || '').trim();
+    if (!no) continue;
+    const owner = taken.get(no.toUpperCase());
+    if (owner === undefined) { taken.set(no.toUpperCase(), key); continue; }
+    if (owner === key || storedNo.get(key) === no) continue;   // unchanged, or an old duplicate we leave alone
+    const before = storedNo.get(key);
+    const fixed = { ...item };
+    if (before && taken.get(before.toUpperCase()) === key) fixed.no = before;
+    else { maxSeq += 1; fixed.no = 'INV' + String(maxSeq).padStart(4, '0'); taken.set(fixed.no.toUpperCase(), key); }
+    invoiceMap.set(key, fixed);
+    info.renumbered.push({ id: String(item.id || ''), from: no, to: fixed.no });
+    info.updatedKeys.add(key);
+  }
+  // Invoices that this device did not know about yet (created elsewhere) are sent back to it.
+  for (const key of invoiceMap.keys()) if (!incomingKeys.has(key)) info.updatedKeys.add(key);
+  info.invoiceMap = invoiceMap;
+
   const existingSettings = existingState && existingState.data && existingState.data.settings
     ? existingState.data.settings : {};
+  const mergedSettings = { ...existingSettings, ...incomingState.data.settings };
+  const seqSetting = Math.max(Number(existingSettings.invoiceSequence) || 0, Number(incomingState.data.settings.invoiceSequence) || 0, maxSeq + 1);
+  if (Number.isFinite(seqSetting) && seqSetting > 0) mergedSettings.invoiceSequence = seqSetting;
 
   return {
     version: Math.max(Number(existingState?.version) || 1, Number(incomingState.version) || 1),
@@ -721,7 +772,7 @@ function mergeInvoiceStates(existingState, incomingState) {
     data: {
       data: Array.from(invoiceMap.values()),
       clients: Array.from(clientMap.values()),
-      settings: { ...existingSettings, ...incomingState.data.settings }
+      settings: mergedSettings
     }
   };
 }
@@ -729,6 +780,7 @@ function mergeInvoiceStates(existingState, incomingState) {
 async function handleStateWrite(req, res) {
   const session = await requireAuth(req, res);
   if (!session) return;
+  let db = null;
   try {
     const raw = await readBody(req);
     const incoming = JSON.parse(raw || '{}');
@@ -736,40 +788,45 @@ async function handleStateWrite(req, res) {
       return json(res, 400, { ok: false, error: 'Invalid Invoice Studio state.' });
     }
 
-    const previousResult = await pool.query('SELECT state_json FROM app_state WHERE id=1');
-    let previousState = previousResult.rows[0]?.state_json || null;
-    if (typeof previousState === 'string') { try { previousState = JSON.parse(previousState); } catch { previousState = null; } }
+    db = await pool.connect();
+    await db.query('BEGIN');
+    await db.query('SELECT pg_advisory_xact_lock($1)', [STATE_LOCK]);   // wait for any other save to finish
 
-    const currentResult = await pool.query('SELECT version,saved_at,state_json FROM app_state WHERE id=1');
+    const currentResult = await db.query('SELECT state_json FROM app_state WHERE id=1');
+    let currentState = currentResult.rows[0]?.state_json || null;
+    if (typeof currentState === 'string') { try { currentState = JSON.parse(currentState); } catch { currentState = null; } }
+
+    const info = { renumbered: [], updatedKeys: new Set() };
     let merged = incoming;
-    if (currentResult.rows[0]) {
-      let currentState = currentResult.rows[0].state_json;
-      if (typeof currentState === 'string') currentState = JSON.parse(currentState);
-      if (currentState && currentState.data) {
-        merged = mergeInvoiceStates(currentState, incoming);
-      }
-    }
+    if (currentState && currentState.data) merged = mergeInvoiceStates(currentState, incoming, info);
 
-    await pool.query(
+    await backupStateIfDue(db, 'daily');
+    await db.query(
       `INSERT INTO app_state (id,version,saved_at,state_json) VALUES (1,$1,$2,$3::jsonb)
        ON CONFLICT(id) DO UPDATE SET version=EXCLUDED.version,saved_at=EXCLUDED.saved_at,state_json=EXCLUDED.state_json`,
       [Number(merged.version) || 1, Number(merged.savedAt) || Date.now(), JSON.stringify(merged)]
     );
+    await db.query('COMMIT');
+    db.release(); db = null;
 
-    await notifyInvoiceStateChanges(previousState, merged, 'Admin/Portal state sync');
+    await notifyInvoiceStateChanges(currentState, merged, 'Admin/Portal state sync');
 
+    const updatedInvoices = info.invoiceMap ? Array.from(info.updatedKeys).map(k => info.invoiceMap.get(k)).filter(Boolean) : [];
     return json(res, 200, {
       ok: true,
       savedAt: Number(merged.savedAt) || Date.now(),
       invoiceCount: merged.data.data.length,
-      clientCount: merged.data.clients.length
+      clientCount: merged.data.clients.length,
+      invoiceSequence: merged.data.settings && merged.data.settings.invoiceSequence,
+      renumbered: info.renumbered,
+      updatedInvoices
     });
   } catch (err) {
+    if (db) { try { await db.query('ROLLBACK'); } catch {} db.release(); }
     console.error('Database write failed:', err);
     return json(res, 500, { ok: false, error: err.message || 'Database write failed.' });
   }
 }
-
 
 function mergePayrollStates(existingState, incomingState) {
   const existing = existingState && typeof existingState === 'object' ? existingState : {};
@@ -1315,6 +1372,151 @@ async function handleAdminSnapshot(req, res) {
   }
 }
 
+// ===================== Data safety, login limits & staff portal access =====================
+// One lock shared with the staff portal for every write to app_state, so two saves can never
+// interleave and overwrite each other.
+const STATE_LOCK = 492020;
+const BACKUP_KEEP = 30;                       // automatic backups kept (newest first)
+const BACKUP_EVERY_MS = 24 * 60 * 60 * 1000;  // at most one automatic backup per day
+const STAFF_PORTAL_URL = String(process.env.STAFF_PORTAL_URL || 'https://fbi-staff-invoice-portal-production.up.railway.app').replace(/\/+$/, '');
+
+async function ensureSafetyTables() {
+  await pool.query(`CREATE TABLE IF NOT EXISTS app_state_backups (
+    id BIGSERIAL PRIMARY KEY, created_at BIGINT NOT NULL, reason TEXT,
+    invoice_count INTEGER, client_count INTEGER, state_json JSONB NOT NULL, payroll_json JSONB)`);
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_app_state_backups_created ON app_state_backups(created_at DESC)');
+  // Staff portal tables (also created by the portal service). Additive only: existing accounts stay active.
+  await pool.query(`CREATE TABLE IF NOT EXISTS portal_users(id BIGSERIAL PRIMARY KEY,username TEXT UNIQUE NOT NULL,display_name TEXT NOT NULL,password_salt TEXT NOT NULL,password_hash TEXT NOT NULL,active BOOLEAN DEFAULT TRUE)`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS portal_sessions(token_hash TEXT PRIMARY KEY,user_id BIGINT REFERENCES portal_users(id) ON DELETE CASCADE,username TEXT NOT NULL,display_name TEXT NOT NULL,created_at BIGINT NOT NULL,expires_at BIGINT NOT NULL)`);
+  await pool.query(`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active'`);
+  await pool.query('ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS created_at BIGINT');
+  await pool.query('ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS reviewed_at BIGINT');
+  await pool.query('ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS reviewed_by TEXT');
+  await pool.query('ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS last_login_at BIGINT');
+  await pool.query(`UPDATE portal_users SET status='disabled' WHERE active=false AND status='active'`);
+}
+
+async function backupStateIfDue(db, reason, force = false) {
+  const has = await db.query('SELECT 1 FROM app_state WHERE id=1');
+  if (!has.rowCount) return false;
+  if (!force) {
+    const last = await db.query('SELECT created_at FROM app_state_backups ORDER BY created_at DESC LIMIT 1');
+    if (last.rows[0] && Date.now() - Number(last.rows[0].created_at) < BACKUP_EVERY_MS) return false;
+  }
+  await db.query(`INSERT INTO app_state_backups (created_at,reason,invoice_count,client_count,state_json,payroll_json)
+    SELECT $1, $2,
+      CASE WHEN jsonb_typeof(s.state_json->'data'->'data')='array' THEN jsonb_array_length(s.state_json->'data'->'data') END,
+      CASE WHEN jsonb_typeof(s.state_json->'data'->'clients')='array' THEN jsonb_array_length(s.state_json->'data'->'clients') END,
+      s.state_json, (SELECT p.state_json FROM payroll_state p WHERE p.id=1)
+    FROM app_state s WHERE s.id=1`, [Date.now(), reason]);
+  await db.query('DELETE FROM app_state_backups WHERE id NOT IN (SELECT id FROM app_state_backups ORDER BY created_at DESC LIMIT $1)', [BACKUP_KEEP]);
+  return true;
+}
+
+// ---- Login / reset attempt limiter (per IP, in memory) ----
+// Only FAILED attempts count, so many staff signing in from one office connection are never blocked.
+const attemptLog = new Map();
+function requestIp(req) {
+  return String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress || 'unknown';
+}
+function recentFailures(key, windowMs) {
+  const now = Date.now(), list = (attemptLog.get(key) || []).filter(t => now - t < windowMs);
+  if (list.length) attemptLog.set(key, list); else attemptLog.delete(key);
+  return list;
+}
+function noteFailure(key) {
+  const list = attemptLog.get(key) || [];
+  list.push(Date.now());
+  attemptLog.set(key, list);
+  if (attemptLog.size > 5000) for (const k of Array.from(attemptLog.keys()).slice(0, 1000)) attemptLog.delete(k);
+}
+const ATTEMPT_RULES = {
+  '/api/auth/login': ['admin-login', 10, 15 * 60 * 1000, 'Too many sign-in attempts. Please wait 15 minutes and try again.'],
+  '/api/auth/recovery-questions': ['admin-recovery', 10, 15 * 60 * 1000, 'Too many attempts. Please wait 15 minutes and try again.'],
+  '/api/auth/reset': ['admin-reset', 5, 15 * 60 * 1000, 'Too many reset attempts. Please wait 15 minutes and try again.'],
+  '/api/payroll-staff/login': ['payroll-login', 10, 15 * 60 * 1000, 'Too many sign-in attempts. Please wait 15 minutes and try again.'],
+  '/api/payroll-staff/register': ['payroll-register', 5, 60 * 60 * 1000, 'Too many registration attempts. Please try again later.']
+};
+function rejectIfTooManyAttempts(req, res, pathname) {
+  const rule = ATTEMPT_RULES[pathname];
+  if (!rule || (req.method === 'GET' && pathname !== '/api/auth/recovery-questions')) return false;
+  const key = rule[0] + '|' + requestIp(req);
+  if (recentFailures(key, rule[2]).length >= rule[1]) { json(res, 429, { ok: false, error: rule[3] }); return true; }
+  res.on('finish', () => { if (res.statusCode >= 400 && res.statusCode < 500 && res.statusCode !== 429) noteFailure(key); });
+  return false;
+}
+
+// ---- Backups (admin only) ----
+async function handleBackupsList(req, res) {
+  if (!(await requireAuth(req, res))) return;
+  const q = await pool.query('SELECT id,created_at,reason,invoice_count,client_count,octet_length(state_json::text) AS bytes FROM app_state_backups ORDER BY created_at DESC LIMIT $1', [BACKUP_KEEP]);
+  return json(res, 200, { ok: true, keep: BACKUP_KEEP, backups: q.rows.map(r => ({ id: String(r.id), createdAt: Number(r.created_at), reason: r.reason || '', invoiceCount: r.invoice_count, clientCount: r.client_count, bytes: Number(r.bytes) || 0 })) });
+}
+async function handleBackupDownload(req, res, id) {
+  if (!(await requireAuth(req, res))) return;
+  let row;
+  if (id === 'current') {
+    const s = await pool.query('SELECT state_json FROM app_state WHERE id=1');
+    const p = await pool.query('SELECT state_json FROM payroll_state WHERE id=1').catch(() => ({ rows: [] }));
+    row = { created_at: Date.now(), state_json: s.rows[0]?.state_json || null, payroll_json: p.rows[0]?.state_json || null, reason: 'manual download' };
+  } else {
+    if (!/^\d+$/.test(id)) return json(res, 400, { ok: false, error: 'Invalid backup id.' });
+    const q = await pool.query('SELECT created_at,reason,state_json,payroll_json FROM app_state_backups WHERE id=$1', [id]);
+    row = q.rows[0];
+  }
+  if (!row || !row.state_json) return json(res, 404, { ok: false, error: 'Backup not found.' });
+  const stamp = new Date(Number(row.created_at)).toISOString().slice(0, 16).replace(/[:T]/g, '-');
+  const body = JSON.stringify({ application: 'FBI Invoice Studio', exportedAt: new Date().toISOString(), backupTakenAt: new Date(Number(row.created_at)).toISOString(), reason: row.reason || '', state: row.state_json, payroll: row.payroll_json || null }, null, 1);
+  res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Content-Disposition': `attachment; filename="fbi-invoice-studio-backup-${stamp}.json"`, 'Cache-Control': 'no-store' });
+  return res.end(body);
+}
+
+// ---- Staff portal accounts (admin only) ----
+function staffUserRow(r) {
+  const status = r.active === false && (r.status || 'active') === 'active' ? 'disabled' : (r.status || 'active');
+  return { id: String(r.id), username: r.username, name: r.display_name, status, createdAt: r.created_at ? Number(r.created_at) : null, reviewedAt: r.reviewed_at ? Number(r.reviewed_at) : null, reviewedBy: r.reviewed_by || '', lastLoginAt: r.last_login_at ? Number(r.last_login_at) : null };
+}
+async function handleStaffUsersList(req, res) {
+  if (!(await requireAuth(req, res))) return;
+  const q = await pool.query(`SELECT id,username,display_name,active,status,created_at,reviewed_at,reviewed_by,last_login_at FROM portal_users
+    ORDER BY CASE status WHEN 'pending' THEN 0 WHEN 'active' THEN 1 ELSE 2 END, lower(display_name)`);
+  return json(res, 200, { ok: true, portalUrl: STAFF_PORTAL_URL, users: q.rows.map(staffUserRow) });
+}
+async function handleStaffUserCreate(req, res) {
+  const session = await requireAuth(req, res); if (!session) return;
+  const b = await parseJsonBody(req);
+  const username = String(b.username || '').trim().toLowerCase(), name = String(b.name || '').trim(), password = String(b.password || '');
+  if (!/^[a-z0-9._-]{3,40}$/.test(username)) return json(res, 400, { ok: false, error: 'Username must be 3–40 characters: letters, numbers, dot, dash or underscore.' });
+  if (name.length < 2) return json(res, 400, { ok: false, error: 'Enter the worker\'s full name.' });
+  if (password.length < 8) return json(res, 400, { ok: false, error: 'Password must be at least 8 characters.' });
+  const exists = await pool.query('SELECT 1 FROM portal_users WHERE username=$1', [username]);
+  if (exists.rowCount) return json(res, 409, { ok: false, error: 'That username is already taken.' });
+  const h = hashPassword(password), now = Date.now();
+  const q = await pool.query(`INSERT INTO portal_users(username,display_name,password_salt,password_hash,active,status,created_at,reviewed_at,reviewed_by)
+    VALUES($1,$2,$3,$4,true,'active',$5,$5,$6) RETURNING id,username,display_name,active,status,created_at,reviewed_at,reviewed_by,last_login_at`, [username, name, h.salt, h.hash, now, session.username]);
+  return json(res, 200, { ok: true, user: staffUserRow(q.rows[0]) });
+}
+async function handleStaffUserAction(req, res, id, action) {
+  const session = await requireAuth(req, res); if (!session) return;
+  if (!/^\d+$/.test(id)) return json(res, 400, { ok: false, error: 'Invalid staff account.' });
+  const now = Date.now();
+  let q;
+  if (action === 'approve') {
+    q = await pool.query(`UPDATE portal_users SET status='active',active=true,reviewed_at=$2,reviewed_by=$3 WHERE id=$1 RETURNING *`, [id, now, session.username]);
+  } else if (action === 'disable') {
+    q = await pool.query(`UPDATE portal_users SET status='disabled',active=false,reviewed_at=$2,reviewed_by=$3 WHERE id=$1 RETURNING *`, [id, now, session.username]);
+    await pool.query('DELETE FROM portal_sessions WHERE user_id=$1', [id]);
+  } else if (action === 'password') {
+    const b = await parseJsonBody(req), password = String(b.password || '');
+    if (password.length < 8) return json(res, 400, { ok: false, error: 'Password must be at least 8 characters.' });
+    const h = hashPassword(password);
+    q = await pool.query('UPDATE portal_users SET password_salt=$2,password_hash=$3 WHERE id=$1 RETURNING *', [id, h.salt, h.hash]);
+    await pool.query('DELETE FROM portal_sessions WHERE user_id=$1', [id]);
+  } else return json(res, 404, { ok: false, error: 'Unknown action.' });
+  if (!q.rowCount) return json(res, 404, { ok: false, error: 'Staff account not found.' });
+  return json(res, 200, { ok: true, user: staffUserRow(q.rows[0]) });
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
@@ -1344,6 +1546,14 @@ const server = http.createServer(async (req, res) => {
         accountExists: !!(await getAccount())
       });
     }
+
+    if (rejectIfTooManyAttempts(req, res, url.pathname)) return;
+
+    if (url.pathname === '/api/backups' && req.method === 'GET') return handleBackupsList(req, res);
+    { const m = url.pathname.match(/^\/api\/backups\/(current|\d+)\/download$/); if (m && req.method === 'GET') return handleBackupDownload(req, res, m[1]); }
+    if (url.pathname === '/api/staff-portal/users' && req.method === 'GET') return handleStaffUsersList(req, res);
+    if (url.pathname === '/api/staff-portal/users' && req.method === 'POST') return handleStaffUserCreate(req, res);
+    { const m = url.pathname.match(/^\/api\/staff-portal\/users\/(\d+)\/(approve|disable|password)$/); if (m && req.method === 'POST') return handleStaffUserAction(req, res, m[1], m[2]); }
 
     if (url.pathname === '/api/auth/status' && req.method === 'GET') return handleAuthStatus(req, res);
     if (url.pathname === '/api/auth/me' && req.method === 'GET') return handleAuthMe(req, res);
@@ -1392,9 +1602,9 @@ const server = http.createServer(async (req, res) => {
     // Dedicated Android pairing route. Kept separate from the legacy route so the mobile gateway can use a clean edge path without changing the pairing engine.
 
     if (url.pathname === '/api/whatsapp/embedded-config' && req.method === 'GET') return json(res, 200, {ok:true, appId:WHATSAPP_APP_ID, configId:WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID, featureType:'whatsapp_business_app_onboarding'});
-    if (url.pathname === '/api/whatsapp/test' && req.method === 'GET') return handleWhatsAppTest(req, res);
-    if (url.pathname === '/api/whatsapp/invoice-created' && req.method === 'POST') { const b = await parseJsonBody(req); const out = await sendWhatsAppInvoiceAlert(String(b.eventType || 'invoice-created'), b.invoice || {}, String(b.source || 'API')); return json(res, out.ok ? 200 : 502, out); }
-    if (url.pathname === '/api/whatsapp/debug-log' && req.method === 'GET') return handleWhatsAppDebugLog(req, res);
+    if (url.pathname === '/api/whatsapp/test' && req.method === 'GET') { if (!(await requireAuth(req, res))) return; return handleWhatsAppTest(req, res); }
+    if (url.pathname === '/api/whatsapp/invoice-created' && req.method === 'POST') { if (!(await requireAuth(req, res))) return; const b = await parseJsonBody(req); const out = await sendWhatsAppInvoiceAlert(String(b.eventType || 'invoice-created'), b.invoice || {}, String(b.source || 'API')); return json(res, out.ok ? 200 : 502, out); }
+    if (url.pathname === '/api/whatsapp/debug-log' && req.method === 'GET') { if (!(await requireAuth(req, res))) return; return handleWhatsAppDebugLog(req, res); }
 
     if (req.method === 'GET') return await sendIndex(res);
     return json(res, 404, { ok: false, error: 'Not found.' });
@@ -1404,7 +1614,8 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-initDb().then(() => {
+initDb().then(async () => {
+  try { if (await backupStateIfDue(pool, 'daily (startup)')) console.log('Automatic backup saved.'); } catch (e) { console.warn('Startup backup skipped:', e.message); }
   server.listen(PORT, HOST, () => {
     console.log('FBI Invoice Studio Cloud server');
     console.log(`Local: http://127.0.0.1:${PORT}`);

@@ -316,9 +316,9 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     <div class="fbi-payroll-grid">
       <div class="fbi-payroll-stat"><span>Workers</span><b id="fbiPayrollWorkerCount">0</b><small id="fbiPayrollWorkerMeta">Active 0</small></div>
       <div class="fbi-payroll-stat"><span>Payroll Records</span><b id="fbiPayrollRecordCount">0</b><small id="fbiPayrollRecordMeta">All work records</small></div>
-      <div class="fbi-payroll-stat"><span>Net Payroll</span><b id="fbiPayrollNetTotal">GHS₵0.00</b><small id="fbiPayrollNetMeta">All records</small></div>
-      <div class="fbi-payroll-stat"><span>Paid</span><b id="fbiPayrollPaidTotal">GHS₵0.00</b><small id="fbiPayrollPaidMeta">Recorded payments</small></div>
-      <div class="fbi-payroll-stat"><span>Outstanding</span><b id="fbiPayrollBalanceTotal">GHS₵0.00</b><small id="fbiPayrollBalanceMeta">Amount still due</small></div>
+      <div class="fbi-payroll-stat"><span>Net Payroll</span><b id="fbiPayrollNetTotal">GH₵0.00</b><small id="fbiPayrollNetMeta">All records</small></div>
+      <div class="fbi-payroll-stat"><span>Paid</span><b id="fbiPayrollPaidTotal">GH₵0.00</b><small id="fbiPayrollPaidMeta">Recorded payments</small></div>
+      <div class="fbi-payroll-stat"><span>Outstanding</span><b id="fbiPayrollBalanceTotal">GH₵0.00</b><small id="fbiPayrollBalanceMeta">Amount still due</small></div>
     </div>
 
     <div class="fbi-payroll-card">
@@ -501,7 +501,7 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
         <button class="btn" type="button" id="fbiPayrollPaymentClose">Close</button>
       </div>
       <div class="fbi-payroll-dialog-body">
-        <div class="fbi-payroll-pay-balance"><span>Outstanding Balance</span><b id="fbiPayrollPaymentBalance">GHS₵0.00</b></div>
+        <div class="fbi-payroll-pay-balance"><span>Outstanding Balance</span><b id="fbiPayrollPaymentBalance">GH₵0.00</b></div>
         <div class="fbi-payroll-form">
           <div class="fbi-payroll-field"><label>Amount</label><input type="number" min="0" step="0.01" id="fbiPayrollPaymentAmount"></div>
           <div class="fbi-payroll-field"><label>Payment Date</label><input type="date" id="fbiPayrollPaymentDate"></div>
@@ -536,7 +536,7 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
   function q(id){return document.getElementById(id);}
   function num(v){var n=Number(v);return Number.isFinite(n)?n:0;}
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
-  function money(v){return 'GHS₵'+num(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function money(v){return 'GH₵'+num(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
   function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
   function uid(prefix){if(window.crypto&&crypto.randomUUID)return prefix+'-'+crypto.randomUUID();return prefix+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,9);}
   function toastLocal(msg){try{if(typeof window.toast==='function'){window.toast(msg);return}}catch(e){}}
@@ -1011,11 +1011,11 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
         field('Notes','prNotes',r.notes||'','text','Additional notes',true)+
       '</div>'+
       '<div class="fbi-payroll-summary">'+
-        '<div class="fbi-payroll-summary-item"><span>Base Pay</span><b id="prBase">GHS₵0.00</b></div>'+
-        '<div class="fbi-payroll-summary-item"><span>Allowances + Bonus</span><b id="prAllowances">GHS₵0.00</b></div>'+
-        '<div class="fbi-payroll-summary-item"><span>Gross Pay</span><b id="prGross">GHS₵0.00</b></div>'+
-        '<div class="fbi-payroll-summary-item"><span>Deductions</span><b id="prDeductions">GHS₵0.00</b></div>'+
-        '<div class="fbi-payroll-summary-item"><span>Net Pay</span><b id="prNet">GHS₵0.00</b></div>'+
+        '<div class="fbi-payroll-summary-item"><span>Base Pay</span><b id="prBase">GH₵0.00</b></div>'+
+        '<div class="fbi-payroll-summary-item"><span>Allowances + Bonus</span><b id="prAllowances">GH₵0.00</b></div>'+
+        '<div class="fbi-payroll-summary-item"><span>Gross Pay</span><b id="prGross">GH₵0.00</b></div>'+
+        '<div class="fbi-payroll-summary-item"><span>Deductions</span><b id="prDeductions">GH₵0.00</b></div>'+
+        '<div class="fbi-payroll-summary-item"><span>Net Pay</span><b id="prNet">GH₵0.00</b></div>'+
         '<div class="fbi-payroll-summary-item"><span>Status</span><b id="prStatus">Pending</b></div>'+
       '</div>'+
       '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn" type="button" id="prCancel">Cancel</button><button class="btn primary" type="button" id="prSave">Save Payroll Record</button></div>'+
