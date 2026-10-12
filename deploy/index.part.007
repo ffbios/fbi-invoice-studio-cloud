@@ -1596,6 +1596,7 @@ html[data-theme] body .ui-chip.info{background:var(--u-info-bg);color:var(--u-in
 html[data-theme] body .ui-empty{display:flex;flex-direction:column;align-items:center;gap:6px;padding:36px 16px;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:var(--r-lg)}
 html[data-theme] body .ui-empty b{color:var(--text);font-size:15px}
 html[data-theme] body .ui-empty .btn{margin-top:8px}
+html[data-theme] body .ui-empty[hidden]{display:none!important}
 html[data-theme] body .toast{border-radius:12px!important;background:#16181e!important;color:#f1f0ec!important;border:1px solid #2a2e38!important;box-shadow:0 18px 40px -16px rgba(0,0,0,.6)!important;font-weight:550}
 
 /* ---------- overview ---------- */
@@ -1644,6 +1645,16 @@ html[data-theme] body #view-dashboard :is(.attention-item,.due-item,.due-row){bo
 /* ---------- invoices list ---------- */
 html[data-theme] body #view-saved .inv-card{padding:20px!important}
 html[data-theme] body #view-saved .inv-toolbar{display:grid;grid-template-columns:minmax(0,1fr) 170px auto;gap:10px;align-items:center}
+html[data-theme] body .inv-search{position:relative}
+html[data-theme] body .inv-search svg{position:absolute;left:12px;top:50%;width:17px;height:17px;transform:translateY(-50%);fill:none;stroke:var(--faint);stroke-width:1.8;stroke-linecap:round;pointer-events:none}
+html[data-theme] body .inv-search input{width:100%;height:42px;padding-left:38px!important}
+html[data-theme] body .inv-toolbar select,html[data-theme] body .inv-toolbar .btn{height:42px}
+html[data-theme] body .inv-chips{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 16px}
+html[data-theme] body .inv-chips button{height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--muted);font:600 13px var(--ui-font);cursor:pointer}
+html[data-theme] body .inv-chips button span{margin-left:4px;color:var(--faint);font-weight:600}
+html[data-theme] body .inv-chips button[aria-selected="true"]{background:var(--text);border-color:var(--text);color:var(--bg)}
+html[data-theme] body .inv-toolbar{display:grid;grid-template-columns:minmax(0,1fr) 170px auto;gap:10px;align-items:center}
+html[data-theme] body .inv-card{padding:20px!important}
 html[data-theme] body #view-saved .inv-search{position:relative}
 html[data-theme] body #view-saved .inv-search svg{position:absolute;left:12px;top:50%;width:17px;height:17px;transform:translateY(-50%);fill:none;stroke:var(--faint);stroke-width:1.8;stroke-linecap:round;pointer-events:none}
 html[data-theme] body #view-saved .inv-search input{width:100%;height:42px;padding-left:38px!important}
@@ -1655,24 +1666,29 @@ html[data-theme] body #view-saved .inv-chips button[aria-selected="true"]{backgr
 html[data-theme] body #view-saved .inv-chips button[aria-selected="true"] span{color:inherit;opacity:.7}
 html[data-theme] body #view-saved :is(.inv-head,.inv-row){display:grid;grid-template-columns:minmax(0,1.4fr) 124px 150px 128px 148px 268px;gap:14px;align-items:center}
 html[data-theme] body #view-saved .inv-head{padding:0 14px 8px;font-size:12.5px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--border)}
-html[data-theme] body #view-saved .inv-head .num,html[data-theme] body #view-saved .inv-amt{text-align:right}
+html[data-theme] body #view-saved .inv-head .num,html[data-theme] body :is(#view-saved,#view-quotes) .inv-amt{text-align:right}
 html[data-theme] body #view-saved #saved{display:flex;flex-direction:column}
 html[data-theme] body #view-saved .saved.inv-row{margin:0!important;padding:12px 14px!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;flex-wrap:nowrap}
 html[data-theme] body #view-saved .saved.inv-row:hover{background:var(--u-row)!important}
-html[data-theme] body #view-saved .inv-main{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;border:0;background:none;padding:0;text-align:left;cursor:pointer;color:var(--text)}
-html[data-theme] body #view-saved .inv-no{font-size:14.5px;font-weight:650}
-html[data-theme] body #view-saved .inv-main:hover .inv-no{color:var(--brand-hi)}
-html[data-theme] body #view-saved .inv-client{max-width:100%;font-size:13.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-html[data-theme] body #view-saved :is(.inv-date,.inv-amt){display:flex;flex-direction:column;font-size:13.5px;color:var(--text)}
-html[data-theme] body #view-saved .inv-amt b{font-weight:650;font-size:14.5px}
-html[data-theme] body #view-saved :is(.inv-date,.inv-amt) small{font-size:12.5px;color:var(--muted)}
+html[data-theme] body :is(#view-saved,#view-quotes) .inv-main{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;border:0;background:none;padding:0;text-align:left;cursor:pointer;color:var(--text)}
+html[data-theme] body :is(#view-saved,#view-quotes) .inv-no{font-size:14.5px;font-weight:650}
+html[data-theme] body :is(#view-saved,#view-quotes) .inv-main:hover .inv-no{color:var(--brand-hi)}
+html[data-theme] body :is(#view-saved,#view-quotes) .inv-client{max-width:100%;font-size:13.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html[data-theme] body :is(#view-saved,#view-quotes) :is(.inv-date,.inv-amt){display:flex;flex-direction:column;font-size:13.5px;color:var(--text)}
+html[data-theme] body :is(#view-saved,#view-quotes) .inv-amt b{font-weight:650;font-size:14.5px}
+html[data-theme] body :is(#view-saved,#view-quotes) :is(.inv-date,.inv-amt) small{font-size:12.5px;color:var(--muted)}
 html[data-theme] body #view-saved .inv-job{display:flex!important;align-items:center;gap:8px;margin:0!important}
 html[data-theme] body #view-saved .inv-job span{display:none}
 html[data-theme] body #view-saved .inv-job select{height:34px;padding:0 8px;font-size:13px;width:100%}
-html[data-theme] body #view-saved .inv-actions{display:flex;gap:6px;justify-content:flex-end;align-items:center}
-html[data-theme] body #view-saved .inv-actions .btn{min-height:34px;height:34px;padding:0 12px;font-size:13px;white-space:nowrap}
+html[data-theme] body :is(#view-saved,#view-quotes) .inv-actions{display:flex;gap:6px;justify-content:flex-end;align-items:center}
+html[data-theme] body :is(#view-saved,#view-quotes) .inv-actions .btn{min-height:34px;height:34px;padding:0 12px;font-size:13px;white-space:nowrap}
 html[data-theme] body #view-saved .inv-row>.ui-chip{justify-self:start}
 html[data-theme] body .inv-more{position:relative}
+/* The open row sits above the rows below it, so its menu is never hidden */
+html[data-theme] body #view-saved .saved.inv-row:has(details.inv-more[open]){position:relative;z-index:60}
+html[data-theme] body #view-saved .saved.inv-row.menu-open{position:relative;z-index:60}
+html[data-theme] body #view-saved .inv-card{overflow:visible!important}
+html[data-theme] body .inv-more.up .inv-menu{top:auto;bottom:calc(100% + 6px)}
 html[data-theme] body .inv-more>summary{list-style:none;cursor:pointer;min-height:34px;height:34px;padding:0 10px;letter-spacing:1px}
 html[data-theme] body .inv-more>summary::-webkit-details-marker{display:none}
 html[data-theme] body .inv-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:240px;padding:6px;border-radius:12px;border:1px solid var(--border);background:var(--raise);box-shadow:0 20px 40px -18px rgba(0,0,0,.55)}
@@ -1720,11 +1736,11 @@ html[data-theme] body .ui-palette-input input:focus-visible,html[data-theme] bod
   html[data-theme] body #view-dashboard .ov-owed-amt{font-size:36px}
   html[data-theme] body #view-saved .inv-head{display:none}
   html[data-theme] body #view-saved .saved.inv-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"main amt" "chip job" "act act";row-gap:10px}
-  html[data-theme] body #view-saved .inv-main{grid-area:main}
+  html[data-theme] body :is(#view-saved,#view-quotes) .inv-main{grid-area:main}
   html[data-theme] body #view-saved .inv-amt{grid-area:amt}
   html[data-theme] body #view-saved .inv-row .ui-chip{grid-area:chip;justify-self:start}
   html[data-theme] body #view-saved .inv-job{grid-area:job}
-  html[data-theme] body #view-saved .inv-actions{grid-area:act;justify-content:flex-start;flex-wrap:wrap}
+  html[data-theme] body :is(#view-saved,#view-quotes) .inv-actions{grid-area:act;justify-content:flex-start;flex-wrap:wrap}
   html[data-theme] body #view-saved .inv-toolbar{grid-template-columns:1fr auto}
   html[data-theme] body #view-saved .inv-toolbar .inv-search{grid-column:1/-1}
   html[data-theme] body .inv-menu{right:auto;left:0}
@@ -1819,14 +1835,14 @@ html[data-theme] body .ui-palette-input input:focus-visible,html[data-theme] bod
 
   /* ---- Command palette (Ctrl K) ---- */
   const pal=$("uiPalette"),inp=$("uiPaletteInput"),out=$("uiPaletteList");let items=[],sel=0,lastFocus=null;
-  const PAGES=[["Overview","dashboard"],["Create invoice","create"],["Invoices","saved"],["Receipts","receipts"],["Jobs","completed"],["Calendar","calendar"],["Clients","clients"],["Business settings","settings"],["WhatsApp alerts","whatsapp"]];
+  const PAGES=[["Overview","dashboard"],["Create invoice","create"],["Invoices","saved"],["Quotations","quotes"],["Receipts","receipts"],["Jobs","completed"],["Calendar","calendar"],["Clients","clients"],["Business settings","settings"],["WhatsApp alerts","whatsapp"]];
   function build(q){
     q=(q||"").trim().toLowerCase();const res=[];
     const inv=list().filter(function(x){return !q||[x.no,x.client,x.clientPhone,x.total,x.eventDate,x.date].join(" ").toLowerCase().indexOf(q)>=0}).slice(0,q?8:5);
     if(inv.length){res.push({g:"Invoices"});inv.forEach(function(x){res.push({t:x.no,s:(x.client||"No client")+" · "+statusOf(x),r:money(x.total,x.cur),run:function(){loadInvoice(x.id)}})})}
     if(q){const cl=people().filter(function(c){return [c.name,c.phone,c.email].join(" ").toLowerCase().indexOf(q)>=0}).slice(0,6);
       if(cl.length){res.push({g:"Clients"});cl.forEach(function(c){res.push({t:c.name,s:[c.phone,c.email].filter(Boolean).join(" · ")||"No contact details",r:"New invoice",run:function(){newInvoice();setTimeout(function(){const s=$("clientSelect");if(s){s.value=c.id;if(has("applySelectedClient"))applySelectedClient()}},80)}})})}}
-    const acts=[{t:"New invoice",s:"Start a blank invoice",run:function(){newInvoice()}},{t:"Business report",s:"Filter and print a report",run:function(){openReportModal()}},{t:"Download a full backup",s:"Everything in one file",run:function(){location.href="/api/backups/current/download"}}]
+    const acts=[{t:"New invoice",s:"Start a blank invoice",run:function(){newInvoice()}},{t:"New quotation",s:"Quote or pro-forma invoice for a client",run:function(){newQuote()}},{t:"Business report",s:"Filter and print a report",run:function(){openReportModal()}},{t:"Download a full backup",s:"Everything in one file",run:function(){location.href="/api/backups/current/download"}}]
       .concat(PAGES.map(function(p){return {t:"Go to "+p[0],s:"Page",run:function(){if(p[1]==="saved"&&window.openInvoicesFiltered)openInvoicesFiltered("");else show(p[1])}}}))
       .filter(function(a){return !q||a.t.toLowerCase().indexOf(q)>=0});
     if(acts.length){res.push({g:"Actions"});acts.slice(0,q?6:4).forEach(function(a){res.push(a)})}
@@ -1855,6 +1871,12 @@ html[data-theme] body .ui-palette-input input:focus-visible,html[data-theme] bod
   });
   /* close any open "more" menu when clicking elsewhere */
   document.addEventListener("click",function(ev){document.querySelectorAll("details.inv-more[open]").forEach(function(d){if(!d.contains(ev.target))d.open=false})});
+  /* Lift the row with the open menu above its neighbours; open upwards near the bottom of the screen */
+  document.addEventListener("toggle",function(ev){
+    var d=ev.target;if(!d||!d.classList||!d.classList.contains("inv-more"))return;
+    var row=d.closest(".inv-row");if(row)row.classList.toggle("menu-open",d.open);
+    if(d.open){var r=d.getBoundingClientRect();d.classList.toggle("up",window.innerHeight-r.bottom<260&&r.top>260)}
+  },true);
 })();
 </script>
 <style id="fbi-ui-v3-pages">
@@ -1870,9 +1892,17 @@ html[data-theme] body .stats .stat b{font-size:22px!important;font-weight:650!im
 html[data-theme] body .stats .stat small{font-size:12.5px!important;color:var(--faint)!important}
 html[data-theme] body .report-filters{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px!important}
 html[data-theme] body .report-filters label{margin:0 0 6px!important;font-size:12.5px}
-html[data-theme] body :is(#completedJobsTable,.report-preview,.fbi-payroll-table-wrap) table{width:100%;border-collapse:collapse;font-size:13.5px}
-html[data-theme] body :is(#completedJobsTable,.report-preview,.fbi-payroll-table-wrap) th{background:transparent!important;color:var(--muted)!important;font-size:12.5px!important;font-weight:600!important;text-transform:none!important;letter-spacing:0!important;padding:9px 10px!important;border:0!important;border-bottom:1px solid var(--border)!important;text-align:left}
-html[data-theme] body :is(#completedJobsTable,.report-preview,.fbi-payroll-table-wrap) td{padding:10px!important;border:0!important;border-bottom:1px solid var(--line)!important;color:var(--text)!important;font-size:13.5px!important;background:transparent!important}
+html[data-theme] body :is(#completedJobsTable,.fbi-payroll-table-wrap) table{width:100%;border-collapse:collapse;font-size:13.5px}
+html[data-theme] body :is(#completedJobsTable,.fbi-payroll-table-wrap) th{background:transparent!important;color:var(--muted)!important;font-size:12.5px!important;font-weight:600!important;text-transform:none!important;letter-spacing:0!important;padding:9px 10px!important;border:0!important;border-bottom:1px solid var(--border)!important;text-align:left}
+html[data-theme] body :is(#completedJobsTable,.fbi-payroll-table-wrap) td{padding:10px!important;border:0!important;border-bottom:1px solid var(--line)!important;color:var(--text)!important;font-size:13.5px!important;background:transparent!important}
+/* The report preview is a white printable page in every theme: keep its text dark and readable */
+html[data-theme] body .report-preview table{width:100%;border-collapse:collapse;font-size:13.5px}
+html[data-theme] body .report-preview :is(th,td){padding:9px 10px!important;text-align:left}
+html[data-theme] body .report-preview{color:#15171c}
+html[data-theme] body .report-preview :is(td,b,strong,h1,h2,h3,h4,p,span,div){color:#15171c!important}
+html[data-theme] body .report-preview th{color:#4b5260!important;border-bottom:1px solid #d9dce2!important}
+html[data-theme] body .report-preview td{border-bottom:1px solid #e8eaee!important}
+html[data-theme] body .report-preview :is(small,.muted){color:#5d6472!important}
 html[data-theme] body :is(#completedJobsTable,.fbi-payroll-table-wrap) tr:hover td{background:var(--u-row)!important}
 html[data-theme] body :is(.status-pill,.status-badge,.fbi-payroll-badge){border-radius:999px!important;font-size:12px!important;font-weight:650!important;padding:3px 10px!important;text-transform:none!important;letter-spacing:0!important}
 html[data-theme] body .status-paid{background:var(--u-ok-bg)!important;color:var(--u-ok)!important;border-color:transparent!important}
@@ -1980,5 +2010,270 @@ html[data-theme] body .report-head{border-bottom:1px solid var(--line)!important
   var head=document.querySelector("#view-clients .cl-list-card .ov-panel-head");
   if(head&&!document.getElementById("clAddBtn")){var b=document.createElement("button");b.type="button";b.className="btn primary";b.id="clAddBtn";b.textContent="＋ Add client";b.onclick=function(){if(typeof clearClientForm==="function")clearClientForm();side.classList.add("editing");var n=document.getElementById("dbClientName");if(n){n.scrollIntoView({behavior:"smooth",block:"center"});setTimeout(function(){n.focus()},250)}};head.appendChild(b)}
   document.getElementById("clientList")&&document.getElementById("clientList").addEventListener("click",function(e){if(e.target.closest('[data-client-action="edit"]')){side.classList.add("editing");setTimeout(function(){var n=document.getElementById("dbClientName");n&&n.scrollIntoView({behavior:"smooth",block:"center"})},50)}},true);
+})();
+</script>
+
+<!-- ===================== Quotations & pro-forma invoices =====================
+     Quotes are stored in their own table (/api/quotes). They never change invoice
+     numbers, totals or receipts. Converting one fills a new invoice that you save as usual. -->
+<style id="fbi-quotes-style">
+html[data-theme] body .qt-banner{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:0 0 14px;padding:14px 18px;border-radius:var(--r-lg,16px);border:1px solid color-mix(in srgb,var(--gold) 45%,var(--border));background:linear-gradient(90deg,var(--gold-soft),transparent 70%),var(--panel)}
+html[data-theme] body .qt-banner[hidden]{display:none}
+html[data-theme] body .qt-banner-main{display:flex;flex-direction:column;min-width:200px;flex:1}
+html[data-theme] body .qt-banner-main b{font-size:16px;color:var(--text)}
+html[data-theme] body .qt-banner-main small{color:var(--muted);font-size:12.5px}
+html[data-theme] body .qt-banner-fields{display:flex;gap:10px;flex-wrap:wrap}
+html[data-theme] body .qt-banner-fields label{display:flex;flex-direction:column;gap:4px;margin:0!important;font-size:12px;color:var(--muted)}
+html[data-theme] body .qt-banner-fields :is(select,input){height:38px;min-width:150px}
+html[data-theme] body .qt-banner-actions{display:flex;gap:8px}
+/* In quotation mode, invoice-only parts of the form are hidden */
+html[data-theme] body #view-create.quote-mode :is(#paymentReceivedCard,[data-cx-step="paymentReceivedCard"]){display:none!important}
+html[data-theme] body #view-create.quote-mode .cx-f:has(> #status),html[data-theme] body #view-create.quote-mode .cx-f:has(> #due){display:none}
+html[data-theme] body #view-quotes :is(.qt-head,.qt-row){display:grid;grid-template-columns:minmax(0,1.4fr) 124px 140px 156px 120px 280px;gap:14px;align-items:center}
+html[data-theme] body #view-quotes .qt-head{padding:0 14px 8px;font-size:12.5px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--border)}
+html[data-theme] body #view-quotes .qt-head .num{text-align:right}
+html[data-theme] body #view-quotes .qt-row{padding:12px 14px;border-bottom:1px solid var(--line)}
+html[data-theme] body #view-quotes .qt-row:hover{background:var(--u-row)}
+html[data-theme] body #view-quotes .qt-row.menu-open{position:relative;z-index:60}
+html[data-theme] body #view-quotes .qt-row>.ui-chip{justify-self:start}
+html[data-theme] body #view-quotes .qt-valid{font-size:13.5px;color:var(--text)}
+html[data-theme] body #view-quotes .qt-valid.late{color:var(--u-bad)}
+html[data-theme] body #view-quotes .qt-valid small{display:block;color:var(--muted);font-size:12.5px}
+html[data-theme] body #view-quotes .inv-toolbar{grid-template-columns:minmax(0,1fr) 0 auto}
+@media(max-width:1280px){html[data-theme] body #view-quotes :is(.qt-head,.qt-row){grid-template-columns:minmax(0,1.4fr) 150px 128px 130px 280px}html[data-theme] body #view-quotes .qt-head span:nth-child(2),html[data-theme] body #view-quotes .qt-row .inv-date{display:none}}
+@media(max-width:950px){
+  html[data-theme] body #view-quotes .qt-head{display:none}
+  html[data-theme] body #view-quotes .qt-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"main amt" "chip valid" "act act";row-gap:10px}
+  html[data-theme] body #view-quotes .qt-row .inv-main{grid-area:main}
+  html[data-theme] body #view-quotes .qt-row .inv-amt{grid-area:amt}
+  html[data-theme] body #view-quotes .qt-row>.ui-chip{grid-area:chip}
+  html[data-theme] body #view-quotes .qt-row .qt-valid{grid-area:valid;text-align:right}
+  html[data-theme] body #view-quotes .qt-row .inv-actions{grid-area:act;justify-content:flex-start;flex-wrap:wrap}
+  html[data-theme] body .qt-banner-fields{width:100%}
+  html[data-theme] body .qt-banner-fields label{flex:1}
+}
+</style>
+<script id="fbi-quotes-js">
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  function e(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+  function note(m){if(typeof toast==="function")toast(m)}
+  function sym(c){try{return curSym(c||"GHS")}catch(x){return "GH₵"}}
+  function fmt(n,c){return sym(c)+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
+  function hd(v){if(!v)return "—";var d=new Date(v);return isNaN(d)?String(v):d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}
+  function today(){return new Date().toISOString().slice(0,10)}
+  function plusDays(n){var d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+  async function api(url,opt){opt=opt||{};opt.credentials="same-origin";opt.headers=Object.assign({"Content-Type":"application/json"},opt.headers||{});var r=await fetch(url,opt);var b={};try{b=await r.json()}catch(x){}if(!r.ok||b.ok===false)throw new Error(b.error||("Request failed ("+r.status+")"));return b}
+
+  window.FBI_DOC_MODE="invoice";
+  window.FBI_QUOTES=[];
+  var currentQuote=null,pendingConvert=null;
+
+  function effectiveStatus(q){var st=q.quoteStatus||q.status||"Draft";if((st==="Draft"||st==="Sent")&&q.validUntil&&q.validUntil<today())return "Expired";return st}
+  async function loadQuotes(){try{var d=await api("/api/quotes");window.FBI_QUOTES=d.quotes||[];renderQuotes()}catch(x){console.warn("Quotations not loaded",x)}}
+  window.loadQuotes=loadQuotes;
+
+  /* ---------- quotation mode on the Create page ---------- */
+  function setMode(mode){
+    window.FBI_DOC_MODE=mode;
+    var v=$("view-create");if(v)v.classList.toggle("quote-mode",mode==="quote");
+    var bn=$("quoteBanner");if(bn)bn.hidden=mode!=="quote";
+    var save=document.querySelector('.cx-aside .cx-big');if(save)save.innerHTML=mode==="quote"?"💾 Save<span class=\"cx-x\"> quotation</span>":"💾 Save<span class=\"cx-x\"> Invoice</span>";
+    var t=$("title");if(t&&v&&v.classList.contains("active"))t.textContent=mode==="quote"?"Quotation":"Create invoice";
+  }
+  function banner(){
+    var q=currentQuote;
+    $("qtBannerTitle").textContent=q?(q.docType==="PRO-FORMA INVOICE"?"Pro-forma invoice ":"Quotation ")+q.no:"New quotation";
+    $("qtBannerMeta").textContent=q?("Created "+hd(q.createdAt)+(q.convertedInvoiceNo?" · Converted to "+q.convertedInvoiceNo:"")):"Not saved yet — it gets a quotation number when you save.";
+  }
+  window.exitQuoteMode=function(goToList){currentQuote=null;setMode("invoice");if(goToList)show("quotes");else if(typeof newInvoice==="function"&&goToList!==false)newInvoice()};
+  window.newQuote=function(){
+    pendingConvert=null;
+    origNewInvoice();
+    currentQuote=null;setMode("quote");
+    $("no").value="New quotation";
+    $("qtDocType").value="QUOTATION";$("qtStatus").value="Draft";$("qtValidUntil").value=plusDays(14);
+    banner();show("create");if($("title"))$("title").textContent="Quotation";if($("subtitle"))$("subtitle").textContent="Quote or pro-forma invoice — not counted in your invoices";window.scrollTo(0,0);
+  };
+  function fillFormFrom(x){
+    // Same steps the app uses to open an invoice, but the quotation is never added to the invoice list
+    var map={no:"no",date:"date",due:"due",status:"status",cur:"cur",client:"client",clientAddress:"clientAddress",clientPhone:"clientPhone",clientEmail:"clientEmail",tax:"taxRate",discount:"discount",payment:"payment",notes:"notes"};
+    Object.keys(map).forEach(function(k){if($(k))$(k).value=x[map[k]]!=null?x[map[k]]:""});
+    if($("status"))$("status").value="Draft";
+    $("template").value=String(Number(x.template)||100);
+    $("amountPaid").value=0;["paymentDate","transactionRef","receiptNo"].forEach(function(k){if($(k))$(k).value=""});
+    $("eventDate").value=x.eventDate||"";$("eventEndDate").value=x.eventEndDate||x.eventDate||"";$("rentalStart").value=x.rentalStart||"";$("rentalEnd").value=x.rentalEnd||"";$("jobLocation").value=x.jobLocation||"";$("rentalRef").value=x.rentalRef||"";$("rentalUnit").value=x.rentalUnit||"Per Day";$("deposit").value=x.deposit||0;
+    if($("payment")&&!String(x.payment||"").trim())$("payment").value=(typeof settings!=="undefined"&&settings.defaultPay)||"";
+    current=null;
+    if(typeof invoiceNumberReserved!=="undefined")invoiceNumberReserved="";
+    try{setTemplate($("template").value)}catch(err){}
+    $("items").innerHTML="";(x.items||[]).forEach(function(a){addItem(a.desc,a.qty,a.rate,a.days)});
+    try{initTemplates()}catch(err){}
+    $("template").value=String(Number(x.template)||100);
+    try{restoreServiceSelection(x)}catch(err){}
+    try{populateClientSelect();if($("clientSelect"))$("clientSelect").value=(clients.find(function(c){return c.name===x.client})||{}).id||""}catch(err){}
+    if($("paymentHistoryPanel"))$("paymentHistoryPanel").innerHTML="";
+    try{calc();updatePaymentBalancePreview()}catch(err){}
+  }
+  window.openQuote=function(id){
+    var q=window.FBI_QUOTES.find(function(x){return x.id===id});if(!q)return;
+    pendingConvert=null;
+    fillFormFrom(q);
+    currentQuote=q;setMode("quote");
+    $("no").value=q.no;$("date").value=q.date||today();
+    $("qtDocType").value=q.docType||"QUOTATION";$("qtStatus").value=["Draft","Sent","Accepted","Declined","Expired"].indexOf(q.quoteStatus)>=0?q.quoteStatus:"Draft";$("qtValidUntil").value=q.validUntil||"";
+    banner();show("create");if($("title"))$("title").textContent="Quotation";if($("subtitle"))$("subtitle").textContent="Quote or pro-forma invoice — not counted in your invoices";window.scrollTo(0,0);
+  };
+  function snapshot(){
+    var x=get();
+    ["id","no","status","amountPaid","payments","receiptNo","paymentDate","paymentMethod","transactionRef","receivedBy","jobStatus","jobCompletedDate"].forEach(function(k){delete x[k]});
+    x.docType=$("qtDocType").value;x.validUntil=$("qtValidUntil").value;x.due=x.validUntil?("Valid until "+x.validUntil):"";
+    return x;
+  }
+  async function saveQuote(){
+    var d=snapshot();
+    if(!String(d.client||"").trim()){note("Enter the client's name first");$("client").focus();return null}
+    if(!(d.items||[]).length){note("Add at least one item to the quotation");return null}
+    var status=$("qtStatus").value;
+    try{
+      var r=currentQuote?await api("/api/quotes/"+encodeURIComponent(currentQuote.id),{method:"PUT",body:JSON.stringify({status:status,data:d})}):await api("/api/quotes",{method:"POST",body:JSON.stringify({status:status,data:d})});
+      currentQuote=r.quote;
+      var i=window.FBI_QUOTES.findIndex(function(q){return q.id===currentQuote.id});if(i>=0)window.FBI_QUOTES[i]=currentQuote;else window.FBI_QUOTES.unshift(currentQuote);
+      $("no").value=currentQuote.no;banner();renderQuotes();
+      note((currentQuote.docType==="PRO-FORMA INVOICE"?"Pro-forma invoice ":"Quotation ")+currentQuote.no+" saved");
+      return currentQuote;
+    }catch(x){note("Quotation not saved: "+x.message);return null}
+  }
+  window.saveQuote=saveQuote;
+
+  /* Make the printed page say Quotation / Pro-forma invoice instead of Invoice */
+  function patchPaper(){
+    var paper=$("paper");if(!paper||window.FBI_DOC_MODE!=="quote")return;
+    var title=$("qtDocType").value||"QUOTATION",word=title==="QUOTATION"?"quotation":"pro-forma invoice",Word=title==="QUOTATION"?"Quotation":"Pro-forma invoice";
+    var st=$("qtStatus").value||"Draft",valid=$("qtValidUntil").value;
+    var walker=document.createTreeWalker(paper,NodeFilter.SHOW_TEXT),nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(function(n){
+      var t=n.nodeValue,s=t.trim();if(!s)return;
+      if(s==="INVOICE"||s==="Invoice")n.nodeValue=t.replace(s,s==="INVOICE"?title:Word);
+      else if(s==="ISSUED")n.nodeValue=t.replace(s,"DATE");
+      else if(s==="DUE"||s==="DUE DATE")n.nodeValue=t.replace(s,"VALID UNTIL");
+      else if(s==="Amount Due"||s==="AMOUNT DUE")n.nodeValue=t.replace(s,s==="Amount Due"?Word+" total":title+" TOTAL");
+      else if(/^Valid until \d{4}-\d{2}-\d{2}$/.test(s))n.nodeValue=t.replace(s,valid?hd(valid):"—");
+      else {
+        var u=t.replace(/\bInvoice total\b/g,Word+" total").replace(/\bThis invoice\b/g,"This "+word).replace(/\bthis invoice\b/g,"this "+word).replace(/^Invoice (QT\d+)/,Word+" $1").replace(/Payment status: [A-Za-z ]+/,"Status: "+st);
+        if(u!==t)n.nodeValue=u;
+      }
+    });
+    paper.querySelectorAll(".tl.balance").forEach(function(el){el.style.display="none"});
+    paper.querySelectorAll(".status-pill").forEach(function(el){el.textContent=st;el.className="status-pill status-draft"});
+    if(!paper.querySelector(".qt-terms")){
+      var box=document.createElement("div");box.className="qt-terms";box.style.cssText="margin:14px 0 0;padding:10px 12px;border:1px dashed #c9cdd4;border-radius:8px;font-size:11px;color:#3d4350;line-height:1.5";
+      box.textContent="This "+word+" is valid"+(valid?" until "+hd(valid):" for 14 days")+". Prices may change after that date. "+(title==="QUOTATION"?"To accept, please confirm in writing or make the advance payment.":"Payment against this pro-forma invoice confirms the booking; a final invoice and receipt will follow.");
+      var anchor=paper.querySelector(".paper-footer")||paper.lastElementChild;if(anchor&&anchor.parentNode)anchor.parentNode.insertBefore(box,anchor);else paper.appendChild(box);
+    }
+  }
+
+  /* ---------- wrap the existing actions (invoice behaviour unchanged) ---------- */
+  var origSave=window.save,origPreview=window.preview,origPrint=window.printInvoice,origPdf=window.savePdfToDrive,origRender=window.renderPaper,
+      origNewInvoice=window.newInvoice,origLoadInvoice=window.loadInvoice,origDraft=window.scheduleDraftSave;
+  window.renderPaper=function(){if(window.FBI_DOC_MODE==="quote"&&$("due")){var vu=$("qtValidUntil").value;$("due").value=vu?"Valid until "+vu:""}var r=origRender.apply(this,arguments);try{patchPaper()}catch(x){console.warn(x)}return r};
+  window.save=async function(){
+    if(window.FBI_DOC_MODE==="quote")return saveQuote();
+    var x=await origSave.apply(this,arguments);
+    if(x&&pendingConvert){var qid=pendingConvert;pendingConvert=null;
+      try{var r=await api("/api/quotes/"+encodeURIComponent(qid),{method:"PUT",body:JSON.stringify({status:"Converted",convertedInvoiceNo:x.no})});var i=window.FBI_QUOTES.findIndex(function(q){return q.id===qid});if(i>=0)window.FBI_QUOTES[i]=r.quote;renderQuotes();note("Quotation marked as converted to "+x.no)}catch(err){console.warn(err)}}
+    return x;
+  };
+  function quotePreview(){window.renderPaper();document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active","print-view")});$("view-preview").classList.add("active");window.scrollTo(0,0)}
+  window.preview=function(){if(window.FBI_DOC_MODE==="quote")return quotePreview();return origPreview.apply(this,arguments)};
+  function quotePrint(){var label=($("qtDocType").value==="QUOTATION"?"Quotation ":"Pro-forma ")+($("no").value||"");window.renderPaper();openDocumentPrint($("paper"),label,"size:A4 portrait;margin:0")}
+  window.printInvoice=function(){if(window.FBI_DOC_MODE==="quote")return quotePrint();return origPrint.apply(this,arguments)};
+  window.savePdfToDrive=function(){if(window.FBI_DOC_MODE==="quote")return quotePrint();return origPdf.apply(this,arguments)};
+  window.newInvoice=function(){if(window.FBI_DOC_MODE==="quote"){currentQuote=null;setMode("invoice")}pendingConvert=null;return origNewInvoice.apply(this,arguments)};
+  window.loadInvoice=function(){if(window.FBI_DOC_MODE==="quote"){currentQuote=null;setMode("invoice")}pendingConvert=null;return origLoadInvoice.apply(this,arguments)};
+  window.scheduleDraftSave=function(){if(window.FBI_DOC_MODE==="quote")return;return origDraft.apply(this,arguments)};
+  ["qtDocType","qtStatus","qtValidUntil"].forEach(function(id){var n=$(id);if(n)n.addEventListener("change",function(){if(currentQuote)banner()})});
+
+  /* ---------- convert ---------- */
+  window.convertCurrentQuote=async function(){
+    if(!currentQuote){var s=await saveQuote();if(!s)return}
+    convertQuote(currentQuote.id);
+  };
+  function convertQuote(id){
+    var q=window.FBI_QUOTES.find(function(x){return x.id===id});if(!q)return;
+    if(q.convertedInvoiceNo&&!confirm("This quotation was already converted to "+q.convertedInvoiceNo+". Create another invoice from it?"))return;
+    currentQuote=null;setMode("invoice");
+    origNewInvoice();
+    fillFormFrom(Object.assign({},q,{due:"On Receipt"}));
+    $("no").value=nextInvoiceNumber();$("date").value=today();$("status").value="Sent";$("due").value="On Receipt";
+    pendingConvert=q.id;
+    show("create");window.scrollTo(0,0);
+    note("Invoice ready from "+q.no+". Check the details and press Save to create it.");
+  }
+  window.convertQuote=convertQuote;
+
+  /* ---------- quotations list ---------- */
+  var CHIPS=[["","All"],["open","Waiting"],["Accepted","Accepted"],["Converted","Converted"],["Declined","Declined"],["Expired","Expired"],["Draft","Drafts"]];
+  var filter="";
+  function matchStatus(q,f){var st=effectiveStatus(q);if(!f)return true;if(f==="open")return st==="Sent";return st===f}
+  function renderQuotes(){
+    var box=$("quoteList");if(!box)return;
+    var qs=(($("quoteSearch")||{}).value||"").trim().toLowerCase();
+    var list=window.FBI_QUOTES.filter(function(q){return matchStatus(q,filter)&&(!qs||[q.no,q.client,q.clientPhone,q.total].join(" ").toLowerCase().indexOf(qs)>=0)});
+    $("quoteChips").innerHTML=CHIPS.map(function(c){var n=window.FBI_QUOTES.filter(function(q){return matchStatus(q,c[0])}).length;return '<button type="button" role="tab" aria-selected="'+(filter===c[0])+'" data-qchip="'+c[0]+'">'+c[1]+' <span>'+n+'</span></button>'}).join("");
+    $("quoteEmpty").hidden=!!window.FBI_QUOTES.length;
+    box.innerHTML=list.map(function(q){
+      var st=effectiveStatus(q),chip={Accepted:"ok",Converted:"ok",Declined:"bad",Expired:"bad",Sent:"info"}[st]||"neutral";
+      var late=q.validUntil&&q.validUntil<today()&&(st==="Sent"||st==="Draft"||st==="Expired");
+      return '<div class="qt-row" data-quote-row="'+e(q.id)+'">'+
+        '<button type="button" class="inv-main" data-q="open" data-id="'+e(q.id)+'"><b class="inv-no">'+e(q.no)+'</b><span class="inv-client">'+e(q.client||"No client")+(q.docType==="PRO-FORMA INVOICE"?" · Pro-forma":"")+'</span></button>'+
+        '<div class="inv-date">'+e(hd(q.date))+'<small>'+e(q.category||"")+'</small></div>'+
+        '<div class="inv-amt"><b>'+e(fmt(q.total,q.cur))+'</b><small>'+e((q.items||[]).length+" item"+((q.items||[]).length===1?"":"s"))+'</small></div>'+
+        '<span class="ui-chip '+chip+'">'+e(st==="Converted"&&q.convertedInvoiceNo?"Invoiced "+q.convertedInvoiceNo:st)+'</span>'+
+        '<div class="qt-valid'+(late?" late":"")+'">'+e(q.validUntil?hd(q.validUntil):"—")+'<small>'+(late?"Expired":"")+'</small></div>'+
+        '<div class="inv-actions"><button type="button" class="btn" data-q="open" data-id="'+e(q.id)+'">Open</button>'+
+        (st!=="Converted"?'<button type="button" class="btn primary" data-q="convert" data-id="'+e(q.id)+'">Convert to invoice</button>':'')+
+        '<details class="inv-more"><summary class="btn" aria-label="More actions for '+e(q.no)+'">•••</summary><div class="inv-menu">'+
+          '<button type="button" data-q="print" data-id="'+e(q.id)+'">Preview / print</button>'+
+          '<button type="button" data-q="share" data-id="'+e(q.id)+'">Send to client on WhatsApp</button>'+
+          (st!=="Sent"&&st!=="Converted"?'<button type="button" data-q="mark-Sent" data-id="'+e(q.id)+'">Mark as sent</button>':'')+
+          (st!=="Accepted"&&st!=="Converted"?'<button type="button" data-q="mark-Accepted" data-id="'+e(q.id)+'">Mark as accepted</button>':'')+
+          (st!=="Declined"&&st!=="Converted"?'<button type="button" data-q="mark-Declined" data-id="'+e(q.id)+'">Mark as declined</button>':'')+
+          '<button type="button" data-q="duplicate" data-id="'+e(q.id)+'">Duplicate as new quotation</button>'+
+          '<button type="button" class="danger" data-q="delete" data-id="'+e(q.id)+'">Delete quotation</button>'+
+        '</div></details></div></div>';
+    }).join("")+(window.FBI_QUOTES.length&&!list.length?'<div class="ui-empty"><b>No quotations match</b><span>Try a different search or filter.</span></div>':"");
+  }
+  window.renderQuotes=renderQuotes;
+  function share(q){
+    var biz=(typeof settings!=="undefined"&&settings&&settings.biz)||"FILM BEYOND IMAGINATION (FBI)";
+    var kind=q.docType==="PRO-FORMA INVOICE"?"pro-forma invoice":"quotation";
+    var lines=["Hello "+(q.client||"there")+",","","Please find our "+kind+" "+q.no+" from "+biz+":"];
+    (q.items||[]).slice(0,8).forEach(function(i){lines.push("• "+i.desc+(i.qty>1?" × "+i.qty:""))});
+    if((q.items||[]).length>8)lines.push("• and "+((q.items||[]).length-8)+" more items");
+    lines.push("","Total: "+fmt(q.total,q.cur));if(q.validUntil)lines.push("Valid until: "+hd(q.validUntil));
+    lines.push("","Reply to this message to accept, or let us know if you'd like any changes. Thank you!");
+    var p=String(q.clientPhone||"").replace(/\D/g,"");if(p.length===10&&p[0]==="0")p="233"+p.slice(1);
+    window.open("https://wa.me/"+p+"?text="+encodeURIComponent(lines.join("\n")),"_blank","noopener");
+  }
+  async function setStatus(q,st){try{var r=await api("/api/quotes/"+encodeURIComponent(q.id),{method:"PUT",body:JSON.stringify({status:st})});var i=window.FBI_QUOTES.indexOf(q);if(i>=0)window.FBI_QUOTES[i]=r.quote;renderQuotes();note(q.no+" marked as "+st.toLowerCase())}catch(x){note(x.message)}}
+  document.addEventListener("click",function(ev){
+    var chip=ev.target.closest&&ev.target.closest("[data-qchip]");if(chip){filter=chip.getAttribute("data-qchip");renderQuotes();return}
+    var b=ev.target.closest&&ev.target.closest("#view-quotes [data-q]");if(!b)return;
+    var q=window.FBI_QUOTES.find(function(x){return x.id===b.getAttribute("data-id")});if(!q)return;
+    var act=b.getAttribute("data-q"),more=b.closest("details");if(more)more.open=false;
+    if(act==="open")openQuote(q.id);
+    else if(act==="convert")convertQuote(q.id);
+    else if(act==="print"){openQuote(q.id);setTimeout(quotePreview,80)}
+    else if(act==="share")share(q);
+    else if(act.indexOf("mark-")===0)setStatus(q,act.slice(5));
+    else if(act==="duplicate"){openQuote(q.id);currentQuote=null;$("no").value="New quotation";$("qtStatus").value="Draft";$("qtValidUntil").value=plusDays(14);$("date").value=today();banner();note("Copy of "+q.no+" ready — save to give it a new number")}
+    else if(act==="delete"){if(confirm("Delete quotation "+q.no+"? This cannot be undone from the app.")){api("/api/quotes/"+encodeURIComponent(q.id),{method:"DELETE"}).then(function(){window.FBI_QUOTES=window.FBI_QUOTES.filter(function(x){return x!==q});renderQuotes();note("Quotation deleted")}).catch(function(x){note(x.message)})}}
+  });
+  document.addEventListener("toggle",function(ev){var d=ev.target;if(!d||!d.classList||!d.classList.contains("inv-more"))return;var row=d.closest(".qt-row");if(row)row.classList.toggle("menu-open",d.open)},true);
+  var qsIn=$("quoteSearch");if(qsIn)qsIn.addEventListener("input",renderQuotes);
+  var qv=$("view-quotes");if(qv){try{new MutationObserver(function(){if(qv.classList.contains("active"))loadQuotes()}).observe(qv,{attributes:true,attributeFilter:["class"]})}catch(x){}}
+  // Leaving the Create page while in quotation mode returns the form to invoice mode next time
+  setTimeout(loadQuotes,1200);
 })();
 </script>
