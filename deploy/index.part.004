@@ -972,6 +972,8 @@ html body #view-create.cx .cx-ghost{background:transparent!important;color:var(-
 /* Toasts never block taps: an invisible toast used to sit on top of the phone Save / PDF buttons. */
 html body .toast{pointer-events:none!important}
 @media(max-width:820px){html body .toast{left:12px!important;right:12px!important;bottom:calc(84px + env(safe-area-inset-bottom))!important;text-align:center}}
+/* Keep the invoice's colours, black bars and logo when printing / saving as PDF (browsers drop backgrounds by default). */
+@media print{.paper,.paper *,.receipt-paper,.receipt-paper *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}
 @media print{html body #view-create.cx .cx-aside,html body #view-create.cx .cx-steps{display:none!important}}
 </style>
 <script id="fbi-create-v3-js">
