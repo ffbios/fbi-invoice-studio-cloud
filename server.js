@@ -2,6 +2,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const zlib = require('node:zlib');
 const { Pool } = require('pg');
 
 const HOST = process.env.HOST || '0.0.0.0';
@@ -245,28 +246,46 @@ async function initDb() {
   await importArchiveState();
 }
 
+// Mobile data is slow: compress text responses for any client that accepts gzip.
+function acceptsGzip(res) {
+  const req = res && res.req;
+  return !!(req && /\bgzip\b/i.test(String(req.headers['accept-encoding'] || '')));
+}
+function sendCompressible(res, status, headers, raw) {
+  const buf = Buffer.isBuffer(raw) ? raw : Buffer.from(String(raw), 'utf8');
+  if (buf.length > 1024 && acceptsGzip(res)) {
+    const gz = zlib.gzipSync(buf, { level: 6 });
+    res.writeHead(status, { ...headers, 'Content-Encoding': 'gzip', 'Vary': 'Accept-Encoding', 'Content-Length': gz.length });
+    return res.end(gz);
+  }
+  res.writeHead(status, { ...headers, 'Content-Length': buf.length });
+  return res.end(buf);
+}
+
 function json(res, status, body, extraHeaders = {}) {
   const raw = JSON.stringify(body);
-  res.writeHead(status, {
+  return sendCompressible(res, status, {
     'Content-Type': 'application/json; charset=utf-8',
-    'Content-Length': Buffer.byteLength(raw),
     'Cache-Control': 'no-store',
     'X-Content-Type-Options': 'nosniff',
     ...extraHeaders
-  });
-  res.end(raw);
+  }, raw);
 }
 
 function sendStatic(res, pathname) {
   const entry = STATIC_FILES[pathname];
   if (!entry || !fs.existsSync(entry.file)) return false;
   const stat = fs.statSync(entry.file);
-  res.writeHead(200, {
+  const headers = {
     'Content-Type': entry.type,
-    'Content-Length': stat.size,
     'Cache-Control': pathname === '/sw.js' || pathname === '/payroll-staff-form.html' || pathname === '/payroll-staff-portal.html' ? 'no-store, no-cache, must-revalidate, max-age=0' : 'public, max-age=86400',
     'X-Content-Type-Options': 'nosniff'
-  });
+  };
+  if (/^(text\/|application\/(javascript|json|manifest)|image\/svg)/.test(entry.type)) {
+    sendCompressible(res, 200, headers, fs.readFileSync(entry.file));
+    return true;
+  }
+  res.writeHead(200, { ...headers, 'Content-Length': stat.size });
   fs.createReadStream(entry.file).pipe(res);
   return true;
 }
@@ -302,50 +321,43 @@ function sendPublicBusinessPage(res, kind) {
   res.end(raw);
 }
 
+// The page is the same for every visitor, so it is built once (and gzipped once) and kept
+// in memory until index.html changes. The database is no longer embedded in the page —
+// the app already loads its records from /api/state after sign-in — which keeps the first
+// load small and stops signed-out visitors from receiving business records.
+const AUTH_GATE_HTML = "<style id=\"fbi-auth-style\">\nbody.fbi-auth-pending{overflow:hidden}\n#fbiAuthGate{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 50% 10%,#202634 0%,#08090c 60%);font-family:Inter,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Arial,sans-serif;color:#f7f8fb}\n#fbiAuthGate[hidden]{display:none}\n.fbi-auth-card{width:min(430px,100%);max-height:calc(100vh - 40px);overflow:auto;background:linear-gradient(180deg,#151a23,#0d1016);border:1px solid #303746;border-radius:24px;box-shadow:0 30px 80px #0009;padding:28px}\n.fbi-auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}.fbi-auth-brand img{width:46px;height:46px;object-fit:contain}.fbi-auth-brand strong{display:block;font-size:15px;letter-spacing:1.5px}.fbi-auth-brand span{display:block;color:#9099a9;font-size:11px;margin-top:3px;letter-spacing:1px}\n.fbi-auth-card h1{margin:0 0 7px;font-size:27px}.fbi-auth-card p{color:#9ba4b3;font-size:13px;line-height:1.5;margin:0 0 20px}\n.fbi-auth-form{display:grid;gap:12px}.fbi-auth-label{display:grid;gap:6px;color:#b4bdcb;font-size:12px;font-weight:700}.fbi-auth-label input,.fbi-auth-label select{width:100%;border:1px solid #323a49;background:#0b0e14;color:#f7f8fb;border-radius:12px;padding:13px 14px;outline:none}.fbi-auth-label input:focus,.fbi-auth-label select:focus{border-color:#c71954;box-shadow:0 0 0 3px #c7195422}\n.fbi-auth-primary{border:0;border-radius:12px;padding:13px 16px;background:#c71954;color:#fff;font-weight:800}.fbi-auth-primary:disabled{opacity:.6}.fbi-auth-secondary{border:1px solid #343b49;border-radius:12px;padding:12px 16px;background:#151a22;color:#e8ebf1;font-weight:700}.fbi-auth-links{display:flex;justify-content:flex-end;margin-top:2px}.fbi-auth-link{border:0;background:none;color:#d6dbe4;padding:4px 0;font-size:12px;text-decoration:underline}.fbi-auth-error{min-height:18px;color:#ff8aa9;font-size:12px}.fbi-auth-note{padding:11px 12px;border-radius:11px;background:#111722;border:1px solid #293141;color:#8f99aa;font-size:11px;line-height:1.5}\n@media(max-width:480px){.fbi-auth-card{padding:22px;border-radius:20px}}\n</style>\n<div id=\"fbiAuthGate\">\n<div class=\"fbi-auth-card\">\n<div class=\"fbi-auth-brand\"><img src=\"/assets/fbi-brand-logo.svg\" alt=\"FBI\"><div><strong>FBI INVOICE STUDIO</strong><span>ADMINISTRATOR ACCESS</span></div></div>\n<div id=\"fbiAuthContent\"></div>\n</div>\n</div>\n<script>\n(function(){\ndocument.body.classList.add('fbi-auth-pending');\nvar gate=document.getElementById('fbiAuthGate'),root=document.getElementById('fbiAuthContent');\nvar questions=[\"What was the name of your first school?\",\"What is the middle name of your mother?\",\"What was the name of your childhood best friend?\",\"What city were you born in?\",\"What was the name of your first pet?\",\"What was your childhood nickname?\",\"What was the first car you or your family owned?\",\"What is the name of the street where you grew up?\"];\nfunction esc(s){return String(s==null?'':s).replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#039;'}[c];});}\nasync function api(path,options){var o=options||{};var r=await fetch(path,Object.assign({credentials:'same-origin',headers:Object.assign({'Content-Type':'application/json'},o.headers||{})},o));var d={};try{d=await r.json();}catch(e){}if(!r.ok)throw new Error(d.error||'Request failed');return d;}\nfunction signedIn(){root.innerHTML='<h1>Signed in</h1><p>Loading your invoices…</p>';location.reload();}\nfunction finish(){gate.hidden=true;document.body.classList.remove('fbi-auth-pending');window.dispatchEvent(new CustomEvent('fbi-authenticated'));}\nfunction showLogin(message){\nroot.innerHTML='<h1>Administrator Sign In</h1><p>Sign in to access your invoices, clients, receipts, payroll and business records.</p><form id=\"fbiLogin\" class=\"fbi-auth-form\"><label class=\"fbi-auth-label\">Username<input name=\"username\" autocomplete=\"username\" required></label><label class=\"fbi-auth-label\">Password<input type=\"password\" name=\"password\" autocomplete=\"current-password\" required></label><div class=\"fbi-auth-error\">'+esc(message||'')+'</div><button type=\"submit\" class=\"fbi-auth-primary\">Sign in</button><div class=\"fbi-auth-links\"><button type=\"button\" class=\"fbi-auth-link\" id=\"fbiForgot\">Forgot password?</button></div></form>';\ndocument.getElementById('fbiLogin').onsubmit=async function(e){e.preventDefault();var f=new FormData(e.currentTarget),btn=e.currentTarget.querySelector('button[type=\"submit\"]');btn.disabled=true;try{await api('/api/auth/login',{method:'POST',body:JSON.stringify({username:f.get('username'),password:f.get('password')})});signedIn();}catch(err){showLogin(err.message);}};\ndocument.getElementById('fbiForgot').onclick=showResetStart;\n}\nfunction showSetup(message){\nroot.innerHTML='<h1>Create Administrator Account</h1><p>Create the administrator account that will control FBI Invoice Studio. This is a one-time setup.</p><form id=\"fbiSetup\" class=\"fbi-auth-form\"><label class=\"fbi-auth-label\">Administrator username<input name=\"username\" autocomplete=\"username\" minlength=\"3\" required></label><label class=\"fbi-auth-label\">Password<input type=\"password\" name=\"password\" autocomplete=\"new-password\" minlength=\"8\" required></label><label class=\"fbi-auth-label\">Confirm password<input type=\"password\" name=\"confirmPassword\" autocomplete=\"new-password\" minlength=\"8\" required></label><div class=\"fbi-auth-note\">Choose two different security questions and answers you will remember. Avoid answers that other people can easily guess.</div><label class=\"fbi-auth-label\">Security question 1<select name=\"securityQuestion1\" required>'+questions.map(function(q){return '<option>'+esc(q)+'</option>';}).join('')+'</select></label><label class=\"fbi-auth-label\">Answer 1<input name=\"securityAnswer1\" autocomplete=\"off\" required></label><label class=\"fbi-auth-label\">Security question 2<select name=\"securityQuestion2\" required>'+questions.map(function(q,i){return '<option '+(i===1?'selected':'')+'>'+esc(q)+'</option>';}).join('')+'</select></label><label class=\"fbi-auth-label\">Answer 2<input name=\"securityAnswer2\" autocomplete=\"off\" required></label><div class=\"fbi-auth-error\">'+esc(message||'')+'</div><button type=\"submit\" class=\"fbi-auth-primary\">Create administrator account</button></form>';\ndocument.getElementById('fbiSetup').onsubmit=async function(e){e.preventDefault();var f=new FormData(e.currentTarget),btn=e.currentTarget.querySelector('button[type=\"submit\"]');btn.disabled=true;try{await api('/api/auth/setup',{method:'POST',body:JSON.stringify(Object.fromEntries(f.entries()))});signedIn();}catch(err){showSetup(err.message);}};\n}\nasync function showResetStart(){\nroot.innerHTML='<h1>Reset Administrator Password</h1><p>Enter your administrator username. Your saved security questions will then appear.</p><form id=\"fbiResetStart\" class=\"fbi-auth-form\"><label class=\"fbi-auth-label\">Username<input name=\"username\" autocomplete=\"username\" required></label><div class=\"fbi-auth-error\"></div><button type=\"submit\" class=\"fbi-auth-primary\">Continue</button><button type=\"button\" class=\"fbi-auth-secondary\" id=\"fbiBackLogin\">Back to sign in</button></form>';\ndocument.getElementById('fbiBackLogin').onclick=function(){showLogin('');};\ndocument.getElementById('fbiResetStart').onsubmit=async function(e){e.preventDefault();var f=new FormData(e.currentTarget),box=e.currentTarget.querySelector('.fbi-auth-error');try{var d=await api('/api/auth/recovery-questions?username='+encodeURIComponent(f.get('username')));showResetForm(String(f.get('username')),d.questions);}catch(err){box.textContent=err.message;}};\n}\nfunction showResetForm(username,qs){\nroot.innerHTML='<h1>Verify Your Identity</h1><p>Answer both security questions, then choose a new password.</p><form id=\"fbiReset\" class=\"fbi-auth-form\"><label class=\"fbi-auth-label\">Username<input name=\"username\" value=\"'+esc(username)+'\" readonly></label><label class=\"fbi-auth-label\">'+esc(qs[0])+'<input name=\"securityAnswer1\" autocomplete=\"off\" required></label><label class=\"fbi-auth-label\">'+esc(qs[1])+'<input name=\"securityAnswer2\" autocomplete=\"off\" required></label><label class=\"fbi-auth-label\">New password<input type=\"password\" name=\"newPassword\" autocomplete=\"new-password\" minlength=\"8\" required></label><label class=\"fbi-auth-label\">Confirm new password<input type=\"password\" name=\"confirmPassword\" autocomplete=\"new-password\" minlength=\"8\" required></label><div class=\"fbi-auth-error\"></div><button type=\"submit\" class=\"fbi-auth-primary\">Reset password</button><button type=\"button\" class=\"fbi-auth-secondary\" id=\"fbiBackLogin\">Back to sign in</button></form>';\ndocument.getElementById('fbiBackLogin').onclick=function(){showLogin('');};\ndocument.getElementById('fbiReset').onsubmit=async function(e){e.preventDefault();var f=new FormData(e.currentTarget),box=e.currentTarget.querySelector('.fbi-auth-error');if(f.get('newPassword')!==f.get('confirmPassword')){box.textContent='Passwords do not match.';return;}try{await api('/api/auth/reset',{method:'POST',body:JSON.stringify({username:f.get('username'),securityAnswer1:f.get('securityAnswer1'),securityAnswer2:f.get('securityAnswer2'),newPassword:f.get('newPassword')})});signedIn();}catch(err){box.textContent=err.message;}};\n}\nasync function boot(){\ntry{var d=await api('/api/auth/status');if(d.authenticated){finish();return;}if(!d.accountExists){showSetup('');}else{showLogin('');}}\ncatch(err){root.innerHTML='<h1>Authentication unavailable</h1><p>FBI Invoice Studio could not verify the administrator session. Please refresh and try again.</p><div class=\"fbi-auth-error\">'+esc(err.message)+'</div>';}\n}\nboot();\n})();\n</script>";
+let indexCache = null;
+function buildIndexPage() {
+  const mtime = fs.statSync(INDEX_FILE).mtimeMs;
+  if (indexCache && indexCache.mtime === mtime) return indexCache;
+  const html = fs.readFileSync(INDEX_FILE, 'utf8').replace('</head>', AUTH_GATE_HTML + '</head>');
+  const raw = Buffer.from(html, 'utf8');
+  indexCache = { mtime, raw, gz: zlib.gzipSync(raw, { level: 9 }) };
+  return indexCache;
+}
+
 async function sendIndex(res) {
-  try {
-    // Inject the authoritative PostgreSQL state into the initial HTML.
-    // This removes the last client-side race: the app has its records before
-    // any startup renderer, service worker, or async fetch can run.
-    const stateResult = await pool.query('SELECT version,saved_at,state_json FROM app_state WHERE id=1');
-    let state = stateResult.rows[0]?.state_json || null;
-    if (typeof state === 'string') {
-      try { state = JSON.parse(state); } catch { state = null; }
-    }
-
-    let html = fs.readFileSync(INDEX_FILE, 'utf8');
-    html = html.replace('</head>', "<style id=\"fbi-auth-style\">\nbody.fbi-auth-pending{overflow:hidden}\n#fbiAuthGate{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 50% 10%,#202634 0%,#08090c 60%);font-family:Inter,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Arial,sans-serif;color:#f7f8fb}\n#fbiAuthGate[hidden]{display:none}\n.fbi-auth-card{width:min(430px,100%);max-height:calc(100vh - 40px);overflow:auto;background:linear-gradient(180deg,#151a23,#0d1016);border:1px solid #303746;border-radius:24px;box-shadow:0 30px 80px #0009;padding:28px}\n.fbi-auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}.fbi-auth-brand img{width:46px;height:46px;object-fit:contain}.fbi-auth-brand strong{display:block;font-size:15px;letter-spacing:1.5px}.fbi-auth-brand span{display:block;color:#9099a9;font-size:11px;margin-top:3px;letter-spacing:1px}\n.fbi-auth-card h1{margin:0 0 7px;font-size:27px}.fbi-auth-card p{color:#9ba4b3;font-size:13px;line-height:1.5;margin:0 0 20px}\n.fbi-auth-form{display:grid;gap:12px}.fbi-auth-label{display:grid;gap:6px;color:#b4bdcb;font-size:12px;font-weight:700}.fbi-auth-label input,.fbi-auth-label select{width:100%;border:1px solid #323a49;background:#0b0e14;color:#f7f8fb;border-radius:12px;padding:13px 14px;outline:none}.fbi-auth-label input:focus,.fbi-auth-label select:focus{border-color:#c71954;box-shadow:0 0 0 3px #c7195422}\n.fbi-auth-primary{border:0;border-radius:12px;padding:13px 16px;background:#c71954;color:#fff;font-weight:800}.fbi-auth-primary:disabled{opacity:.6}.fbi-auth-secondary{border:1px solid #343b49;border-radius:12px;padding:12px 16px;background:#151a22;color:#e8ebf1;font-weight:700}.fbi-auth-links{display:flex;justify-content:flex-end;margin-top:2px}.fbi-auth-link{border:0;background:none;color:#d6dbe4;padding:4px 0;font-size:12px;text-decoration:underline}.fbi-auth-error{min-height:18px;color:#ff8aa9;font-size:12px}.fbi-auth-note{padding:11px 12px;border-radius:11px;background:#111722;border:1px solid #293141;color:#8f99aa;font-size:11px;line-height:1.5}\n@media(max-width:480px){.fbi-auth-card{padding:22px;border-radius:20px}}\n</style>\n<div id=\"fbiAuthGate\">\n<div class=\"fbi-auth-card\">\n<div class=\"fbi-auth-brand\"><img src=\"/assets/fbi-brand-logo.svg\" alt=\"FBI\"><div><strong>FBI INVOICE STUDIO</strong><span>ADMINISTRATOR ACCESS</span></div></div>\n<div id=\"fbiAuthContent\"></div>\n</div>\n</div>\n<script>\n(function(){\ndocument.body.classList.add('fbi-auth-pending');\nvar gate=document.getElementById('fbiAuthGate'),root=document.getElementById('fbiAuthContent');\nvar questions=[\"What was the name of your first school?\",\"What is the middle name of your mother?\",\"What was the name of your childhood best friend?\",\"What city were you born in?\",\"What was the name of your first pet?\",\"What was your childhood nickname?\",\"What was the first car you or your family owned?\",\"What is the name of the street where you grew up?\"];\nfunction esc(s){return String(s==null?'':s).replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#039;'}[c];});}\nasync function api(path,options){var o=options||{};var r=await fetch(path,Object.assign({credentials:'same-origin',headers:Object.assign({'Content-Type':'application/json'},o.headers||{})},o));var d={};try{d=await r.json();}catch(e){}if(!r.ok)throw new Error(d.error||'Request failed');return d;}\nfunction signedIn(){root.innerHTML='<h1>Signed in</h1><p>Loading your invoices…</p>';location.reload();}\nfunction finish(){gate.hidden=true;document.body.classList.remove('fbi-auth-pending');window.dispatchEvent(new CustomEvent('fbi-authenticated'));}\nfunction showLogin(message){\nroot.innerHTML='<h1>Administrator Sign In</h1><p>Sign in to access your invoices, clients, receipts, payroll and business records.</p><form id=\"fbiLogin\" class=\"fbi-auth-form\"><label class=\"fbi-auth-label\">Username<input name=\"username\" autocomplete=\"username\" required></label><label class=\"fbi-auth-label\">Password<input type=\"password\" name=\"password\" autocomplete=\"current-password\" required></label><div class=\"fbi-auth-error\">'+esc(message||'')+'</div><button type=\"submit\" class=\"fbi-auth-primary\">Sign in</button><div class=\"fbi-auth-links\"><button type=\"button\" class=\"fbi-auth-link\" id=\"fbiForgot\">Forgot password?</button></div></form>';\ndocument.getElementById('fbiLogin').onsubmit=async function(e){e.preventDefault();var f=new FormData(e.currentTarget),btn=e.currentTarget.querySelector('button[type=\"submit\"]');btn.disabled=true;try{await api('/api/auth/login',{method:'POST',body:JSON.stringify({username:f.get('username'),password:f.get('password')})});signedIn();}catch(err){showLogin(err.message);}};\ndocument.getElementById('fbiForgot').onclick=showResetStart;\n}\nfunction showSetup(message){\nroot.innerHTML='<h1>Create Administrator Account</h1><p>Create the administrator account that will control FBI Invoice Studio. This is a one-time setup.</p><form id=\"fbiSetup\" class=\"fbi-auth-form\"><label class=\"fbi-auth-label\">Administrator username<input name=\"username\" autocomplete=\"username\" minlength=\"3\" required></label><label class=\"fbi-auth-label\">Password<input type=\"password\" name=\"password\" autocomplete=\"new-password\" minlength=\"8\" required></label><label class=\"fbi-auth-label\">Confirm password<input type=\"password\" name=\"confirmPassword\" autocomplete=\"new-password\" minlength=\"8\" required></label><div class=\"fbi-auth-note\">Choose two different security questions and answers you will remember. Avoid answers that other people can easily guess.</div><label class=\"fbi-auth-label\">Security question 1<select name=\"securityQuestion1\" required>'+questions.map(function(q){return '<option>'+esc(q)+'</option>';}).join('')+'</select></label><label class=\"fbi-auth-label\">Answer 1<input name=\"securityAnswer1\" autocomplete=\"off\" required></label><label class=\"fbi-auth-label\">Security question 2<select name=\"securityQuestion2\" required>'+questions.map(function(q,i){return '<option '+(i===1?'selected':'')+'>'+esc(q)+'</option>';}).join('')+'</select></label><label class=\"fbi-auth-label\">Answer 2<input name=\"securityAnswer2\" autocomplete=\"off\" required></label><div class=\"fbi-auth-error\">'+esc(message||'')+'</div><button type=\"submit\" class=\"fbi-auth-primary\">Create administrator account</button></form>';\ndocument.getElementById('fbiSetup').onsubmit=async function(e){e.preventDefault();var f=new FormData(e.currentTarget),btn=e.currentTarget.querySelector('button[type=\"submit\"]');btn.disabled=true;try{await api('/api/auth/setup',{method:'POST',body:JSON.stringify(Object.fromEntries(f.entries()))});signedIn();}catch(err){showSetup(err.message);}};\n}\nasync function showResetStart(){\nroot.innerHTML='<h1>Reset Administrator Password</h1><p>Enter your administrator username. Your saved security questions will then appear.</p><form id=\"fbiResetStart\" class=\"fbi-auth-form\"><label class=\"fbi-auth-label\">Username<input name=\"username\" autocomplete=\"username\" required></label><div class=\"fbi-auth-error\"></div><button type=\"submit\" class=\"fbi-auth-primary\">Continue</button><button type=\"button\" class=\"fbi-auth-secondary\" id=\"fbiBackLogin\">Back to sign in</button></form>';\ndocument.getElementById('fbiBackLogin').onclick=function(){showLogin('');};\ndocument.getElementById('fbiResetStart').onsubmit=async function(e){e.preventDefault();var f=new FormData(e.currentTarget),box=e.currentTarget.querySelector('.fbi-auth-error');try{var d=await api('/api/auth/recovery-questions?username='+encodeURIComponent(f.get('username')));showResetForm(String(f.get('username')),d.questions);}catch(err){box.textContent=err.message;}};\n}\nfunction showResetForm(username,qs){\nroot.innerHTML='<h1>Verify Your Identity</h1><p>Answer both security questions, then choose a new password.</p><form id=\"fbiReset\" class=\"fbi-auth-form\"><label class=\"fbi-auth-label\">Username<input name=\"username\" value=\"'+esc(username)+'\" readonly></label><label class=\"fbi-auth-label\">'+esc(qs[0])+'<input name=\"securityAnswer1\" autocomplete=\"off\" required></label><label class=\"fbi-auth-label\">'+esc(qs[1])+'<input name=\"securityAnswer2\" autocomplete=\"off\" required></label><label class=\"fbi-auth-label\">New password<input type=\"password\" name=\"newPassword\" autocomplete=\"new-password\" minlength=\"8\" required></label><label class=\"fbi-auth-label\">Confirm new password<input type=\"password\" name=\"confirmPassword\" autocomplete=\"new-password\" minlength=\"8\" required></label><div class=\"fbi-auth-error\"></div><button type=\"submit\" class=\"fbi-auth-primary\">Reset password</button><button type=\"button\" class=\"fbi-auth-secondary\" id=\"fbiBackLogin\">Back to sign in</button></form>';\ndocument.getElementById('fbiBackLogin').onclick=function(){showLogin('');};\ndocument.getElementById('fbiReset').onsubmit=async function(e){e.preventDefault();var f=new FormData(e.currentTarget),box=e.currentTarget.querySelector('.fbi-auth-error');if(f.get('newPassword')!==f.get('confirmPassword')){box.textContent='Passwords do not match.';return;}try{await api('/api/auth/reset',{method:'POST',body:JSON.stringify({username:f.get('username'),securityAnswer1:f.get('securityAnswer1'),securityAnswer2:f.get('securityAnswer2'),newPassword:f.get('newPassword')})});signedIn();}catch(err){box.textContent=err.message;}};\n}\nasync function boot(){\ntry{var d=await api('/api/auth/status');if(d.authenticated){finish();return;}if(!d.accountExists){showSetup('');}else{showLogin('');}}\ncatch(err){root.innerHTML='<h1>Authentication unavailable</h1><p>FBI Invoice Studio could not verify the administrator session. Please refresh and try again.</p><div class=\"fbi-auth-error\">'+esc(err.message)+'</div>';}\n}\nboot();\n})();\n</script>" + '</head>');
-    if (state && state.data && Array.isArray(state.data.data) && Array.isArray(state.data.clients)) {
-      const safeState = JSON.stringify(state)
-        .replace(/</g, '\\u003c')
-        .replace(/>/g, '\\u003e')
-        .replace(/&/g, '\\u0026');
-      const boot = '<script>window.__FBI_SERVER_STATE__=' + safeState + ';</script>';
-      html = html.replace('</head>', boot + '</head>');
-    }
-
-    const raw = Buffer.from(html, 'utf8');
-    res.writeHead(200, {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Content-Length': raw.length,
-      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-      'Pragma': 'no-cache',
-      'X-Content-Type-Options': 'nosniff'
-    });
-    res.end(raw);
-  } catch (err) {
+  const headers = {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+    'Pragma': 'no-cache',
+    'X-Content-Type-Options': 'nosniff',
+    'Vary': 'Accept-Encoding'
+  };
+  let page;
+  try { page = buildIndexPage(); }
+  catch (err) {
     console.error('Index render failed:', err);
-    // Serve the static shell rather than taking the whole app down.
     const raw = fs.readFileSync(INDEX_FILE);
-    res.writeHead(200, {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Content-Length': raw.length,
-      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-      'Pragma': 'no-cache',
-      'X-Content-Type-Options': 'nosniff'
-    });
-    res.end(raw);
+    res.writeHead(200, { ...headers, 'Content-Length': raw.length });
+    return res.end(raw);
   }
+  if (acceptsGzip(res)) {
+    res.writeHead(200, { ...headers, 'Content-Encoding': 'gzip', 'Content-Length': page.gz.length });
+    return res.end(page.gz);
+  }
+  res.writeHead(200, { ...headers, 'Content-Length': page.raw.length });
+  return res.end(page.raw);
 }
 
 function readBody(req) {
@@ -362,7 +374,15 @@ function readBody(req) {
       }
       chunks.push(chunk);
     });
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    req.on('end', () => {
+      const body = Buffer.concat(chunks);
+      if (/gzip/i.test(String(req.headers['content-encoding'] || '')) || (body.length > 2 && body[0] === 0x1f && body[1] === 0x8b)) {
+        // Phones upload the invoice database gzip-compressed (far smaller on mobile data).
+        zlib.gunzip(body, { maxOutputLength: 100 * 1024 * 1024 }, (err, out) => err ? reject(new Error('Could not read compressed upload.')) : resolve(out.toString('utf8')));
+        return;
+      }
+      resolve(body.toString('utf8'));
+    });
     req.on('error', reject);
   });
 }
@@ -809,7 +829,8 @@ async function handleStateWrite(req, res) {
     await db.query('COMMIT');
     db.release(); db = null;
 
-    await notifyInvoiceStateChanges(currentState, merged, 'Admin/Portal state sync');
+    // WhatsApp alerts run in the background so a slow or failing Meta API never delays the save.
+    notifyInvoiceStateChanges(currentState, merged, 'Admin/Portal state sync').catch(err => console.error('Invoice notifications failed:', err));
 
     const updatedInvoices = info.invoiceMap ? Array.from(info.updatedKeys).map(k => info.invoiceMap.get(k)).filter(Boolean) : [];
     return json(res, 200, {

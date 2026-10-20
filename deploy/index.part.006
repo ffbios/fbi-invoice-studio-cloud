@@ -122,7 +122,7 @@ async function savePdfToDrive(){
     renderPaper();
     persist();
     openDocumentPrint($("paper"),"Invoice "+invoice.no,"size:A4 portrait;margin:0");
-    toast("Use the print dialog and choose Save as PDF");
+    if(!isMobilePdfDevice())toast("Use the print dialog and choose Save as PDF");
   }catch(err){console.error(err);toast("Could not prepare PDF: "+err.message)}
 }
 async function saveReceiptToDrive(){
@@ -131,7 +131,7 @@ async function saveReceiptToDrive(){
     renderReceipt(current);
     persist();
     openDocumentPrint($("receiptPaper"),"Receipt "+(current.receiptNo||nextReceiptNumber()),"size:A5 portrait;margin:0");
-    toast("Use the print dialog and choose Save as PDF");
+    if(!isMobilePdfDevice())toast("Use the print dialog and choose Save as PDF");
   }catch(err){console.error(err);toast("Could not prepare receipt PDF: "+err.message)}
 }
 

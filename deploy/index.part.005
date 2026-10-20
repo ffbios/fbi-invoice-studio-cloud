@@ -62,7 +62,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("reportModal")?.c
 
 function show(v){document.body.classList.remove("receipt-print-mode");document.querySelectorAll(".view").forEach(x=>x.classList.remove("active","print-view"));$("view-"+v).classList.add("active");document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.v===v));let t={dashboard:["Overview","Where FBI's money stands today"],create:["Create invoice","Build, save and print an invoice"],clients:["Clients","Contacts, billing details and history"],saved:["Invoices","Find, open and follow up every invoice"],completed:["Jobs","Track every job linked to an invoice"],quotes:["Quotations","Quotes and pro-forma invoices for clients"],calendar:["Calendar","View media event dates and invoice details"],receipts:["Receipts","Every payment recorded against an invoice"],settings:["Business settings","Business details, staff access and backups"],whatsapp:["WhatsApp Alerts","Automatic invoice notifications"],preview:["Invoice Preview","Preview and print your invoice"],"receipt-preview":["Official Receipt","Preview and print your receipt"]}[v]||["Invoice Studio",""];$("title").textContent=t[0];$("subtitle").textContent=t[1];if(v==="saved")renderSaved();if(v==="calendar")renderCalendar();if(v==="receipts")renderReceipts();if(v==="clients")renderClients();if(v==="dashboard")dashboard();if(v==="create"){populateClientSelect();initServiceCatalog();}$("side").classList.remove("open")}
 document.querySelectorAll(".nav button").forEach(b=>{b.addEventListener("click",function(e){e.preventDefault();if(window.__FBI_NAV__)window.__FBI_NAV__(b.dataset.v);else show(b.dataset.v);});});$("template").onchange=()=>setTemplate($("template").value);["amountPaid","paymentDate","paymentMethod","transactionRef","receivedBy"].forEach(id=>$(id)?.addEventListener("input",()=>{if(id==="amountPaid")updatePaymentBalancePreview()}));
-function toast(x){let t=$("toast");t.textContent=x;t.classList.add("show");clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove("show"),2000)}
+function toast(x){let t=$("toast");t.textContent=x;t.classList.add("show");clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove("show"),Math.min(7000,2000+String(x||"").length*40))}
 const DRAFT_KEY=KEY+":draft-v3";
 let lastPersistAt=0;
 
@@ -142,12 +142,16 @@ function persist(){
   setWindowNameEnvelope(json);
   lastPersistAt=envelope.savedAt;
 
-  serverPersistQueue=serverPersistQueue.then(async()=>{
+  const gen=++persistGeneration;
+  const task=serverPersistQueue.then(async()=>{
+    // A newer save is already waiting with everything this one has, so skip the duplicate upload.
+    if(gen!==persistGeneration)return 'superseded';
     try{
-      const res=await fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:json,cache:'no-store'});
-      if(!res.ok)throw new Error('HTTP '+res.status);
+      const upload=cloudUploadJson(envelope,json);
+      const res=await putCloudState(upload.text);
       const body=await res.json().catch(()=>({}));
       if(body.ok===false)throw new Error(body.error||'Database save failed');
+      if(upload.sentLogo)serverSyncedLogo=upload.logo;
       try{applyServerSaveResult(body)}catch(e){console.warn('Could not apply server updates',e)}
       serverDbOnline=true;
       lastServerPersistAt=envelope.savedAt;
@@ -164,7 +168,52 @@ function persist(){
       return false;
     }
   });
-  return serverPersistQueue;
+  serverPersistQueue=task.then(()=>{},()=>{});
+  const result=task.then(r=>r==='superseded'?latestPersistResult:r);
+  latestPersistResult=result;
+  return result;
+}
+/* ---- Mobile-friendly cloud upload ----
+   The whole invoice book is uploaded on every save. On mobile data that took 20–80 seconds
+   and phones often gave up, so the save never reached the database. Now the upload is
+   gzip-compressed, the business logo is only re-sent when it changes (the server keeps the
+   stored one), slow uploads are retried once, and back-to-back saves are merged. */
+let persistGeneration=0;
+let latestPersistResult=Promise.resolve(true);
+let serverSyncedLogo=undefined;
+function cloudUploadJson(envelope,fullJson){
+  const st=(envelope&&envelope.data&&envelope.data.settings)||{};
+  const logo=st.logo;
+  if(typeof logo==='string'&&logo&&serverSyncedLogo===logo){
+    const rest=Object.assign({},st);delete rest.logo;
+    return {text:JSON.stringify(Object.assign({},envelope,{data:Object.assign({},envelope.data,{settings:rest})})),sentLogo:false,logo};
+  }
+  return {text:fullJson,sentLogo:true,logo};
+}
+async function gzipText(text){
+  if(typeof CompressionStream!=='function')return null;
+  try{return await new Response(new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()}catch(e){return null}
+}
+async function putCloudState(text){
+  const gz=await gzipText(text);
+  let lastErr=null;
+  for(let attempt=0;attempt<2;attempt++){
+    const ctl=typeof AbortController==='function'?new AbortController():null;
+    const timer=ctl?setTimeout(()=>ctl.abort(),150000):null;
+    try{
+      const headers={'Content-Type':'application/json'};
+      if(gz)headers['Content-Encoding']='gzip';
+      const res=await fetch('/api/state',{method:'PUT',headers,body:gz||text,cache:'no-store',credentials:'same-origin',signal:ctl?ctl.signal:undefined});
+      if(res.status===401){const e=new Error('Your sign-in has expired. Please sign in again.');e.fatal=true;throw e}
+      if(res.status>=400&&res.status<500){const b=await res.json().catch(()=>({}));const e=new Error(b.error||('HTTP '+res.status));e.fatal=true;throw e}
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      return res;
+    }catch(e){
+      lastErr=e.name==='AbortError'?new Error('The upload timed out on a slow connection'):e;
+      if(e.fatal)break;
+    }finally{if(timer)clearTimeout(timer)}
+  }
+  throw lastErr||new Error('Upload failed');
 }
 /* After a save the server tells this device about invoices that changed elsewhere
    (staff portal, another computer) and about any invoice number it had to correct. */
@@ -206,6 +255,7 @@ function readPersistentPayload(){
       serverDbOnline=true;
       const st=$('storageStatus');
       if(st)st.textContent='Cloud PostgreSQL database is connected. Your invoices, clients and settings are restored from the cloud database.';
+      try{const lg=body&&body.state&&body.state.data&&body.state.data.settings&&body.state.data.settings.logo;serverSyncedLogo=typeof lg==='string'&&lg?lg:undefined}catch(e){}
       return body&&body.state?parseStoredEnvelope(JSON.stringify(body.state)):null;
     })
     .catch(e=>{
@@ -270,7 +320,9 @@ function collectDraft(){
 }
 function scheduleDraftSave(){
   clearTimeout(draftSaveTimer);
-  draftSaveTimer=setTimeout(()=>{try{const d=collectDraft();if(d)writeDraft(d)}catch(e){}},180);
+  // Wait for a pause in typing before saving the draft (was every keystroke), so drafts
+  // don't compete with the real Save for a phone's limited upload bandwidth.
+  draftSaveTimer=setTimeout(()=>{try{const d=collectDraft();if(d)writeDraft(d)}catch(e){}},1200);
 }
 function applyDraftEntry(entry,showMessage){
   if(!entry?.draft)return false;
@@ -590,7 +642,101 @@ function showReceipt(id,receiptId){
   $("side").classList.remove("open");
 }
 function renderReceipt(x){const s=settings,p=paymentTotals(x),full=p.balance<=0.005,logo=s.logo?`<div class="receipt-logo" style="background-image:url('${s.logo}')"></div>`:`<div class="receipt-logo"></div>`;const rows=(x.items||[]).map(i=>`<tr><td>${esc(i.desc)}</td><td>${i.qty}</td><td>${esc(money(i.qty*i.rate))}</td></tr>`).join("");const statusLabel=full?"PAID IN FULL":"PARTIAL PAYMENT";$("receiptPaper").innerHTML=`<div class="receipt-header"><div class="receipt-brand">${logo}<div class="receipt-biz"><h2>${esc(s.biz||"FILM BEYOND IMAGINATION (FBI)")}</h2><div>${s.owner?esc(s.owner)+"<br>":""}${esc(s.baddr||"")}<br>${esc(s.bphone||"")} · ${esc(s.bemail||"")}</div></div></div><div class="receipt-meta"><div class="label">Receipt Number</div><div class="receipt-no">${esc(x.receiptNo||nextReceiptNumber())}</div><div class="label">Payment Date</div><div class="date">${esc(x.paymentDate||new Date().toISOString().slice(0,10))}</div></div></div><div class="receipt-title">OFFICIAL PAYMENT RECEIPT</div><span class="receipt-paid-badge ${full?"":"partial"}">${statusLabel}</span><div class="receipt-grid"><div class="receipt-info"><div class="k">Received From</div><div class="v">${esc(x.client||"Client")}<br>${esc(x.clientAddress||"")}<br>${esc(x.clientPhone||"")}${x.clientEmail?" · "+esc(x.clientEmail):""}</div></div><div class="receipt-info"><div class="k">Reference</div><div class="v">Invoice: ${esc(x.no||"—")}<br>Payment Method: ${esc(x.paymentMethod||"—")}<br>Transaction Ref: ${esc(x.transactionRef||"—")}</div></div></div><table class="receipt-items"><thead><tr><th>Description</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${rows||`<tr><td>Invoice payment</td><td>1</td><td>${esc(fmtMoney(p.paid,x.cur))}</td></tr>`}</tbody></table><div class="receipt-total"><div class="receipt-total-box"><div class="receipt-total-line"><span>Invoice Total</span><b>${esc(fmtMoney(p.total,x.cur))}</b></div><div class="receipt-total-line"><span>Amount Received</span><b>${esc(fmtMoney(p.paid,x.cur))}</b></div><div class="receipt-total-line total"><span>RECEIVED</span><b>${esc(fmtMoney(p.paid,x.cur))}</b></div><div class="receipt-total-line balance"><span>Balance Remaining</span><b>${esc(fmtMoney(p.balance,x.cur))}</b></div></div></div><div class="receipt-note">Received with thanks. This receipt acknowledges payment made against the referenced invoice. ${x.notes?esc(x.notes):"Thank you for your business."}</div><div class="receipt-sign"><div class="line">Customer / Payer</div><div class="line">Received By${x.receivedBy?": "+esc(x.receivedBy):""}</div></div><div class="receipt-footer"><b>Receipt Record</b><br>Receipt ${esc(x.receiptNo||"")} · Invoice ${esc(x.no||"")} · ${esc(statusLabel)}<br>This document is a payment receipt. It is not a GRA E-VAT receipt unless issued through a GRA-certified invoicing system.</div>`}
+/* ---- PDF on phones ----
+   Phones (especially the installed app) can't use the pop-up + print dialog, so there the
+   document is turned straight into a real PDF file the user can share to WhatsApp/email or download.
+   Computers keep the print dialog (which also offers "Save as PDF"). */
+const HTML2PDF_SRC="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+let documentPdfBusy=false;
+function isMobilePdfDevice(){
+  try{
+    if(window.FBI_FORCE_PRINT_DIALOG)return false;
+    const ua=navigator.userAgent||"";
+    if(/Android|iPhone|iPad|iPod|Mobile/i.test(ua))return true;
+    if(navigator.maxTouchPoints>1&&/Macintosh/.test(ua))return true;
+    const standalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+    return !!(standalone&&window.matchMedia&&matchMedia("(max-width: 900px)").matches);
+  }catch(e){return false}
+}
+function documentPdfName(title){
+  return (String(title||"Document").replace(/[^\w.\- ]+/g,"").trim().replace(/\s+/g,"-")||"Document")+".pdf";
+}
+async function makeDocumentPdf(element,pageCss){
+  const isA5=/\bA5\b/i.test(pageCss||"");
+  const widthPx=isA5?559:794;               // 148mm / 210mm at 96 dpi
+  const styles=Array.from(document.querySelectorAll("style")).map(s=>s.textContent).join("\n").replace(/@media\s+print/gi,"@media all");
+  const links=Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map(l=>l.outerHTML).join("\n");
+  const frame=document.createElement("iframe");
+  frame.setAttribute("aria-hidden","true");frame.tabIndex=-1;
+  frame.style.cssText="position:fixed;left:-12000px;top:0;width:"+widthPx+"px;height:1400px;border:0;opacity:0;pointer-events:none";
+  document.body.appendChild(frame);
+  try{
+    const doc=frame.contentDocument;
+    doc.open();
+    doc.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width='+widthPx+'">'+links+'<style>'+styles+'\nhtml,body{margin:0!important;padding:0!important;background:#fff!important;display:block!important;min-height:0!important;width:'+widthPx+'px!important;overflow:visible!important}body{color:#111!important}.print-root{width:'+widthPx+'px;margin:0!important;padding:0!important;background:#fff!important}.paper,.receipt-paper{box-shadow:none!important;margin:0 auto!important;max-width:none!important;transform:none!important}.no-print{display:none!important}</style></head><body><div class="print-root">'+element.outerHTML+'</div></body></html>');
+    doc.close();
+    await new Promise((resolve,reject)=>{
+      const sc=doc.createElement("script");sc.src=HTML2PDF_SRC;
+      sc.onload=resolve;sc.onerror=()=>reject(new Error("the PDF tool could not load (check your internet connection)"));
+      doc.head.appendChild(sc);
+    });
+    try{await Promise.race([doc.fonts?doc.fonts.ready:Promise.resolve(),new Promise(r=>setTimeout(r,3000))])}catch(e){}
+    await new Promise(r=>setTimeout(r,200));
+    const w=frame.contentWindow;
+    if(typeof w.html2pdf!=="function")throw new Error("the PDF tool did not start");
+    const out=await w.html2pdf().set({
+      margin:0,
+      image:{type:"jpeg",quality:0.95},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff",windowWidth:widthPx,scrollX:0,scrollY:0,logging:false},
+      jsPDF:{unit:"mm",format:isA5?"a5":"a4",orientation:"portrait"},
+      pagebreak:{mode:["css","legacy"]}
+    }).from(doc.querySelector(".print-root")).outputPdf("blob");
+    return new Blob([await out.arrayBuffer()],{type:"application/pdf"});
+  }finally{setTimeout(()=>{try{frame.remove()}catch(e){}},0)}
+}
+function showPdfReady(blob,filename){
+  let file;try{file=new File([blob],filename,{type:"application/pdf"})}catch(e){file=blob}
+  const url=URL.createObjectURL(file);
+  const old=document.getElementById("fbiPdfSheet");if(old)old.remove();
+  let canShare=false;try{canShare=!!(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]}))}catch(e){}
+  const kb=Math.max(1,Math.round(blob.size/1024));
+  const btn="display:block;width:100%;margin-top:10px;padding:14px;border-radius:12px;font-size:15px;font-weight:700;border:1px solid #343b49;background:#151a22;color:#f2f4f8";
+  const box=document.createElement("div");
+  box.id="fbiPdfSheet";box.className="no-print";
+  box.style.cssText="position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;padding:12px 12px calc(12px + env(safe-area-inset-bottom))";
+  box.innerHTML='<div style="width:min(440px,100%);background:#10131a;border:1px solid #2b303c;border-radius:20px;padding:18px;color:#f2f4f8;font-family:inherit">'+
+    '<div style="font-size:17px;font-weight:800">📄 PDF ready</div>'+
+    '<div style="color:#9aa3b2;font-size:13px;margin-top:4px;word-break:break-all">'+esc(filename)+' · '+kb+' KB</div>'+
+    (canShare?'<button type="button" data-pdf="share" style="'+btn+';background:#c71954;border-color:#c71954;color:#fff">📤 Send to client (WhatsApp, email…)</button>':'')+
+    '<button type="button" data-pdf="download" style="'+btn+'">⬇️ Download PDF</button>'+
+    '<button type="button" data-pdf="open" style="'+btn+'">👁 Open PDF</button>'+
+    '<button type="button" data-pdf="close" style="'+btn+';background:transparent">Close</button></div>';
+  const close=()=>{box.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)};
+  box.addEventListener("click",async ev=>{
+    if(ev.target===box)return close();
+    const a=ev.target.closest&&ev.target.closest("[data-pdf]");if(!a)return;
+    const act=a.getAttribute("data-pdf");
+    if(act==="close")return close();
+    if(act==="share"){try{await navigator.share({files:[file],title:filename.replace(/\.pdf$/,"")});close()}catch(e){if(e&&e.name!=="AbortError")toast("Sharing failed — use Download instead")}return}
+    if(act==="download"){const l=document.createElement("a");l.href=url;l.download=filename;document.body.appendChild(l);l.click();l.remove();toast("PDF saved to your Downloads");return}
+    if(act==="open"){window.open(url,"_blank")||(location.href=url);return}
+  });
+  document.body.appendChild(box);
+}
 function openDocumentPrint(element, title, pageCss){
+  if(!element){throw new Error("Document preview is empty")};
+  if(!isMobilePdfDevice())return openDocumentPrintDialog(element,title,pageCss);
+  if(documentPdfBusy){toast("Your PDF is still being prepared…");return true}
+  documentPdfBusy=true;
+  toast("Preparing PDF…");
+  const filename=documentPdfName(title);
+  makeDocumentPdf(element,pageCss)
+    .then(blob=>showPdfReady(blob,filename))
+    .catch(err=>{console.error("PDF creation failed",err);toast("Could not create the PDF: "+(err&&err.message||err)+". Opening the print screen instead.");openDocumentPrintDialog(element,title,pageCss)})
+    .finally(()=>{documentPdfBusy=false});
+  return true;
+}
+function openDocumentPrintDialog(element, title, pageCss){
   if(!element){throw new Error("Document preview is empty")};
   const popup=window.open("about:blank","_blank","width=1100,height=900");
   if(!popup){toast("Please allow pop-ups for this app so the invoice can be printed.");return false;}
@@ -668,10 +814,13 @@ async function save(){
     $("no").value=x.no;invoiceNumberReserved=x.no;
     if(i>=0)data[i]=x;else data.unshift(x);
     current=x;
-    const localOk=await persist();
+    dashboard();renderSaved();renderReceipts();
+    const slowNote=setTimeout(()=>toast("Saving to the cloud… please keep the app open"),1500);
+    let localOk=false;
+    try{localOk=await persist()}finally{clearTimeout(slowNote)}
     if(localOk)clearPersistentDraft();
     dashboard();renderSaved();renderReceipts();
-    toast(localOk?"Invoice saved":"Invoice could not be saved");
+    toast(localOk?"Invoice saved":"Saved on this device only — the cloud upload failed. Check your connection and tap Save again.");
     if(isNew && settings.waEnabled==="yes"){try{await sendWhatsAppNotification(x)}catch(e){console.warn("WhatsApp notification failed",e)}}
     return x;
   }catch(err){console.error(err);toast("Invoice could not be saved: "+err.message);throw err}
