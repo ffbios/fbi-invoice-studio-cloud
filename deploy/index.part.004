@@ -1196,6 +1196,9 @@ html[data-theme] body .cal2 .calendar-event.cal2-ev:hover{transform:translateY(-
 .cal2-ev-pay{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:99px;background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--muted)}
 .cal2-ev-pay.paid{background:color-mix(in srgb,#3ccf8e 18%,transparent);color:#3ccf8e}
 .cal2-ev-pay.overdue{background:color-mix(in srgb,#ff6b81 18%,transparent);color:#ff6b81}
+.cal2-ev-pay.sent{background:color-mix(in srgb,#4aa8ff 18%,transparent);color:#4aa8ff}
+.cal2-ev-pay.part{background:color-mix(in srgb,#f0b93a 18%,transparent);color:#f0b93a}
+html[data-theme="light"] .cal2-ev-pay.sent{color:#1f6fb8}html[data-theme="light"] .cal2-ev-pay.part{color:#946a0b}
 html[data-theme="light"] .cal2-ev-pay.paid{color:#127a52}html[data-theme="light"] .cal2-ev-pay.overdue{color:#b4233b}
 html[data-theme="light"] .cal2-ev-job{filter:brightness(.8)}
 .cal2-more{font-size:12px;font-weight:800;color:var(--cal-brand);padding:2px 4px}
@@ -1216,7 +1219,7 @@ html[data-theme="light"] .cal2-ev-job{filter:brightness(.8)}
 .cal2-row-right small{font-size:12px;color:var(--muted);white-space:nowrap}
 .cal2-empty{grid-column:1/-1;padding:30px;text-align:center;border:1px dashed var(--border);border-radius:16px;color:var(--muted);font-size:14px}
 @media(max-width:1100px){.cal2-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.cal2-stat.next{grid-column:span 3}}
-@media(max-width:760px){.cal2{padding:16px!important}.cal2-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.cal2-stat.next{grid-column:span 2}.cal2-legend em{display:none}html[data-theme] body .cal2-grid,.cal2-grid{gap:4px}html[data-theme] body .cal2 .calendar-day{min-height:70px;padding:6px;border-radius:10px}html[data-theme] body .cal2 .calendar-weekday{padding:2px;text-align:center;font-size:10.5px;letter-spacing:.04em}.cal2-ev-meta,.cal2-ev-foot,.cal2-todaytag{display:none}html[data-theme] body .cal2 .calendar-event.cal2-ev{padding:5px 5px 4px}.cal2-ev-client{font-size:10.5px}.cal2-add{display:none!important}.cal2-agenda{grid-template-columns:1fr}}
+@media(max-width:760px){.cal2{padding:16px!important}.cal2-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.cal2-stat.next{grid-column:span 2}.cal2-legend em{display:none}html[data-theme] body .cal2-grid,.cal2-grid{gap:4px}html[data-theme] body .cal2 .calendar-day{min-height:70px;padding:6px;border-radius:10px}html[data-theme] body .cal2 .calendar-weekday{padding:2px;text-align:center;font-size:10.5px;letter-spacing:.04em}.cal2-ev-meta,.cal2-ev-foot,.cal2-todaytag{display:none}html[data-theme] body .cal2 .calendar-event.cal2-ev{padding:5px 5px 4px}.cal2-ev-client{font-size:10.5px}.cal2-add{display:none!important}.cal2-agenda{grid-template-columns:1fr}.cal2-agenda .cal2-ev-foot{display:flex}}
 @media(prefers-reduced-motion:reduce){html[data-theme] body .cal2 .calendar-event.cal2-ev,.cal2-agenda .cal2-row{transition:none}html[data-theme] body .cal2 .calendar-event.cal2-ev:hover,.cal2-agenda .cal2-row:hover{transform:none}}
 </style>
 <section class="view" id="view-calendar">
