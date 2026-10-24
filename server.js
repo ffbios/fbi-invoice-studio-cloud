@@ -5,6 +5,7 @@ const crypto = require('node:crypto');
 const zlib = require('node:zlib');
 const { Pool } = require('pg');
 const momo = require('./momo');
+const notify = require('./notify');
 
 const HOST = process.env.HOST || '0.0.0.0';
 const PORT = Number(process.env.PORT || 10000);
@@ -181,7 +182,6 @@ async function importArchiveState() {
 }
 
 async function initDb() {
-  await ensureWhatsAppTables();
   await pool.query(`
     CREATE TABLE IF NOT EXISTS app_state (
       id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -231,6 +231,7 @@ async function initDb() {
 
   await ensureSafetyTables();
   await momo.ensureMomoTables(pool);
+  await notify.ensureTables(pool);
 
   const state = await pool.query('SELECT id FROM app_state WHERE id=1');
   if (state.rowCount === 0 && process.env.SEED_ON_EMPTY !== 'false' && fs.existsSync(SEED_FILE)) {
@@ -834,8 +835,6 @@ async function handleStateWrite(req, res) {
     await db.query('COMMIT');
     db.release(); db = null;
 
-    // WhatsApp alerts run in the background so a slow or failing Meta API never delays the save.
-    notifyInvoiceStateChanges(currentState, merged, 'Admin/Portal state sync').catch(err => console.error('Invoice notifications failed:', err));
 
     const updatedInvoices = info.invoiceMap ? Array.from(info.updatedKeys).map(k => info.invoiceMap.get(k)).filter(Boolean) : [];
     return json(res, 200, {
@@ -1168,210 +1167,6 @@ async function handleDraftDelete(req, res) {
 }
 
 
-const WHATSAPP_API_VERSION = process.env.META_WHATSAPP_API_VERSION || 'v23.0';
-const WHATSAPP_TOKEN = String(process.env.META_WHATSAPP_TOKEN || '').trim();
-const WHATSAPP_PHONE_NUMBER_ID = String(process.env.META_WHATSAPP_PHONE_NUMBER_ID || '').trim();
-const WHATSAPP_BUSINESS_ACCOUNT_ID = String(process.env.META_WHATSAPP_BUSINESS_ACCOUNT_ID || '').trim();
-const WHATSAPP_RECIPIENT = String(process.env.META_WHATSAPP_RECIPIENT || '').trim();
-const WHATSAPP_TEMPLATE = String(process.env.META_WHATSAPP_TEMPLATE || 'fbi_invoice_alert').trim();
-const WHATSAPP_TEMPLATE_LANGUAGE = String(process.env.META_WHATSAPP_TEMPLATE_LANGUAGE || 'en_US').trim();
-const WHATSAPP_ENABLED = String(process.env.META_WHATSAPP_ENABLED || 'false').toLowerCase() === 'true';
-const WHATSAPP_APP_ID = String(process.env.META_WHATSAPP_APP_ID || '').trim();
-const WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID = String(process.env.META_WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID || '').trim();
-
-async function ensureWhatsAppTables() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS whatsapp_notification_log (
-      id BIGSERIAL PRIMARY KEY,
-      event_key TEXT NOT NULL UNIQUE,
-      event_type TEXT NOT NULL,
-      invoice_id TEXT,
-      invoice_no TEXT,
-      recipient TEXT,
-      status TEXT NOT NULL,
-      provider_message_id TEXT,
-      error_message TEXT,
-      payload_json JSONB,
-      created_at BIGINT NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_whatsapp_notification_log_created_at ON whatsapp_notification_log(created_at DESC);
-  `);
-}
-
-function whatsappConfigured() {
-  return WHATSAPP_ENABLED && !!WHATSAPP_TOKEN && !!WHATSAPP_PHONE_NUMBER_ID && !!WHATSAPP_RECIPIENT;
-}
-
-function invoiceRecipientText(v) {
-  const s = String(v || '').replace(/\\s+/g, ' ').trim();
-  return s || 'Client';
-}
-
-async function sendWhatsAppInvoiceAlert(eventType, invoice, source) {
-  if (!whatsappConfigured() || !invoice || typeof invoice !== 'object') return { skipped: true, reason: 'not-configured' };
-
-  const invoiceId = String(invoice.id || invoice.no || '').trim();
-  const invoiceNo = String(invoice.no || invoice.invoiceNo || invoice.number || invoiceId || '').trim();
-  const eventKey = eventType + ':' + (invoiceId || invoiceNo);
-  const existing = await pool.query('SELECT id,status,provider_message_id FROM whatsapp_notification_log WHERE event_key=$1', [eventKey]);
-  if (existing.rows[0]) return { skipped: true, reason: 'already-sent', log: existing.rows[0] };
-
-  const clientName = invoiceRecipientText(invoice.client || invoice.clientName || invoice.customer || invoice.billTo || invoice.name);
-  const amount = invoice.total ?? invoice.grandTotal ?? invoice.amount ?? invoice.netTotal ?? invoice.balance ?? '';
-  const amountNumber = amount === '' ? '' : Number(amount || 0).toLocaleString('en-GH', {minimumFractionDigits:2, maximumFractionDigits:2});
-  const currency = String(invoice.currency || invoice.curr || 'GHS').trim() || 'GHS';
-  const amountText = amountNumber ? currency + ' ' + amountNumber : '';
-  const status = String(invoice.status || invoice.invoiceStatus || (eventType === 'invoice-sent' ? 'Sent' : 'Created'));
-  const creator = String(invoice.createdBy || invoice.staffName || invoice.user || source || 'Invoice Studio');
-  const textBody = [
-    'FBI INVOICE ALERT',
-    eventType === 'invoice-sent' ? 'Invoice sent to client' : 'New invoice created',
-    'Invoice: ' + invoiceNo,
-    'Client: ' + clientName,
-    amountText ? 'Amount: ' + amountText : '',
-    'Status: ' + status,
-    'Created by: ' + creator,
-    'Time: ' + new Date().toLocaleString('en-GH', { timeZone: 'Africa/Accra' })
-  ].filter(Boolean).join('\\n');
-
-  const payload = {
-    messaging_product: 'whatsapp',
-    to: WHATSAPP_RECIPIENT,
-    type: 'template',
-    template: {
-      name: WHATSAPP_TEMPLATE,
-      language: { code: WHATSAPP_TEMPLATE_LANGUAGE },
-      components: [{
-        type: 'body',
-        parameters: [
-          { type: 'text', text: invoiceNo || '-' },
-          { type: 'text', text: eventType === 'invoice-sent' ? 'Invoice sent to client' : 'New invoice created' },
-          { type: 'text', text: clientName },
-          { type: 'text', text: amountNumber || '-' },
-          { type: 'text', text: currency },
-          { type: 'text', text: status }
-        ]
-      }]
-    }
-  };
-
-  try {
-    const response = await fetch(`https://graph.facebook.com/${WHATSAPP_API_VERSION}/${encodeURIComponent(WHATSAPP_PHONE_NUMBER_ID)}/messages`, {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + WHATSAPP_TOKEN, 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const body = await response.json().catch(() => ({}));
-    const providerId = body?.messages?.[0]?.id || null;
-    const ok = response.ok && !!providerId;
-    await pool.query(
-      'INSERT INTO whatsapp_notification_log(event_key,event_type,invoice_id,invoice_no,recipient,status,provider_message_id,error_message,payload_json,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10) ON CONFLICT(event_key) DO NOTHING',
-      [eventKey,eventType,invoiceId,invoiceNo,WHATSAPP_RECIPIENT,ok?'sent':'failed',providerId,ok?null:(body?.error?.message||'WhatsApp API request failed'),JSON.stringify({textBody,payload,source}),Date.now()]
-    );
-    if (!ok) console.warn('WhatsApp notification failed:', body);
-    return { ok, providerId, error: ok ? null : (body?.error?.message || 'WhatsApp API request failed') };
-  } catch (err) {
-    await pool.query(
-      'INSERT INTO whatsapp_notification_log(event_key,event_type,invoice_id,invoice_no,recipient,status,error_message,payload_json,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9) ON CONFLICT(event_key) DO NOTHING',
-      [eventKey,eventType,invoiceId,invoiceNo,WHATSAPP_RECIPIENT,'failed',err.message||'Request failed',JSON.stringify({textBody,payload,source}),Date.now()]
-    );
-    return { ok:false, error:err.message||'WhatsApp request failed' };
-  }
-}
-
-async function notifyInvoiceStateChanges(previousState, mergedState, source) {
-  const before = new Map((previousState?.data?.data || []).map(x => [String(x.id || x.no || ''), x]));
-  const after = Array.isArray(mergedState?.data?.data) ? mergedState.data.data : [];
-  const jobs = [];
-  for (const invoice of after) {
-    const key = String(invoice.id || invoice.no || '');
-    if (!key) continue;
-    const prior = before.get(key);
-    if (!prior) jobs.push(sendWhatsAppInvoiceAlert('invoice-created', invoice, source));
-    const priorSent = String(prior?.status || prior?.invoiceStatus || '').toLowerCase() === 'sent' || !!prior?.sentAt || !!prior?.sent;
-    const nowSent = String(invoice.status || invoice.invoiceStatus || '').toLowerCase() === 'sent' || !!invoice.sentAt || !!invoice.sent;
-    if (nowSent && !priorSent) jobs.push(sendWhatsAppInvoiceAlert('invoice-sent', invoice, source));
-  }
-  if (jobs.length) await Promise.allSettled(jobs);
-}
-
-async function handleWhatsAppTest(req, res) {
-  if (!whatsappConfigured()) return json(res, 503, {ok:false,error:'WhatsApp is not configured. Set META_WHATSAPP_ENABLED=true, META_WHATSAPP_TOKEN, META_WHATSAPP_PHONE_NUMBER_ID and META_WHATSAPP_RECIPIENT in Railway.'});
-
-  // First verify that the token can access the configured WhatsApp Business Account and enumerate its phone numbers.
-  let businessAccountCheck = null;
-  if (WHATSAPP_BUSINESS_ACCOUNT_ID) {
-    try {
-      const wabaResponse = await fetch(
-        `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${encodeURIComponent(WHATSAPP_BUSINESS_ACCOUNT_ID)}/phone_numbers?fields=id,display_phone_number,verified_name,is_on_biz_app,platform_type`,
-        {headers:{Authorization:'Bearer '+WHATSAPP_TOKEN}}
-      );
-      const wabaBody = await wabaResponse.json().catch(()=>({}));
-      businessAccountCheck = {
-        httpStatus:wabaResponse.status,
-        ok:wabaResponse.ok,
-        phoneNumbers:Array.isArray(wabaBody?.data) ? wabaBody.data.map(x=>({id:x.id||null,displayPhoneNumber:x.display_phone_number||null,verifiedName:x.verified_name||null})) : [],
-        error:wabaBody?.error ? {message:wabaBody.error.message||null,type:wabaBody.error.type||null,code:wabaBody.error.code||null} : null
-      };
-      if (!wabaResponse.ok) {
-        return json(res, 502, {ok:false,stage:'business-account-access',error:wabaBody?.error?.message||'Meta rejected access to the configured WhatsApp Business Account.',businessAccountCheck});
-      }
-      const match = businessAccountCheck.phoneNumbers.find(x=>String(x.id)===WHATSAPP_PHONE_NUMBER_ID);
-      if (!match) {
-        return json(res, 502, {ok:false,stage:'phone-number-mismatch',error:'The configured Phone Number ID is not present in the WhatsApp Business Account returned by Meta.',configuredPhoneNumberId:WHATSAPP_PHONE_NUMBER_ID,businessAccountCheck});
-      }
-    } catch (err) {
-      return json(res, 502, {ok:false,stage:'business-account-access',error:err.message||'Unable to reach Meta',businessAccountCheck});
-    }
-  }
-
-  // First verify that the configured Phone Number ID is visible to the configured token.
-  // This keeps Meta's generic "Unsupported post request" error from being mistaken for a template problem.
-  let resourceCheck = null;
-  try {
-    const checkResponse = await fetch(
-      `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${encodeURIComponent(WHATSAPP_PHONE_NUMBER_ID)}?fields=id,display_phone_number,verified_name`,
-      {headers:{Authorization:'Bearer '+WHATSAPP_TOKEN}}
-    );
-    const checkBody = await checkResponse.json().catch(()=>({}));
-    resourceCheck = {
-      httpStatus: checkResponse.status,
-      ok: checkResponse.ok,
-      id: checkBody?.id || null,
-      displayPhoneNumber: checkBody?.display_phone_number || null,
-      verifiedName: checkBody?.verified_name || null,
-      isOnBizApp: typeof checkBody?.is_on_biz_app === 'boolean' ? checkBody.is_on_biz_app : null,
-      platformType: checkBody?.platform_type || null,
-      error: checkBody?.error ? {
-        message: checkBody.error.message || null,
-        type: checkBody.error.type || null,
-        code: checkBody.error.code || null
-      } : null
-    };
-    if (!checkResponse.ok) {
-      return json(res, 502, {
-        ok:false,
-        stage:'phone-number-access',
-        error:checkBody?.error?.message || 'Meta rejected access to the configured Phone Number ID.',
-        resourceCheck
-      });
-    }
-  } catch (err) {
-    return json(res, 502, {ok:false,stage:'phone-number-access',error:err.message||'Unable to reach Meta',resourceCheck});
-  }
-
-  const fake = {id:'test-'+Date.now(),no:'TEST',clientName:'FBI WhatsApp Test',total:0,status:'Test'};
-  const out = await sendWhatsAppInvoiceAlert('invoice-created', fake, 'Admin Test');
-  return json(res, out.ok ? 200 : 502, {...out, messageId: out.providerId || null, stage: out.ok ? 'send' : 'send-message', resourceCheck});
-}
-
-async function handleWhatsAppDebugLog(req, res) {
-  const q = await pool.query('SELECT id,event_type,invoice_id,invoice_no,status,error_message,created_at FROM whatsapp_notification_log ORDER BY created_at DESC LIMIT 50');
-  return json(res,200,{ok:true,configured:whatsappConfigured(),recipientConfigured:!!WHATSAPP_RECIPIENT,log:q.rows,logText:q.rows.map(r=>[new Date(Number(r.created_at)).toLocaleString('en-GH',{timeZone:'Africa/Accra'}),r.event_type,r.invoice_no||'-',r.status,r.error_message||''].join(' · ')).join('\\n')||'No WhatsApp notifications yet.'});
-}
-
-
-
 function adminApiAuthorized(req) {
   const expected = String(process.env.FBI_ADMIN_SHARED_TOKEN || '').trim();
   const supplied = String(req.headers['x-fbi-admin-token'] || '').trim();
@@ -1631,6 +1426,7 @@ const server = http.createServer(async (req, res) => {
 
     if (rejectIfTooManyAttempts(req, res, url.pathname)) return;
     if (url.pathname.startsWith('/api/momo/') && await momo.handleMomoRoute(req, res, url, { pool, json, parseJsonBody, requireAuth })) return;
+    if (url.pathname.startsWith('/api/push/') && await notify.handleRoute(req, res, url, { json, parseJsonBody, requireAuth })) return;
 
     if (url.pathname === '/api/backups' && req.method === 'GET') return handleBackupsList(req, res);
     { const m = url.pathname.match(/^\/api\/backups\/(current|\d+)\/download$/); if (m && req.method === 'GET') return handleBackupDownload(req, res, m[1]); }
@@ -1687,10 +1483,6 @@ const server = http.createServer(async (req, res) => {
 
     // Dedicated Android pairing route. Kept separate from the legacy route so the mobile gateway can use a clean edge path without changing the pairing engine.
 
-    if (url.pathname === '/api/whatsapp/embedded-config' && req.method === 'GET') return json(res, 200, {ok:true, appId:WHATSAPP_APP_ID, configId:WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID, featureType:'whatsapp_business_app_onboarding'});
-    if (url.pathname === '/api/whatsapp/test' && req.method === 'GET') { if (!(await requireAuth(req, res))) return; return handleWhatsAppTest(req, res); }
-    if (url.pathname === '/api/whatsapp/invoice-created' && req.method === 'POST') { if (!(await requireAuth(req, res))) return; const b = await parseJsonBody(req); const out = await sendWhatsAppInvoiceAlert(String(b.eventType || 'invoice-created'), b.invoice || {}, String(b.source || 'API')); return json(res, out.ok ? 200 : 502, out); }
-    if (url.pathname === '/api/whatsapp/debug-log' && req.method === 'GET') { if (!(await requireAuth(req, res))) return; return handleWhatsAppDebugLog(req, res); }
 
     if (req.method === 'GET') return await sendIndex(res);
     return json(res, 404, { ok: false, error: 'Not found.' });
@@ -1702,6 +1494,12 @@ const server = http.createServer(async (req, res) => {
 
 initDb().then(async () => {
   try { if (await backupStateIfDue(pool, 'daily (startup)')) console.log('Automatic backup saved.'); } catch (e) { console.warn('Startup backup skipped:', e.message); }
+  notify.start();
+  momo.onPaymentStored = p => p.via === 'pasted' ? null : notify.notify('payment', {
+    title: 'MoMo payment ' + 'GH₵' + Number(p.amount).toLocaleString('en-GB', { minimumFractionDigits: 2 }),
+    body: (p.payerName || 'Unknown sender') + ' · tap to match it to an invoice',
+    url: '/?open=momo', tag: 'momo-' + p.id
+  }).catch(e => console.warn('MoMo notification failed:', e.message));
   server.listen(PORT, HOST, () => {
     console.log('FBI Invoice Studio Cloud server');
     console.log(`Local: http://127.0.0.1:${PORT}`);

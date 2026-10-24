@@ -1,0 +1,132 @@
+<!-- Phone notifications: settings card + opening the right page from a notification. Added to index.html by build-index.js -->
+<style id="fbi-notify-styles">
+#notifyCard .nt-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+#notifyCard .nt-note{font-size:12.5px;color:var(--muted);line-height:1.55}
+#notifyCard .nt-state{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border:1px solid var(--line,var(--border));border-radius:var(--u-r-sm,10px);background:var(--u-row,transparent);font-size:13.5px}
+#notifyCard .nt-dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--u-neutral,#888)}
+#notifyCard .nt-dot.ok{background:var(--u-ok,#2a9d6a)}#notifyCard .nt-dot.bad{background:var(--u-bad,#c33)}
+#notifyCard .nt-types{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:14px}
+#notifyCard .nt-types label{display:inline-flex;align-items:center;gap:7px;margin:0;font-weight:600;cursor:pointer}
+#notifyCard .nt-types input{width:18px;height:18px;margin:0}
+#notifyCard .nt-dev{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line,var(--border));font-size:13px}
+#notifyCard .nt-dev .grow{flex:1;min-width:0}
+#notifyCard .nt-dev small{display:block;color:var(--muted);font-size:12px}
+@media(max-width:640px){#notifyCard .nt-row .btn{flex:1 1 auto!important}}
+</style>
+<script id="fbi-notify-script">
+(function(){
+  const PUSH_STORE="fbi-push-key", ID_KEY="fbiPushId";
+  const $n=id=>document.getElementById(id);
+  const h=v=>(typeof esc==="function"?esc(v):String(v??""));
+  const st={config:null,busy:false};
+  async function api(path,body){
+    const r=await fetch(path,body===undefined?{credentials:"same-origin"}:{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const j=await r.json().catch(()=>({}));if(!r.ok||j.ok===false){const e=new Error(j.error||("Request failed ("+r.status+")"));e.status=r.status;throw e}return j;
+  }
+  function ago(ms){if(!ms)return"not yet";const s=(Date.now()-ms)/1000;if(s<90)return"just now";if(s<3600)return Math.round(s/60)+" min ago";if(s<86400)return Math.round(s/3600)+" h ago";return Math.round(s/86400)+" days ago"}
+  function myId(){try{return localStorage.getItem(ID_KEY)||""}catch(e){return""}}
+  function supported(){return "serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window}
+  function label(){const ua=navigator.userAgent;const m=/Android[^;)]*;\s*([^;)]+?)(?: Build|\))/.exec(ua);const dev=/Android/.test(ua)?(m&&m[1]&&!/^K$/.test(m[1])?m[1]:"Android phone"):/iPhone|iPad/.test(ua)?"iPhone":/Windows/.test(ua)?"Windows computer":/Mac/.test(ua)?"Mac":"Device";return dev+(matchMedia("(display-mode: standalone)").matches?" (app)":" (browser)")}
+  function b64ToBytes(s){s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a}
+
+  function inject(){
+    const view=$n("view-settings");if(!view||$n("notifyCard"))return;
+    const card=document.createElement("div");card.className="card";card.id="notifyCard";
+    card.innerHTML='<h3 style="margin-bottom:2px">Phone notifications</h3><div class="nt-note">Get a notification on this phone or computer when an invoice is created, when a payment is made, and before an event date (2 days before, the day before and the morning of the event).</div><div id="ntState"></div><div id="ntDevices"></div>';
+    view.insertBefore(card,view.firstChild);
+  }
+  function render(){
+    const el=$n("ntState");if(!el)return;
+    const devs=(st.config&&st.config.devices)||[];
+    const mine=devs.find(d=>d.id===myId());
+    const perm=supported()?Notification.permission:"unsupported";
+    let html="";
+    if(!supported()){
+      html='<div class="nt-state"><span class="nt-dot bad"></span><div>This browser can\'t show notifications. On Android, open invoice.fbigh.com in <b>Chrome</b> (or the installed FBI Studio app).</div></div>';
+    }else if(perm==="denied"){
+      html='<div class="nt-state"><span class="nt-dot bad"></span><div>Notifications are blocked for Invoice Studio on this device. Allow them in the phone\'s Settings → Apps → FBI Studio (or Chrome) → Notifications, then come back here.</div></div>';
+    }else if(!mine){
+      html='<div class="nt-state"><span class="nt-dot"></span><div class="grow">Notifications are off on this device.</div></div><div class="nt-row"><button class="btn primary" type="button" id="ntOn">Turn on notifications on this device</button></div>';
+    }else{
+      const p=mine.prefs||{};
+      html='<div class="nt-state"><span class="nt-dot ok"></span><div class="grow"><b>On for this device</b> ('+h(mine.label)+')<div class="nt-note">Last notification delivered: '+h(ago(mine.lastOkAt))+(mine.lastError?' · last problem: '+h(mine.lastError):'')+'</div></div></div>'+
+        '<div class="nt-types"><label><input type="checkbox" data-pref="invoice" '+(p.invoice!==false?"checked":"")+'> New invoices</label><label><input type="checkbox" data-pref="payment" '+(p.payment!==false?"checked":"")+'> Payments</label><label><input type="checkbox" data-pref="event" '+(p.event!==false?"checked":"")+'> Event reminders</label></div>'+
+        '<div class="nt-row"><button class="btn primary" type="button" id="ntTest">Send a test notification</button><button class="btn" type="button" id="ntOff">Turn off on this device</button></div>';
+    }
+    el.innerHTML=html;
+    const others=devs.filter(d=>d.id!==myId());
+    $n("ntDevices").innerHTML=others.length?'<div class="nt-note" style="margin-top:14px;font-weight:700">Other devices getting notifications</div>'+others.map(d=>'<div class="nt-dev"><div class="grow">'+h(d.label)+'<small>Last delivered '+h(ago(d.lastOkAt))+'</small></div><button class="btn" type="button" data-remove="'+h(d.id)+'">Remove</button></div>').join(""):"";
+    $n("ntOn")?.addEventListener("click",turnOn);
+    $n("ntOff")?.addEventListener("click",()=>removeDevice(myId(),true));
+    $n("ntTest")?.addEventListener("click",sendTest);
+    el.querySelectorAll("[data-pref]").forEach(cb=>cb.addEventListener("change",savePrefs));
+    $n("ntDevices").querySelectorAll("[data-remove]").forEach(b=>b.addEventListener("click",()=>removeDevice(b.dataset.remove,false)));
+  }
+  async function load(){try{st.config=await api("/api/push/config");render()}catch(e){if(e.status!==401){const el=$n("ntState");if(el)el.innerHTML='<div class="nt-state"><span class="nt-dot bad"></span><div>Could not load notification settings: '+h(e.message)+'</div></div>'}}}
+
+  async function turnOn(){
+    if(st.busy)return;st.busy=true;const b=$n("ntOn");if(b){b.disabled=true;b.textContent="Turning on…"}
+    try{
+      const perm=await Notification.requestPermission();
+      if(perm!=="granted"){render();throw new Error("Notifications were not allowed. Tap “Allow” when the phone asks.")}
+      if(!st.config)await load();
+      const reg=await navigator.serviceWorker.ready;
+      let sub=await reg.pushManager.getSubscription();
+      if(sub){try{await sub.unsubscribe()}catch(e){}}
+      sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToBytes(st.config.publicKey)});
+      const j=await api("/api/push/subscribe",{subscription:sub.toJSON(),label:label()});
+      await (await caches.open(PUSH_STORE)).put("/__push_key",new Response(JSON.stringify({key:j.key}),{headers:{"Content-Type":"application/json"}}));
+      try{localStorage.setItem(ID_KEY,j.id)}catch(e){}
+      await load();
+      await sendTest();
+    }catch(e){alert(e.message||"Could not turn on notifications.")}
+    finally{st.busy=false;render()}
+  }
+  async function sendTest(){
+    const b=$n("ntTest");if(b){b.disabled=true;b.textContent="Sending…"}
+    try{const j=await api("/api/push/devices/"+encodeURIComponent(myId())+"/test",{});toast(j.ok?"Test sent. It should appear on this device in a few seconds.":"The test could not be delivered: "+(j.error||"unknown problem"))}
+    catch(e){toast("The test could not be sent: "+e.message)}
+    finally{await load()}
+  }
+  async function savePrefs(){
+    const prefs={};document.querySelectorAll("#ntState [data-pref]").forEach(cb=>prefs[cb.dataset.pref]=cb.checked);
+    try{await api("/api/push/devices/"+encodeURIComponent(myId())+"/prefs",{prefs});toast("Saved")}catch(e){alert(e.message)}
+  }
+  async function removeDevice(id,isMine){
+    if(!confirm(isMine?"Turn off notifications on this device?":"Stop sending notifications to this device?"))return;
+    try{
+      await api("/api/push/devices/"+encodeURIComponent(id)+"/remove",{});
+      if(isMine){try{localStorage.removeItem(ID_KEY)}catch(e){}try{const reg=await navigator.serviceWorker.ready;const s=await reg.pushManager.getSubscription();if(s)await s.unsubscribe()}catch(e){}try{await caches.delete(PUSH_STORE)}catch(e){}}
+      await load();
+    }catch(e){alert(e.message)}
+  }
+
+  // Opening the page a notification points to: /?open=invoice:<id> | momo | receipts | invoices
+  // The app sets up its own start page first, so this waits until that is done and then makes sure it stays.
+  function openTarget(target){
+    target=String(target||"");if(!target)return;
+    const inv=/^invoice:(.+)$/.exec(target);
+    const viewId=inv?"view-create":target==="momo"?"view-momo":target==="receipts"?"view-receipts":target==="invoices"?"view-saved":null;
+    if(!viewId)return;
+    let tries=0,stable=0,done=false;
+    const t=setInterval(()=>{
+      tries++;
+      if(tries>40){clearInterval(t);return}
+      const ready=typeof data!=="undefined"&&Array.isArray(data)&&document.getElementById(viewId)&&(!inv||data.some(x=>String(x.id)===inv[1]));
+      if(!ready)return;
+      const active=document.getElementById(viewId).classList.contains("active")&&(!inv||(typeof current!=="undefined"&&current&&String(current.id)===inv[1]));
+      if(active){if(++stable>=3){clearInterval(t);try{const u=new URL(location.href);u.searchParams.delete("open");history.replaceState(history.state,"",u.pathname+u.search+u.hash)}catch(e){}}return}
+      stable=0;
+      try{if(inv){loadInvoice(inv[1]);show("create")}else show(viewId.slice(5)==="saved"?"saved":viewId.slice(5))}catch(e){}
+    },500);
+  }
+  try{const o=new URL(location.href).searchParams.get("open");if(o)openTarget(o)}catch(e){}
+  navigator.serviceWorker?.addEventListener("message",ev=>{const u=ev.data&&ev.data.fbiOpen;if(u){try{openTarget(new URL(u).searchParams.get("open"))}catch(e){}}});
+
+  const settingsShown=()=>$n("view-settings")?.classList.contains("active");
+  function boot(){inject();if(settingsShown())load()}
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
+  // Refresh the card whenever Business settings is opened.
+  setTimeout(()=>{inject();const v=$n("view-settings");if(v)new MutationObserver(()=>{if(settingsShown())load()}).observe(v,{attributes:true,attributeFilter:["class"]})},1500);
+})();
+</script>

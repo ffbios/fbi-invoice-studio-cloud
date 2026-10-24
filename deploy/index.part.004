@@ -547,7 +547,6 @@ html[data-theme] body :is(.paper,.receipt-paper,.preview-wrap){line-height:norma
     </div>
     <div class="nav-group" role="group" aria-label="Setup"><div class="nav-heading">Setup</div>
     <button type="button" class="nav-link" data-v="settings" onclick="show('settings')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span>Business settings</span></button>
-    <button type="button" class="nav-link" data-v="whatsapp" onclick="show('whatsapp')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span>WhatsApp alerts</span></button>
     </div>
   </div>
   <div class="sidefoot"><span class="sf-dot" aria-hidden="true"></span><span>Saved to the cloud · backed up daily</span></div>
