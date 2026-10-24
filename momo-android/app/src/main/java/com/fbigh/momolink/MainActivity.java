@@ -31,6 +31,7 @@ import java.util.Locale;
 
 public class MainActivity extends Activity {
     private static final int REQ_SMS = 7;
+    private String pendingLink;
     private final Handler ui = new Handler(Looper.getMainLooper());
 
     private TextView statusTitle, statusText, permText, recentText, footText;
@@ -44,11 +45,29 @@ public class MainActivity extends Activity {
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         buildUi();
+        handleLink(getIntent());
+    }
+
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleLink(intent);
+    }
+
+    /** Opened from the "Open in FBI MoMo Link" button on the link page. */
+    private void handleLink(Intent intent) {
+        if (intent == null || intent.getData() == null) return;
+        Uri u = intent.getData();
+        if (!"fbimomo".equals(u.getScheme())) return;
+        String t = u.getQueryParameter("token");
+        intent.setData(null);
+        if (t != null) doLink(t);
     }
 
     @Override protected void onResume() {
         super.onResume();
         refresh();
+        if (hasSms() && pendingLink != null) { String l = pendingLink; pendingLink = null; doLink(l); return; }
         if (Link.linked(this) && hasSms()) { Link.schedulePeriodic(this); runSync(false); }
     }
 
@@ -87,6 +106,7 @@ public class MainActivity extends Activity {
 
     @Override public void onRequestPermissionsResult(int code, String[] p, int[] res) {
         super.onRequestPermissionsResult(code, p, res);
+        if (hasSms() && pendingLink != null) { String l = pendingLink; pendingLink = null; doLink(l); }
         if (!hasSms()) {
             permText.setText("Android blocked the SMS permission. This happens with apps installed outside the Play Store.\n\n"
                     + "1. Tap “Open app settings” below.\n2. Tap the ⋮ menu (top right) → “Allow restricted settings” and confirm.\n"
@@ -96,16 +116,15 @@ public class MainActivity extends Activity {
         refresh();
     }
 
-    private void doLink() {
-        String code = codeInput.getText().toString().replaceAll("\\D", "");
-        if (code.length() != 6) { toast("Type the 6-digit code from Invoice Studio"); return; }
+    private void doLink(String linkText) {
+        if (!hasSms()) { pendingLink = linkText; toast("First allow SMS access, then the phone will be linked."); askSms(); return; }
         InputMethodManager im = getSystemService(InputMethodManager.class);
         if (im != null) im.hideSoftInputFromWindow(codeInput.getWindowToken(), 0);
         linkButton.setEnabled(false); linkButton.setText("Linking…");
         new Thread(() -> {
             String msg;
             try {
-                String name = Link.pair(this, code);
+                String name = Link.linkWith(this, linkText);
                 Link.schedulePeriodic(this);
                 String s = Link.sync(this);
                 msg = "Linked as " + name + ". " + s;
@@ -113,7 +132,7 @@ public class MainActivity extends Activity {
                 msg = e.getMessage() == null ? "Linking failed" : e.getMessage();
             }
             String m = msg;
-            ui.post(() -> { linkButton.setEnabled(true); linkButton.setText("Link phone"); codeInput.setText(""); toast(m); refresh(); });
+            ui.post(() -> { linkButton.setEnabled(true); linkButton.setText("Link with pasted link"); codeInput.setText(""); toast(m); refresh(); });
         }, "fbi-momo-link").start();
     }
 
@@ -176,13 +195,16 @@ public class MainActivity extends Activity {
 
         LinearLayout lc = card(root); linkCard = lc;
         lc.addView(text("Link to Invoice Studio", 17, WHITE, true));
-        TextView lh = text("On a computer, open Invoice Studio → MoMo payments → Link phone. Type the 6-digit code shown there.", 14, MUTED, false);
-        lh.setPadding(0, dp(8), 0, dp(12)); lc.addView(lh);
-        codeInput = new EditText(this); codeInput.setHint("6-digit code"); codeInput.setHintTextColor(Color.rgb(110, 110, 118)); codeInput.setTextColor(WHITE);
-        codeInput.setTextSize(26); codeInput.setGravity(Gravity.CENTER); codeInput.setSingleLine(true); codeInput.setInputType(InputType.TYPE_CLASS_NUMBER);
-        codeInput.setLetterSpacing(0.3f); codeInput.setBackground(box(Color.rgb(13, 13, 16), Color.rgb(70, 70, 78)));
-        lc.addView(codeInput, new LinearLayout.LayoutParams(-1, dp(64)));
-        linkButton = button("Link phone", true); linkButton.setOnClickListener(v -> doLink()); lc.addView(linkButton);
+        TextView lh = text("On a computer, open Invoice Studio → MoMo payments → Link phone. Scan the QR code with this phone's camera, open the page, and tap “Open in FBI MoMo Link”.", 14, MUTED, false);
+        lh.setPadding(0, dp(8), 0, dp(14)); lc.addView(lh);
+        TextView alt = text("Can't scan? Paste the link here:", 14, WHITE, false); alt.setPadding(0, 0, 0, dp(8)); lc.addView(alt);
+        codeInput = new EditText(this); codeInput.setHint("Paste the link from Invoice Studio"); codeInput.setHintTextColor(Color.rgb(110, 110, 118)); codeInput.setTextColor(WHITE);
+        codeInput.setTextSize(14); codeInput.setSingleLine(true); codeInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        codeInput.setPadding(dp(12), 0, dp(12), 0); codeInput.setBackground(box(Color.rgb(13, 13, 16), Color.rgb(70, 70, 78)));
+        lc.addView(codeInput, new LinearLayout.LayoutParams(-1, dp(52)));
+        linkButton = button("Link with pasted link", false);
+        linkButton.setOnClickListener(v -> { String t = codeInput.getText().toString().trim(); if (t.isEmpty()) toast("Paste the link first"); else doLink(t); });
+        lc.addView(linkButton);
 
         LinearLayout wc = card(root); workingCard = wc;
         wc.addView(text("Recent MoMo payments", 17, WHITE, true));
