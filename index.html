@@ -8506,6 +8506,7 @@ html[data-theme] body #view-quotes .inv-toolbar{grid-template-columns:minmax(0,1
 
 <!-- Phone notifications: settings card + opening the right page from a notification. Added to index.html by build-index.js -->
 <style id="fbi-notify-styles">
+#appCard .nt-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}#appCard .nt-note{font-size:12.5px;color:var(--muted);line-height:1.55}
 #notifyCard .nt-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
 #notifyCard .nt-note{font-size:12.5px;color:var(--muted);line-height:1.55}
 #notifyCard .nt-state{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border:1px solid var(--line,var(--border));border-radius:var(--u-r-sm,10px);background:var(--u-row,transparent);font-size:13.5px}
@@ -8540,6 +8541,16 @@ html[data-theme] body #view-quotes .inv-toolbar{grid-template-columns:minmax(0,1
     const card=document.createElement("div");card.className="card";card.id="notifyCard";
     card.innerHTML='<h3 style="margin-bottom:2px">Phone notifications</h3><div class="nt-note">Get a notification on this phone or computer when an invoice is created, when a payment is made, and before an event date (2 days before, the day before and the morning of the event).</div><div id="ntState"></div><div id="ntDevices"></div>';
     view.insertBefore(card,view.firstChild);
+    // App & appearance: on phones the top bar has no room for these, so they live here too.
+    const ap=document.createElement("div");ap.className="card";ap.id="appCard";
+    const installed=matchMedia("(display-mode: standalone)").matches;
+    ap.innerHTML='<h3 style="margin-bottom:2px">App &amp; appearance</h3>'+
+      '<div class="nt-row" style="margin-top:8px"><button class="btn" type="button" data-th="light">☀️ Light</button><button class="btn" type="button" data-th="dark">🌙 Dark</button><button class="btn" type="button" data-th="system">⚙️ Same as phone</button></div>'+
+      (installed?'<div class="nt-note" style="margin-top:12px">Invoice Studio is installed on this device.</div>':
+      '<div class="nt-row"><button class="btn primary" type="button" id="apInstall">⬇ Install Invoice Studio on this device</button></div><div class="nt-note" id="apInstallHelp" style="margin-top:8px;display:none">If nothing happens: in Chrome tap ⋮ (top right) → <b>Add to Home screen</b> → <b>Install</b>.</div>');
+    view.insertBefore(ap,view.firstChild);
+    ap.querySelectorAll("[data-th]").forEach(b=>b.addEventListener("click",()=>{try{setThemePreference(b.dataset.th)}catch(e){}}));
+    $n("apInstall")?.addEventListener("click",()=>{$n("apInstallHelp").style.display="block";try{installFBIApp()}catch(e){}});
   }
   function render(){
     const el=$n("ntState");if(!el)return;
