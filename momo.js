@@ -159,7 +159,9 @@ async function storeSms(pool, { text, sender, receivedAt, via }) {
     [dedupeKey, parsed.transactionId || null, parsed.amount, parsed.currency, parsed.payerName || null, parsed.payerPhone || null, parsed.reference || null, parsed.source || null, parsed.kind, clean(text).slice(0, 2000), clean(sender).slice(0, 60) || null, when, Date.now(), via || 'phone']
   );
   if (!q.rowCount) return { stored: false, reason: 'duplicate' };
-  return { stored: true, payment: paymentOut(q.rows[0]) };
+  const out = paymentOut(q.rows[0]);
+  if (typeof module.exports.onPaymentStored === 'function') { try { module.exports.onPaymentStored(out); } catch (e) {} }
+  return { stored: true, payment: out };
 }
 
 async function deviceFromRequest(pool, req) {

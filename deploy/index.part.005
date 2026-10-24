@@ -831,7 +831,7 @@ async function save(){
     if(localOk)clearPersistentDraft();
     dashboard();renderSaved();renderReceipts();
     toast(localOk?"Invoice saved":"Saved on this device only — the cloud upload failed. Check your connection and tap Save again.");
-    if(isNew && settings.waEnabled==="yes"){try{await sendWhatsAppNotification(x)}catch(e){console.warn("WhatsApp notification failed",e)}}
+    
     return x;
   }catch(err){console.error(err);toast("Invoice could not be saved: "+err.message);throw err}
 }
