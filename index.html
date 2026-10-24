@@ -8328,14 +8328,30 @@ html[data-theme] body #view-quotes .inv-toolbar{grid-template-columns:minmax(0,1
   function modal(html){$m("mmModalBox").innerHTML=html;$m("mmModal").classList.add("show")}
   window.momoCloseModal=function(){$m("mmModal").classList.remove("show");clearInterval(MM.codeTimer)};
 
+  // Loads the small QR code drawer only when it is needed.
+  function loadQr(){
+    if(window.QRCode)return Promise.resolve(true);
+    return new Promise(res=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";sc.onload=()=>res(!!window.QRCode);sc.onerror=()=>res(false);document.head.appendChild(sc)});
+  }
   window.momoPairStart=async function(){
-    let j;try{j=await api("/api/momo/pair-code",{})}catch(e){alert(e.message);return}
-    modal('<h3>Link the MoMo phone</h3><div class="mm-note">Do this on the Android phone that receives your MoMo payment messages.</div><ol><li>On that phone, open <b>'+h(location.origin)+'/momo-link</b> and install <b>FBI MoMo Link</b>.</li><li>Open the app and allow it to read SMS.</li><li>Type this code into the app:</li></ol><div class="mm-code">'+h(j.code.slice(0,3)+" "+j.code.slice(3))+'</div><div class="mm-note" style="text-align:center" id="mmCodeLeft"></div><div class="mm-foot"><button class="btn primary" type="button" onclick="momoCloseModal();momoLoad()">Done</button></div>');
-    const tick=()=>{const s=Math.max(0,Math.round((j.expiresAt-Date.now())/1000));const el=$m("mmCodeLeft");if(el)el.textContent=s?"Code works for "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0"):"Code expired — close and press Link phone again.";if(!s)clearInterval(MM.codeTimer)};
+    let j;try{j=await api("/api/momo/link-phone",{})}catch(e){alert(e.message);return}
+    const url=location.origin+"/momo-link#link="+j.token;
+    MM.linkUrl=url;
+    modal('<h3>Link the MoMo phone</h3><div class="mm-note">Use the Android phone that receives your MoMo payment messages.</div>'+
+      '<ol><li>Open the phone\'s <b>camera</b> and point it at this code. Tap the link that appears.</li><li>If the app is not installed yet, tap <b>Download the app</b> and install it, then go back to that page.</li><li>Tap <b>Open in FBI MoMo Link</b>. The phone is linked straight away.</li></ol>'+
+      '<div id="mmQr" style="display:flex;justify-content:center;margin:14px 0 6px"><div style="background:#fff;padding:12px;border-radius:12px" id="mmQrBox"></div></div>'+
+      '<div class="mm-note" style="text-align:center" id="mmCodeLeft"></div>'+
+      '<details style="margin-top:10px"><summary class="mm-note" style="cursor:pointer">Camera can\'t scan it?</summary><div class="mm-note" style="margin-top:6px">Send this link to the phone (for example on WhatsApp to yourself) and open it there:</div><input type="text" readonly value="'+h(url)+'" onclick="this.select()" style="width:100%;margin-top:6px;font-size:12px"><div class="mm-foot" style="justify-content:flex-start"><button class="btn" type="button" onclick="momoCopyLink()">Copy link</button><a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent("FBI MoMo Link – open this on the MoMo phone: "+url)+'">Send on WhatsApp</a></div><div class="mm-note">Keep this link private: anyone who opens it within 30 minutes can link a phone.</div></details>'+
+      '<div class="mm-foot"><button class="btn primary" type="button" onclick="momoCloseModal();momoLoad()">Done</button></div>');
+    const ok=await loadQr();
+    const box=$m("mmQrBox");
+    if(box){if(ok){new QRCode(box,{text:url,width:220,height:220,correctLevel:QRCode.CorrectLevel.M})}else{box.parentNode.innerHTML='<div class="mm-note">The QR code could not load. Use “Camera can\'t scan it?” below to send the link to the phone.</div>'}}
+    const tick=()=>{const s=Math.max(0,Math.round((j.expiresAt-Date.now())/1000));const el=$m("mmCodeLeft");if(el)el.textContent=s?"Works for "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0")+" · waiting for the phone…":"Expired — close this and press Link phone again.";if(!s)clearInterval(MM.codeTimer)};
     clearInterval(MM.codeTimer);tick();MM.codeTimer=setInterval(tick,1000);
-    // Refresh while waiting so the new phone shows up as soon as it links.
-    const before=MM.devices.length;let tries=0;const poll=setInterval(async()=>{tries++;if(!$m("mmModal").classList.contains("show")||tries>90){clearInterval(poll);return}await load(true);if(MM.devices.length>before){clearInterval(poll);momoCloseModal();render();toast("Phone linked. MoMo payments will now appear automatically.")}},5000);
+    // Refresh while waiting so the phone shows up as soon as it links.
+    const before=MM.devices.length;let tries=0;const poll=setInterval(async()=>{tries++;if(!$m("mmModal").classList.contains("show")||tries>360){clearInterval(poll);return}await load(true);if(MM.devices.length>before){clearInterval(poll);momoCloseModal();render();toast("Phone linked. MoMo payments will now appear automatically.")}},5000);
   };
+  window.momoCopyLink=function(){const u=MM.linkUrl||"";(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast("Link copied"),()=>prompt("Copy this link:",u))};
   window.momoUnlink=async function(id){if(!confirm("Unlink this phone? It will stop sending MoMo payments until you link it again."))return;try{await api("/api/momo/devices/"+encodeURIComponent(id)+"/unlink",{});await load()}catch(e){alert(e.message)}};
 
   window.momoPasteOpen=function(){

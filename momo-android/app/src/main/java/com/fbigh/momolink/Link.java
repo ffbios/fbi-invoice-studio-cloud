@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 
 /** Everything the app does: decide which SMS are MoMo payments, keep them in a queue, and send them to Invoice Studio. */
 final class Link {
-    static final String VERSION = "1.0";
+    static final String VERSION = "1.1";
     // The custom domain first, then Railway's own address in case the domain has a problem.
     static final String[] BASE_URLS = {
             "https://invoice.fbigh.com",
@@ -146,6 +146,7 @@ final class Link {
                 for (int i = start; i < Math.min(q.length(), start + 50); i++) batch.put(q.get(i));
                 JSONObject body = new JSONObject();
                 body.put("appVersion", VERSION);
+                body.put("deviceName", deviceName());
                 body.put("messages", batch);
                 JSONObject res = post(c, "/api/momo/sms", body);
                 Set<String> done = new HashSet<>(p.getStringSet("sent_keys", new HashSet<>()));
@@ -164,7 +165,7 @@ final class Link {
             JSONArray now = new JSONArray(p.getString("queue", "[]"));
             for (int i = 0; i < now.length(); i++) if (!done.contains(now.getJSONObject(i).optString("ref"))) left.put(now.get(i));
             p.edit().putString("queue", left.toString()).apply();
-            JSONObject hb = new JSONObject(); hb.put("appVersion", VERSION);
+            JSONObject hb = new JSONObject(); hb.put("appVersion", VERSION); hb.put("deviceName", deviceName());
             post(c, "/api/momo/heartbeat", hb);
             p.edit().putLong("last_ok", System.currentTimeMillis()).putString("last_error", "").apply();
             return sent > 0 ? sent + " new payment" + (sent == 1 ? "" : "s") + " sent" : "Up to date";
@@ -226,17 +227,30 @@ final class Link {
         return s.toString();
     }
 
-    /** Pairs this phone using the 6-digit code from Invoice Studio. */
-    static String pair(Context c, String code) throws Exception {
-        JSONObject b = new JSONObject();
-        b.put("code", code);
-        b.put("deviceName", (Build.MANUFACTURER + " " + Build.MODEL).trim());
-        b.put("appVersion", VERSION);
-        JSONObject res = post(c, "/api/momo/pair", b);
-        String t = res.optString("token", "");
-        if (t.length() < 20) throw new IllegalStateException(res.optString("error", "Linking failed"));
-        prefs(c).edit().putString("token", t).putLong("first_scan_done", 0).putStringSet("sent_keys", new HashSet<>()).apply();
-        return res.optString("deviceName", "this phone");
+    static String deviceName() { return (Build.MANUFACTURER + " " + Build.MODEL).trim(); }
+
+    private static final Pattern LINK_KEY = Pattern.compile("(?:link=|token=)?([A-Za-z0-9_-]{30,})");
+
+    /**
+     * Links the phone with the key from the Invoice Studio QR code (or a pasted link).
+     * The key was made by Invoice Studio, so nothing has to be requested here; the first check-in activates it.
+     */
+    static String linkWith(Context c, String linkOrKey) throws Exception {
+        Matcher m = LINK_KEY.matcher(linkOrKey == null ? "" : linkOrKey.trim());
+        String key = null;
+        while (m.find()) key = m.group(1);
+        if (key == null) throw new IllegalStateException("That is not an FBI MoMo Link. Scan the QR code in Invoice Studio again.");
+        String old = token(c);
+        prefs(c).edit().putString("token", key).putLong("first_scan_done", 0).putStringSet("sent_keys", new HashSet<>()).apply();
+        try {
+            JSONObject hb = new JSONObject(); hb.put("appVersion", VERSION); hb.put("deviceName", deviceName());
+            post(c, "/api/momo/heartbeat", hb);
+        } catch (Unlinked u) {
+            prefs(c).edit().putString("token", old).apply();
+            throw new IllegalStateException("This link has expired or was already used. In Invoice Studio press Link phone again and scan the new code.");
+        }
+        // If there is no internet right now the key is kept and checked again later.
+        return deviceName();
     }
 
     /** Checks in every 15 minutes (when there is internet), also after a restart. */

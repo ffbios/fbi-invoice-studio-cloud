@@ -4,6 +4,8 @@
 const crypto = require('node:crypto');
 
 const PAIR_CODE_MINUTES = 15;
+// A QR link that has not been opened on a phone stops working after this long.
+const LINK_MINUTES = 30;
 // MTN Ghana sends wallet alerts from the "MobileMoney" sender ID. Anything else is rejected,
 // so an ordinary phone number cannot fake a payment by texting the phone.
 const TRUSTED_SENDERS = String(process.env.MOMO_TRUSTED_SENDERS || 'MobileMoney,MTN MoMo,MTNMoMo,MTN MOMO')
@@ -114,6 +116,7 @@ async function ensureMomoTables(pool) {
       last_rejected_sender TEXT,
       revoked BOOLEAN NOT NULL DEFAULT FALSE
     );
+    ALTER TABLE momo_devices ADD COLUMN IF NOT EXISTS pending BOOLEAN NOT NULL DEFAULT FALSE;
     CREATE TABLE IF NOT EXISTS momo_pair_codes (
       code_hash TEXT PRIMARY KEY,
       expires_at BIGINT NOT NULL
@@ -164,7 +167,15 @@ async function deviceFromRequest(pool, req) {
   const token = auth.startsWith('Bearer ') ? auth.slice(7).trim() : String(req.headers['x-fbi-momo-token'] || '').trim();
   if (token.length < 30) return null;
   const q = await pool.query('SELECT * FROM momo_devices WHERE token_hash=$1 AND revoked=FALSE', [sha256(token)]);
-  return q.rows[0] || null;
+  const d = q.rows[0];
+  if (!d) return null;
+  // A phone linked by QR becomes active the first time it checks in, if it does so in time.
+  if (d.pending) {
+    if (Number(d.created_at) < Date.now() - LINK_MINUTES * 60 * 1000) return null;
+    await pool.query('UPDATE momo_devices SET pending=FALSE WHERE id=$1', [d.id]);
+    d.pending = false;
+  }
+  return d;
 }
 
 // Returns true when the request was a MoMo route and has been answered.
@@ -208,14 +219,25 @@ async function handleMomoRoute(req, res, url, h) {
         results.push({ ref: m.ref || null, stored: r.stored, reason: r.reason || null });
       }
     }
-    await pool.query('UPDATE momo_devices SET last_seen_at=$1, app_version=COALESCE($2, app_version), last_sms_at=CASE WHEN $3 THEN $1 ELSE last_sms_at END WHERE id=$4',
-      [now, clean(b.appVersion).slice(0, 20) || null, results.some(r => r.stored), device.id]);
+    await pool.query('UPDATE momo_devices SET last_seen_at=$1, app_version=COALESCE($2, app_version), last_sms_at=CASE WHEN $3 THEN $1 ELSE last_sms_at END, name=COALESCE($5, name) WHERE id=$4',
+      [now, clean(b.appVersion).slice(0, 20) || null, results.some(r => r.stored), device.id, clean(b.deviceName).slice(0, 80) || null]);
     json(res, 200, { ok: true, results, stored: results.filter(r => r.stored).length });
     return true;
   }
 
   // ---- Invoice Studio (signed-in administrator) ----
   if (!(await requireAuth(req, res))) return true;
+
+  // QR link: the key is made here, while the administrator is signed in, and travels to the phone
+  // inside the QR code. The phone never has to ask for it, so there is no pairing request to block.
+  if (p === '/api/momo/link-phone' && req.method === 'POST') {
+    const now = Date.now();
+    await pool.query('DELETE FROM momo_devices WHERE pending=TRUE AND created_at < $1', [now - LINK_MINUTES * 60 * 1000]);
+    const token = crypto.randomBytes(32).toString('base64url');
+    await pool.query('INSERT INTO momo_devices (name, token_hash, created_at, pending) VALUES ($1,$2,$3,TRUE)', ['MoMo phone', sha256(token), now]);
+    json(res, 200, { ok: true, token, expiresAt: now + LINK_MINUTES * 60 * 1000 });
+    return true;
+  }
 
   if (p === '/api/momo/pair-code' && req.method === 'POST') {
     const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
@@ -231,7 +253,7 @@ async function handleMomoRoute(req, res, url, h) {
     const where = ['new', 'matched', 'ignored'].includes(status) ? 'WHERE status=$1' : '';
     const q = await pool.query(`SELECT * FROM momo_payments ${where} ORDER BY received_at DESC, id DESC LIMIT ${limit}`, where ? [status] : []);
     const counts = await pool.query('SELECT status, COUNT(*)::int AS n FROM momo_payments GROUP BY status');
-    const devices = await pool.query('SELECT id, name, created_at, last_seen_at, last_sms_at, app_version, last_rejected_sender FROM momo_devices WHERE revoked=FALSE ORDER BY created_at DESC');
+    const devices = await pool.query('SELECT id, name, created_at, last_seen_at, last_sms_at, app_version, last_rejected_sender FROM momo_devices WHERE revoked=FALSE AND pending=FALSE ORDER BY created_at DESC');
     const links = await pool.query('SELECT payer_key, client_id, client_name FROM momo_payer_links');
     json(res, 200, {
       ok: true,

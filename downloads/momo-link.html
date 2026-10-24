@@ -20,14 +20,33 @@ small{color:var(--muted)}b{color:#fff}
 <body><main>
 <div class="brand">FILM BEYOND IMAGINATION</div>
 <h1>FBI MoMo Link</h1>
-<p class="lead">Install this on the Android phone that receives your MTN MoMo payments. It sends only the “Payment received” messages to Invoice Studio.</p>
+<p class="lead" id="lead">Install this on the Android phone that receives your MTN MoMo payments. It sends only the “Payment received” messages to Invoice Studio.</p>
 <div class="card"><a class="btn" href="/momo-link.apk" download="FBI-MoMo-Link.apk">Download the app</a><p><small>Android 8 or newer · 24&nbsp;KB</small></p></div>
+<div class="card" id="linkCard" style="display:none;border-color:var(--gold)"><b>Link this phone</b>
+<p id="noApp" style="display:none;margin:8px 0 0"><small>The app isn't installed yet. Download and install it above, then come back to this page and tap the button again.</small></p>
+<p style="margin:8px 0 12px"><small>After the app is installed, tap the button. The phone is linked straight away.</small></p>
+<a class="btn" id="openApp" href="#">Open in FBI MoMo Link</a>
+<p style="margin:12px 0 0"><small>Button not working? <a href="#" id="copyLink" style="color:var(--gold)">Copy the link</a>, open the app and paste it in.</small></p>
+</div>
 <div class="card"><b>Install and link</b>
 <ol>
-<li>Open the downloaded file. If Android asks, allow your browser to <b>install unknown apps</b>.</li>
+<li>Tap <b>Download the app</b> and open the file. If Android asks, allow your browser to <b>install unknown apps</b>.</li>
 <li>Open <b>FBI MoMo Link</b> and tap <b>Allow SMS access</b>.<br><small>If Android blocks it: Settings → Apps → FBI MoMo Link → ⋮ → Allow restricted settings, then Permissions → SMS → Allow.</small></li>
-<li>On a computer, open Invoice Studio → <b>MoMo payments</b> → <b>Link phone</b>, and type the 6-digit code into the app.</li>
+<li>On a computer, open Invoice Studio → <b>MoMo payments</b> → <b>Link phone</b> and scan the QR code with this phone's camera.</li>
 <li>Set the app's battery use to <b>Unrestricted</b> so the phone doesn't pause it.</li>
 </ol></div>
+<script>
+(function(){
+  var m=/link=([A-Za-z0-9_-]{30,})/.exec(location.hash||"");
+  if(!m)return;
+  var token=m[1], card=document.getElementById("linkCard"); card.style.display="block";
+  if(/noapp=1/.test(location.hash))document.getElementById("noApp").style.display="block";
+  var back=location.origin+"/momo-link#link="+token+"&noapp=1";
+  document.getElementById("openApp").href="intent://link?token="+token+"#Intent;scheme=fbimomo;package=com.fbigh.momolink;S.browser_fallback_url="+encodeURIComponent(back)+";end";
+  document.getElementById("copyLink").onclick=function(e){e.preventDefault();var u=location.origin+"/momo-link#link="+token;
+    if(navigator.clipboard)navigator.clipboard.writeText(u).then(function(){alert("Link copied. Open FBI MoMo Link and paste it.")},function(){prompt("Copy this link:",u)});else prompt("Copy this link:",u)};
+  card.scrollIntoView();
+})();
+</script>
 </main></body>
 </html>
