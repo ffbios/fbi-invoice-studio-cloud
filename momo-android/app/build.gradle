@@ -1,0 +1,35 @@
+plugins { id 'com.android.application' }
+
+// Builds are signed with the FBI MoMo Link key when CI provides it, so a new version installs over the old one.
+def ks = file('momo-link.keystore')
+android {
+  namespace 'com.fbigh.momolink'
+  compileSdk 35
+  defaultConfig {
+    applicationId 'com.fbigh.momolink'
+    minSdk 26
+    targetSdk 35
+    versionCode 1
+    versionName '1.0'
+  }
+  signingConfigs {
+    fbi {
+      if (ks.exists()) {
+        storeFile ks
+        storePassword System.getenv('MOMO_KEYSTORE_PASSWORD') ?: ''
+        keyAlias 'momolink'
+        keyPassword System.getenv('MOMO_KEYSTORE_PASSWORD') ?: ''
+      }
+    }
+  }
+  buildTypes {
+    release {
+      minifyEnabled false
+      signingConfig ks.exists() ? signingConfigs.fbi : signingConfigs.debug
+    }
+  }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+}

@@ -1,5 +1,5 @@
 {
- "version": 2,
+ "version": 3,
  "categories": [
   {
    "name": "Equipment Rentals",
@@ -3463,6 +3463,125 @@
       "Door Contact / Motion Detector Set",
       "Perimeter Intrusion Detection Integration",
       "Emergency Panic Button System"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Maintenance",
+   "description": "Maintenance, servicing, repairs, call-outs and maintenance contracts for CCTV, networks, smart homes, data centers and equipment",
+   "sections": [
+    {
+     "name": "Service calls & visits",
+     "items": [
+      "Maintenance Service Call",
+      "Preventive Maintenance Visit",
+      "Routine Maintenance Visit (Monthly)",
+      "Emergency Call-out",
+      "After-hours / Weekend Call-out",
+      "Site Inspection & Fault Diagnosis",
+      "Repair Labour (per hour)",
+      "Repair Labour (per day)",
+      "Transport & Call-out Fee",
+      "Replacement Parts & Consumables",
+      "System Health Check & Report",
+      "Remote Support Session"
+     ]
+    },
+    {
+     "name": "CCTV & security",
+     "items": [
+      "Camera Health Monitoring",
+      "CCTV Maintenance",
+      "CCTV Troubleshooting",
+      "Remote CCTV Maintenance",
+      "CCTV Annual Maintenance Contract",
+      "CCTV Upgrade (Analog to IP)",
+      "NVR/DVR Firmware Update",
+      "Camera Cleaning & Refocusing",
+      "Recorder (NVR/DVR) Health Check",
+      "Hard Drive Replacement",
+      "Faulty Camera Replacement",
+      "Cable & Connector Repair",
+      "Power Supply / Adaptor Replacement",
+      "Access Control Maintenance",
+      "Alarm System Maintenance",
+      "Electric Fence Maintenance"
+     ]
+    },
+    {
+     "name": "Networking & IT",
+     "items": [
+      "Network Troubleshooting",
+      "Network Maintenance",
+      "Annual Network Support Contract",
+      "Computer Maintenance & Repair",
+      "Printer Maintenance",
+      "Wi-Fi Optimisation",
+      "Router / Switch Replacement",
+      "Software Update & Virus Removal",
+      "Starlink Maintenance & Realignment"
+     ]
+    },
+    {
+     "name": "Smart home",
+     "items": [
+      "Smart Home Maintenance",
+      "Smart Home Troubleshooting",
+      "Smart Device Re-pairing & Reset",
+      "Smart Lock Maintenance",
+      "Gate / Garage Motor Maintenance"
+     ]
+    },
+    {
+     "name": "Data center & power",
+     "items": [
+      "Data Center Preventive Maintenance",
+      "Data Center Emergency Troubleshooting",
+      "Annual Maintenance & Support Contract",
+      "CCTV Preventive Maintenance Visit",
+      "CCTV Annual Maintenance Contract",
+      "Domain Controller / Directory Services Setup",
+      "Server Hardware Upgrade & Component Replacement",
+      "NVR Storage Expansion & Retention Upgrade",
+      "Clean-Agent Fire Suppression System",
+      "Camera Firmware Update & Standardization",
+      "UPS Battery Replacement",
+      "UPS Maintenance",
+      "Inverter & Solar Backup Maintenance",
+      "Server Maintenance",
+      "Rack Cleaning & Cable Management"
+     ]
+    },
+    {
+     "name": "Equipment & AV",
+     "items": [
+      "Camera Sensor Cleaning",
+      "Lens Cleaning & Servicing",
+      "Camera Body Servicing",
+      "Gimbal / Stabilizer Servicing",
+      "Drone Servicing & Calibration",
+      "Lighting Equipment Servicing",
+      "Audio Equipment Servicing",
+      "Projector Maintenance & Lamp Replacement",
+      "LED Screen / Video Wall Maintenance",
+      "PA System Maintenance",
+      "Battery Health Check & Replacement",
+      "Equipment Firmware Updates"
+     ]
+    },
+    {
+     "name": "Maintenance contracts",
+     "items": [
+      "Monthly Maintenance Contract",
+      "Quarterly Maintenance Contract",
+      "Bi-annual Maintenance Contract",
+      "Annual Maintenance Contract (AMC)",
+      "Annual Maintenance & Support Contract",
+      "CCTV Annual Maintenance Contract",
+      "Network Annual Maintenance Contract",
+      "Smart Home Annual Maintenance Contract",
+      "Equipment Annual Maintenance Contract"
      ]
     }
    ]

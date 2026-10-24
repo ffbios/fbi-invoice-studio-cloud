@@ -1,0 +1,348 @@
+<!-- MoMo payments page: built into index.html by build-index.js (inserted before </body>) -->
+<style id="fbi-momo-styles">
+.nav button[data-v="momo"][data-count]:not([data-count=""])::after{content:attr(data-count);margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--u-brand,#c71954);color:#fff;font-size:11px;font-weight:800;display:inline-grid;place-items:center}
+#view-momo .mm-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+#view-momo .mm-head h3{margin:0 0 4px}
+#view-momo .mm-note{font-size:12.5px;color:var(--muted);line-height:1.55;max-width:640px}
+#view-momo .mm-actions{display:flex;gap:8px;flex-wrap:wrap}
+#view-momo .mm-phones{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+#view-momo .mm-phone{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line,var(--border));border-radius:var(--u-r-sm,10px);background:var(--u-row,transparent);font-size:13px;flex-wrap:wrap}
+#view-momo .mm-dot{width:9px;height:9px;border-radius:50%;background:var(--u-neutral,#888);flex:none}
+#view-momo .mm-dot.ok{background:var(--u-ok,#2a9d6a)}#view-momo .mm-dot.warn{background:var(--u-warn,#c99a1a)}#view-momo .mm-dot.bad{background:var(--u-bad,#c33)}
+#view-momo .mm-phone .grow{flex:1;min-width:180px}
+#view-momo .mm-phone small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+#view-momo .mm-tabs{display:flex;gap:6px;margin:4px 0 12px;flex-wrap:wrap}
+#view-momo .mm-tab{border:1px solid var(--line,var(--border));background:transparent;color:var(--text);border-radius:999px;height:34px;padding:0 14px;font-size:13px;font-weight:700;cursor:pointer}
+#view-momo .mm-tab.active{background:var(--u-brand,#a80e4d);border-color:var(--u-brand,#a80e4d);color:#fff}
+#view-momo .mm-tab b{margin-left:6px;opacity:.85}
+#view-momo .mm-list{display:flex;flex-direction:column;gap:10px}
+#view-momo .mm-pay{border:1px solid var(--line,var(--border));border-radius:var(--u-r,14px);padding:14px;background:var(--panel)}
+#view-momo .mm-pay-top{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+#view-momo .mm-amt{font-size:22px;font-weight:850;letter-spacing:-.3px;white-space:nowrap}
+#view-momo .mm-who{flex:1;min-width:200px}
+#view-momo .mm-who b{font-size:15px}
+#view-momo .mm-meta{color:var(--muted);font-size:12px;margin-top:3px;line-height:1.5;word-break:break-word}
+#view-momo .mm-tag{display:inline-block;font-size:11px;font-weight:750;padding:2px 8px;border-radius:999px;background:var(--u-neutral-bg,#eee);color:var(--u-neutral,#555);margin-right:4px}
+#view-momo .mm-tag.ok{background:var(--u-ok-bg);color:var(--u-ok)}#view-momo .mm-tag.warn{background:var(--u-warn-bg);color:var(--u-warn)}#view-momo .mm-tag.info{background:var(--u-info-bg);color:var(--u-info)}
+#view-momo .mm-match{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line,var(--border));display:flex;flex-direction:column;gap:8px}
+#view-momo .mm-sugg{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px}
+#view-momo .mm-sugg .grow{flex:1;min-width:200px}
+#view-momo .mm-btns{display:flex;gap:7px;flex-wrap:wrap}
+#view-momo .mm-sms{margin-top:8px;font-size:11.5px;color:var(--muted)}
+#view-momo .mm-sms summary{cursor:pointer}
+#view-momo .mm-sms div{margin-top:6px;padding:8px 10px;border-radius:8px;background:var(--u-row,rgba(0,0,0,.04));line-height:1.5}
+#view-momo .mm-empty{padding:28px 10px;text-align:center;color:var(--muted);font-size:13.5px}
+#mmModal{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(8,9,12,.55);padding:16px}
+#mmModal.show{display:flex}
+#mmModal .mm-box{width:min(560px,100%);max-height:88vh;overflow:auto;background:var(--panel);color:var(--text);border:1px solid var(--line,var(--border));border-radius:16px;box-shadow:var(--u-shadow);padding:18px}
+#mmModal h3{margin:0 0 6px;font-size:17px}
+#mmModal .mm-note{font-size:13px;color:var(--muted);line-height:1.55}
+#mmModal .mm-code{font-size:40px;font-weight:850;letter-spacing:8px;text-align:center;margin:14px 0 4px;font-variant-numeric:tabular-nums}
+#mmModal ol{padding-left:20px;font-size:13.5px;line-height:1.7;margin:10px 0}
+#mmModal textarea,#mmModal input[type=search]{width:100%;box-sizing:border-box}
+#mmModal .mm-inv{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line,var(--border));border-radius:10px;margin-top:7px;cursor:pointer;background:transparent;color:var(--text);width:100%;text-align:left;font:inherit}
+#mmModal .mm-inv:hover{border-color:var(--u-brand,#a80e4d)}
+#mmModal .mm-inv .grow{flex:1;min-width:0}
+#mmModal .mm-inv small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+#mmModal .mm-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;flex-wrap:wrap}
+@media(max-width:640px){#view-momo .mm-amt{font-size:19px}#view-momo .mm-btns{display:grid;grid-template-columns:1fr;width:100%}#view-momo .mm-btns .btn{width:100%!important;height:auto!important;min-height:40px;white-space:normal}#view-momo .mm-sugg>.btn{width:100%!important;min-height:40px}#view-momo .mm-actions{width:100%}#view-momo .mm-actions .btn{flex:1 1 auto!important}}
+</style>
+<div id="mmModal" class="no-print" role="dialog" aria-modal="true" onclick="if(event.target===this)momoCloseModal()"><div class="mm-box" id="mmModalBox"></div></div>
+<script id="fbi-momo-script">
+(function(){
+  const MM={payments:[],counts:{},devices:[],payerLinks:{},tab:"new",loaded:false,known:null,timer:null};
+  window.__FBI_MOMO__=MM;
+
+  // Adds the "MoMo payments" menu item and page next to Receipts.
+  function injectShell(){
+    if(!document.getElementById("view-momo")){
+      const sec=document.createElement("section");sec.className="view";sec.id="view-momo";
+      sec.innerHTML='<div class="card"><div class="mm-head"><div><h3>MTN MoMo payments</h3><div class="mm-note">Payments that land on your MoMo number show up here by themselves. Pick the invoice they belong to and the receipt is made for you.</div></div><div class="mm-actions"><button class="btn" type="button" onclick="momoPasteOpen()">Paste a MoMo SMS</button><button class="btn" type="button" onclick="momoPairStart()">Link phone</button><button class="btn" type="button" onclick="momoLoad()">Refresh</button></div></div><div class="mm-phones" id="mmPhones"></div></div>'+
+        '<div class="card"><div class="mm-tabs" role="tablist"><button type="button" class="mm-tab active" data-tab="new" onclick="momoTab(\'new\')">To match<b>0</b></button><button type="button" class="mm-tab" data-tab="matched" onclick="momoTab(\'matched\')">Recorded<b>0</b></button><button type="button" class="mm-tab" data-tab="ignored" onclick="momoTab(\'ignored\')">Not client payments<b>0</b></button></div><div class="mm-list" id="mmList"></div></div>';
+      const after=document.getElementById("view-receipts");
+      if(after&&after.parentNode)after.parentNode.insertBefore(sec,after.nextSibling);else (document.querySelector("main.main")||document.body).appendChild(sec);
+    }
+    if(!document.querySelector('.nav button[data-v="momo"]')){
+      const rb=document.querySelector('.nav button[data-v="receipts"]');
+      if(rb){const b=document.createElement("button");b.type="button";b.className="nav-link";b.dataset.v="momo";b.setAttribute("onclick","show('momo')");
+        b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10 18.5h4"/><path d="M12 6.5v7M9.5 9.5 12 7l2.5 2.5"/></svg><span>MoMo payments</span>';
+        rb.parentNode.insertBefore(b,rb.nextSibling)}
+    }
+    if(typeof window.show==="function"&&!window.show.__momo){
+      const orig=window.show;
+      window.show=function(v){if(v!=="receipt-preview")receiptExtras("");const r=orig.apply(this,arguments);if(v==="momo"){const t=document.getElementById("title"),st=document.getElementById("subtitle");if(t)t.textContent="MoMo payments";if(st)st.textContent="Match MTN MoMo payments to invoices and make receipts";window.renderMomo()}return r};
+      window.show.__momo=true;
+    }
+  }
+  const STOP=new Set(["THE","AND","LTD","LIMITED","ENTERPRISE","ENTERPRISES","ENT","COMPANY","CO","MRS","MR","MISS","MS","DR","REV","BANK","FROM","GHS","FBL","PLC","GHANA","SERVICES","SERVICE","VENTURES"]);
+  const $m=id=>document.getElementById(id);
+  const h=v=>(typeof esc==="function"?esc(v):String(v??""));
+  const cedi=v=>(typeof fmtMoney==="function"?fmtMoney(v,"GHS"):"GH₵"+Number(v||0).toFixed(2));
+
+  async function api(path,body){
+    const opt=body===undefined?{credentials:"same-origin"}:{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})};
+    const r=await fetch(path,opt);const j=await r.json().catch(()=>({}));
+    if(!r.ok||j.ok===false){const e=new Error(j.error||("Request failed ("+r.status+")"));e.status=r.status;throw e}
+    return j;
+  }
+  function when(ms){if(!ms)return"";const d=new Date(ms);return d.toLocaleString("en-GB",{day:"numeric",month:"short",year:d.getFullYear()===new Date().getFullYear()?undefined:"numeric",hour:"2-digit",minute:"2-digit"})}
+  function ago(ms){if(!ms)return"never";const s=Math.max(0,(Date.now()-ms)/1000);if(s<90)return"just now";if(s<3600)return Math.round(s/60)+" min ago";if(s<86400)return Math.round(s/3600)+" h ago";return Math.round(s/86400)+" days ago"}
+  function dayOf(ms){const d=new Date(ms||Date.now());return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+  function digits(v){return String(v||"").replace(/\D/g,"")}
+  function phoneKeys(v){return String(v||"").split(/[\/,;|]| or /i).map(digits).filter(d=>d.length>=9).map(d=>d.slice(-9))}
+  function tokens(v){return String(v||"").toUpperCase().replace(/[^A-Z0-9]+/g," ").split(" ").filter(t=>t.length>=3&&!STOP.has(t)&&!/^\d+$/.test(t))}
+  function normName(v){return tokens(v).join(" ")}
+  function tokMatch(a,b){return a===b||(a.length>=4&&b.length>=4&&(a.startsWith(b)||b.startsWith(a)))}
+  function nameScore(pt,name){const ct=tokens(name);if(!pt.length||!ct.length)return 0;const m=pt.filter(t=>ct.some(c=>tokMatch(t,c))).length;if(!m)return 0;return (m/ct.length+m/pt.length)/2}
+  function invPaid(x){try{return paymentHistory(x).reduce((s,p)=>s+Math.max(0,Number(p.amount||0)),0)}catch(e){return Number(x.amountPaid||0)}}
+  function invBalance(x){if(!x||x.status==="Cancelled")return 0;return Math.max(0,Number(x.total||0)-invPaid(x))}
+  function allInvoices(){return (typeof data!=="undefined"&&Array.isArray(data))?data:[]}
+  function allClients(){return (typeof clients!=="undefined"&&Array.isArray(clients))?clients:[]}
+  function clientById(id){return allClients().find(c=>String(c.id)===String(id))||null}
+  function invoiceForClient(inv,c){
+    if(!c)return false;
+    const cn=normName(c.name);if(cn&&normName(inv.client)===cn)return true;
+    const ck=phoneKeys(c.phone),ik=phoneKeys(inv.clientPhone);return ck.some(k=>ik.includes(k));
+  }
+  function clientForInvoice(inv){
+    const n=normName(inv.client),ik=phoneKeys(inv.clientPhone);
+    return allClients().find(c=>n&&normName(c.name)===n)||allClients().find(c=>phoneKeys(c.phone).some(k=>ik.includes(k)))||null;
+  }
+
+  // Who most likely sent this money? Linked before > same phone > similar name.
+  function clientCandidates(p){
+    const out=[],seen=new Set();
+    const add=(c,score,why)=>{if(c&&!seen.has(String(c.id))){seen.add(String(c.id));out.push({client:c,score,why})}};
+    const link=MM.payerLinks[p.payerKey];if(link)add(clientById(link.clientId),2,"Paid before");
+    const pk=phoneKeys(p.payerPhone);
+    if(pk.length)allClients().forEach(c=>{if(phoneKeys(c.phone).some(k=>pk.includes(k)))add(c,1.5,"Same phone number")});
+    const pt=tokens(p.payerName),rt=tokens(p.reference).filter(t=>!pt.includes(t));
+    const scored=[];
+    allClients().forEach(c=>{if(seen.has(String(c.id)))return;let s=nameScore(pt,c.name),why="Name matches";const r=rt.length?nameScore(rt,c.name)*.9:0;if(r>s){s=r;why="Matches the reference"}if(s>=.5)scored.push({c,s,why})});
+    scored.sort((a,b)=>b.s-a.s).slice(0,4).forEach(x=>add(x.c,x.s,x.s>=.85?x.why:"Similar name"));
+    return out;
+  }
+  function invoiceSuggestions(p,cands){
+    const res=[],seen=new Set();
+    const push=(inv,why,client)=>{if(!seen.has(inv.id)){seen.add(inv.id);res.push({inv,why,client})}};
+    cands.forEach(cd=>{
+      allInvoices().filter(inv=>invBalance(inv)>0.005&&invoiceForClient(inv,cd.client))
+        .sort((a,b)=>(Math.abs(invBalance(a)-p.amount)<.01?0:1)-(Math.abs(invBalance(b)-p.amount)<.01?0:1)||String(b.date||"").localeCompare(String(a.date||"")))
+        .forEach(inv=>push(inv,Math.abs(invBalance(inv)-p.amount)<.01?"Exact balance":"Unpaid balance "+cedi(invBalance(inv)),cd.client));
+    });
+    if(!res.length)allInvoices().filter(inv=>Math.abs(invBalance(inv)-p.amount)<.01).sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))).slice(0,3).forEach(inv=>push(inv,"Same amount owed",clientForInvoice(inv)));
+    // An invoice whose balance is exactly this payment goes first, whichever likely client it belongs to.
+    const exact=r=>Math.abs(invBalance(r.inv)-p.amount)<.01?0:1;
+    return res.map((r,i)=>({r,i})).sort((a,b)=>exact(a.r)-exact(b.r)||a.i-b.i).map(x=>x.r);
+  }
+
+  function momoRef(p){return "MoMo "+(p.transactionId||("SMS "+p.id))+(p.kind==="bank-transfer"&&p.source?" (from "+p.source+")":"")}
+  function kindLabel(p){
+    if(p.kind==="bank-transfer")return"Bank transfer"+(p.source?" · "+p.source:"");
+    if(p.kind==="cash-in")return"Cash-in at agent";
+    return"MoMo transfer";
+  }
+
+  function renderPhones(){
+    const el=$m("mmPhones");if(!el)return;
+    if(!MM.devices.length){el.innerHTML='<div class="mm-phone"><span class="mm-dot bad"></span><div class="grow"><b>No phone linked yet</b><small>Link the phone that receives your MoMo payments so they appear here by themselves. Until then, you can paste a MoMo SMS.</small></div><button class="btn primary" type="button" onclick="momoPairStart()">Link phone</button></div>';return}
+    el.innerHTML=MM.devices.map(d=>{
+      const age=d.lastSeenAt?Date.now()-d.lastSeenAt:Infinity,cls=age<40*60e3?"ok":age<6*3600e3?"warn":"bad";
+      const state=cls==="ok"?"Connected":cls==="warn"?"Not heard from in a while":"Offline — check the phone has data and the app is open";
+      return '<div class="mm-phone"><span class="mm-dot '+cls+'"></span><div class="grow"><b>'+h(d.name)+'</b> · '+state+'<small>Last check-in '+h(ago(d.lastSeenAt))+(d.lastSmsAt?' · last payment received '+h(ago(d.lastSmsAt)):'')+(d.lastRejectedSender?'<br>Blocked a payment-looking SMS from “'+h(d.lastRejectedSender)+'” because it did not come from MTN MobileMoney':'')+'</small></div><button class="btn" type="button" onclick="momoUnlink(\''+h(d.id)+'\')">Unlink</button></div>';
+    }).join("");
+  }
+
+  function payCard(p){
+    const top='<div class="mm-pay-top"><div class="mm-amt">'+cedi(p.amount)+'</div><div class="mm-who"><b>'+h(p.payerName||"Unknown sender")+'</b>'+(p.payerPhone?' · '+h(p.payerPhone):'')+
+      '<div class="mm-meta"><span class="mm-tag info">'+h(kindLabel(p))+'</span>'+h(when(p.receivedAt))+(p.transactionId?' · Transaction '+h(p.transactionId):'')+(p.via==="pasted"?' · pasted':'')+'</div>'+
+      (p.reference&&p.reference.toUpperCase()!==String(p.payerName||"").toUpperCase()?'<div class="mm-meta">Reference: '+h(p.reference)+'</div>':'')+'</div></div>';
+    const sms='<details class="mm-sms"><summary>Show SMS</summary><div>'+h(p.smsText)+'</div></details>';
+    let body="";
+    if(p.status==="new"){
+      const cands=clientCandidates(p),sugg=invoiceSuggestions(p,cands);
+      let best=cands[0];
+      if(sugg[0]){const nm=String(sugg[0].inv.client||"").trim().toLowerCase();const owner=cands.find(c=>String(c.client.name||"").trim().toLowerCase()===nm)||cands.find(c=>invoiceForClient(sugg[0].inv,c.client));if(owner)best=owner}
+      let lines=[];
+      if(best)lines.push('<div class="mm-sugg"><div class="grow">Client: <b>'+h(best.client.name)+'</b> <span class="mm-tag '+(best.score>=1?"ok":"warn")+'">'+h(best.why)+'</span>'+(cands.length>1?'<div class="mm-meta">Also possible: '+cands.filter(c=>c!==best).slice(0,2).map(c=>h(c.client.name)).join(", ")+'</div>':'')+'</div></div>');
+      else lines.push('<div class="mm-sugg"><div class="grow"><span class="mm-tag warn">No matching client found</span> Choose the invoice yourself, or make a new one.</div></div>');
+      sugg.slice(0,3).forEach((s,i)=>{
+        lines.push('<div class="mm-sugg"><div class="grow"><b>'+h(s.inv.no||"Invoice")+'</b> · '+h(s.inv.client||"")+' · '+h(s.inv.date||"")+'<div class="mm-meta">Total '+cedi(s.inv.total)+' · <span class="mm-tag '+(s.why==="Exact balance"||s.why==="Same amount owed"?"ok":"")+'">'+h(s.why)+'</span></div></div><button class="btn '+(i===0?"primary":"")+'" type="button" onclick="momoRecord(\''+h(p.id)+'\',\''+h(s.inv.id)+'\')">Record &amp; make receipt</button></div>');
+      });
+      if(best&&!sugg.length)lines.push('<div class="mm-meta">'+h(best.client.name)+' has no unpaid invoice. Make a new invoice for this payment.</div>');
+      body='<div class="mm-match">'+lines.join("")+'<div class="mm-btns"><button class="btn" type="button" onclick="momoPickInvoice(\''+h(p.id)+'\')">Choose another invoice</button><button class="btn'+(sugg.length?"":" primary")+'" type="button" onclick="momoNewInvoice(\''+h(p.id)+'\''+(best?',\''+h(best.client.id)+'\'':'')+')">＋ New invoice for this payment</button><button class="btn" type="button" onclick="momoIgnore(\''+h(p.id)+'\')">Not a client payment</button></div></div>';
+    }else if(p.status==="matched"){
+      const inv=allInvoices().find(x=>String(x.id)===String(p.invoiceId));
+      const rec=inv?paymentHistory(inv).find(x=>String(x.receiptNo)===String(p.receiptNo)):null;
+      body='<div class="mm-match"><div class="mm-sugg"><div class="grow"><span class="mm-tag ok">Recorded</span> on <b>'+h(p.invoiceNo||"invoice")+'</b>'+(p.clientName?' · '+h(p.clientName):'')+(p.receiptNo?' · Receipt <b>'+h(p.receiptNo)+'</b>':'')+'<div class="mm-meta">'+h(when(p.matchedAt))+'</div></div><div class="mm-btns">'+
+        (inv&&rec?'<button class="btn primary" type="button" onclick="showReceipt(\''+h(inv.id)+'\',\''+h(rec.id)+'\');__momoReceiptExtras(\''+h(p.id)+'\');document.getElementById(\'title\').textContent=\'Official Receipt\'">View receipt</button><button class="btn" type="button" onclick="momoSendReceipt(\''+h(p.id)+'\')">Send on WhatsApp</button>':'')+
+        '<button class="btn" type="button" onclick="momoReopen(\''+h(p.id)+'\')">Undo</button></div></div></div>';
+    }else{
+      body='<div class="mm-match"><div class="mm-sugg"><div class="grow"><span class="mm-tag">Not a client payment</span>'+(p.note?' · '+h(p.note):'')+'</div><button class="btn" type="button" onclick="momoReopen(\''+h(p.id)+'\')">Move back to “To match”</button></div></div>';
+    }
+    return '<div class="mm-pay" id="mm-pay-'+h(p.id)+'">'+top+body+sms+'</div>';
+  }
+
+  function render(){
+    const view=$m("view-momo");if(!view)return;
+    renderPhones();
+    const c=MM.counts||{};
+    document.querySelectorAll("#view-momo .mm-tab").forEach(b=>{b.classList.toggle("active",b.dataset.tab===MM.tab);const n=b.querySelector("b");if(n)n.textContent=c[b.dataset.tab]||0});
+    const list=MM.payments.filter(p=>p.status===MM.tab);
+    const el=$m("mmList");
+    if(!MM.loaded){el.innerHTML='<div class="mm-empty">Loading MoMo payments…</div>';return}
+    el.innerHTML=list.length?list.map(payCard).join(""):'<div class="mm-empty">'+(MM.tab==="new"?"All caught up. New MoMo payments will show up here.":MM.tab==="matched"?"No payments recorded from MoMo yet.":"Nothing here.")+'</div>';
+  }
+  function badge(){const b=document.querySelector('.nav button[data-v="momo"]');if(b)b.dataset.count=(MM.counts.new||0)>0?String(MM.counts.new>99?"99+":MM.counts.new):""}
+
+  async function load(quiet){
+    try{
+      const j=await api("/api/momo/payments?limit=300");
+      const fresh=j.payments.filter(p=>p.status==="new"&&MM.known&&!MM.known.has(p.id));
+      MM.payments=j.payments;MM.counts=j.counts||{};MM.devices=j.devices||[];MM.payerLinks=j.payerLinks||{};MM.loaded=true;
+      MM.known=new Set(j.payments.map(p=>p.id));
+      badge();
+      if(fresh.length&&typeof toast==="function")toast(fresh.length===1?"New MoMo payment: "+cedi(fresh[0].amount)+" from "+(fresh[0].payerName||"unknown"):fresh.length+" new MoMo payments to match");
+      if($m("view-momo")?.classList.contains("active"))render();
+    }catch(e){if(e.status!==401&&!quiet&&typeof toast==="function")toast("Could not load MoMo payments: "+e.message)}
+  }
+  window.momoLoad=load;
+  window.renderMomo=function(){render();load(true)};
+  window.momoTab=function(t){MM.tab=t;render()};
+
+  function modal(html){$m("mmModalBox").innerHTML=html;$m("mmModal").classList.add("show")}
+  window.momoCloseModal=function(){$m("mmModal").classList.remove("show");clearInterval(MM.codeTimer)};
+
+  window.momoPairStart=async function(){
+    let j;try{j=await api("/api/momo/pair-code",{})}catch(e){alert(e.message);return}
+    modal('<h3>Link the MoMo phone</h3><div class="mm-note">Do this on the Android phone that receives your MoMo payment messages.</div><ol><li>On that phone, open <b>'+h(location.origin)+'/momo-link</b> and install <b>FBI MoMo Link</b>.</li><li>Open the app and allow it to read SMS.</li><li>Type this code into the app:</li></ol><div class="mm-code">'+h(j.code.slice(0,3)+" "+j.code.slice(3))+'</div><div class="mm-note" style="text-align:center" id="mmCodeLeft"></div><div class="mm-foot"><button class="btn primary" type="button" onclick="momoCloseModal();momoLoad()">Done</button></div>');
+    const tick=()=>{const s=Math.max(0,Math.round((j.expiresAt-Date.now())/1000));const el=$m("mmCodeLeft");if(el)el.textContent=s?"Code works for "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0"):"Code expired — close and press Link phone again.";if(!s)clearInterval(MM.codeTimer)};
+    clearInterval(MM.codeTimer);tick();MM.codeTimer=setInterval(tick,1000);
+    // Refresh while waiting so the new phone shows up as soon as it links.
+    const before=MM.devices.length;let tries=0;const poll=setInterval(async()=>{tries++;if(!$m("mmModal").classList.contains("show")||tries>90){clearInterval(poll);return}await load(true);if(MM.devices.length>before){clearInterval(poll);momoCloseModal();render();toast("Phone linked. MoMo payments will now appear automatically.")}},5000);
+  };
+  window.momoUnlink=async function(id){if(!confirm("Unlink this phone? It will stop sending MoMo payments until you link it again."))return;try{await api("/api/momo/devices/"+encodeURIComponent(id)+"/unlink",{});await load()}catch(e){alert(e.message)}};
+
+  window.momoPasteOpen=function(){
+    modal('<h3>Paste a MoMo message</h3><div class="mm-note">Copy the “Payment received for GHS …” SMS from your phone and paste it here. You can paste several at once.</div><textarea id="mmPasteText" rows="7" placeholder="Payment received for GHS 200.00 from …"></textarea><div class="mm-foot"><button class="btn" type="button" onclick="momoCloseModal()">Cancel</button><button class="btn primary" type="button" onclick="momoPasteSave()">Add payment</button></div>');
+    setTimeout(()=>$m("mmPasteText")?.focus(),50);
+  };
+  window.momoPasteSave=async function(){
+    const t=$m("mmPasteText")?.value||"";if(!t.trim())return;
+    try{const j=await api("/api/momo/paste",{text:t});momoCloseModal();MM.tab="new";await load(true);render();toast(j.stored?(j.stored+" payment"+(j.stored===1?"":"s")+" added"+(j.duplicates?" ("+j.duplicates+" already here)":"")):"That payment is already in the list")}catch(e){alert(e.message)}
+  };
+
+  window.momoPickInvoice=function(pid){
+    const p=MM.payments.find(x=>x.id===pid);if(!p)return;
+    MM.pickFor=pid;
+    modal('<h3>Choose the invoice</h3><div class="mm-note">'+cedi(p.amount)+' from '+h(p.payerName||"unknown")+'. Unpaid invoices are listed; the same amount is shown first.</div><input type="search" id="mmInvSearch" placeholder="Search invoice number or client" oninput="momoPickRender()" autocomplete="off"><div id="mmInvList"></div><div class="mm-foot"><button class="btn" type="button" onclick="momoCloseModal()">Cancel</button></div>');
+    momoPickRender();setTimeout(()=>$m("mmInvSearch")?.focus(),50);
+  };
+  window.momoPickRender=function(){
+    const p=MM.payments.find(x=>x.id===MM.pickFor);if(!p)return;
+    const q=String($m("mmInvSearch")?.value||"").toLowerCase().trim();
+    const pt=tokens(p.payerName);
+    const list=allInvoices().filter(inv=>invBalance(inv)>0.005).filter(inv=>!q||[inv.no,inv.client,inv.clientPhone,inv.category].join(" ").toLowerCase().includes(q))
+      .map(inv=>({inv,bal:invBalance(inv),score:(Math.abs(invBalance(inv)-p.amount)<.01?2:0)+nameScore(pt,inv.client)}))
+      .sort((a,b)=>b.score-a.score||String(b.inv.date||"").localeCompare(String(a.inv.date||""))).slice(0,40);
+    $m("mmInvList").innerHTML=list.length?list.map(x=>'<button type="button" class="mm-inv" onclick="momoRecord(\''+h(p.id)+'\',\''+h(x.inv.id)+'\')"><div class="grow"><b>'+h(x.inv.no||"Invoice")+'</b> · '+h(x.inv.client||"No client")+'<small>'+h(x.inv.date||"")+(x.inv.category?' · '+h(x.inv.category):'')+'</small></div><div style="text-align:right"><b>'+cedi(x.bal)+'</b><small>owed</small></div></button>').join(""):'<div class="mm-empty">No unpaid invoices'+(q?' match “'+h(q)+'”':'')+'.</div>';
+  };
+
+  async function markMatched(p,inv,pay,clientHint){
+    const c=clientHint||clientForInvoice(inv);
+    const j=await api("/api/momo/payments/"+encodeURIComponent(p.id)+"/match",{invoiceId:inv.id,invoiceNo:inv.no||"",receiptNo:pay?.receiptNo||"",clientId:c?.id||"",clientName:c?.name||inv.client||"",rememberPayer:!!c});
+    const i=MM.payments.findIndex(x=>x.id===p.id);if(i>=0)MM.payments[i]=j.payment;
+    MM.counts.new=Math.max(0,(MM.counts.new||1)-1);MM.counts.matched=(MM.counts.matched||0)+1;
+    if(c&&p.payerKey)MM.payerLinks[p.payerKey]={clientId:c.id,clientName:c.name};
+    badge();
+  }
+
+  // Records the MoMo money on an existing invoice using the app's normal payment + receipt steps.
+  window.momoRecord=async function(pid,invId){
+    const p=MM.payments.find(x=>x.id===pid);const inv=allInvoices().find(x=>String(x.id)===String(invId));
+    if(!p||!inv){alert("That payment or invoice could not be found. Refresh and try again.");return}
+    const bal=invBalance(inv);if(bal<=0.005){alert((inv.no||"This invoice")+" is already fully paid.");return}
+    let amt=Number(p.amount);
+    if(amt>bal+0.005){if(!confirm("This payment is "+cedi(amt)+" but "+(inv.no||"the invoice")+" only has "+cedi(bal)+" left to pay.\n\nRecord "+cedi(bal)+" on "+(inv.no||"it")+"?"))return;amt=bal}
+    else if(!confirm("Record "+cedi(amt)+" from "+(p.payerName||"this sender")+" on "+(inv.no||"invoice")+" ("+(inv.client||"no client")+") and make the receipt?"))return;
+    momoCloseModal();
+    const ref=momoRef(p);
+    openInvoicePayment(inv.id);
+    $("amountPaid").value=amt.toFixed(2);
+    $("paymentDate").value=dayOf(p.receivedAt);
+    $("paymentMethod").value="Mobile Money";
+    $("transactionRef").value=ref;
+    MM.pending={pid:p.id,ref,clientId:(clientCandidates(p).find(c=>invoiceForClient(inv,c.client))||{}).client?.id||""};
+    await recordPayment();
+  };
+
+  // New invoice already filled with the client and this payment; the receipt is made when it is recorded.
+  window.momoNewInvoice=function(pid,clientId){
+    const p=MM.payments.find(x=>x.id===pid);if(!p)return;
+    momoCloseModal();
+    newInvoice();show("create");
+    const c=clientId?clientById(clientId):null;
+    if(c&&$("clientSelect")){populateClientSelect();$("clientSelect").value=c.id;applySelectedClient()}
+    else{$("client").value=String(p.payerName||"").replace(/\b([A-Z])([A-Z']+)/g,(m,a,b)=>a+b.toLowerCase());$("clientPhone").value=p.payerPhone||""}
+    const ref=momoRef(p);
+    $("amountPaid").value=Number(p.amount).toFixed(2);$("paymentDate").value=dayOf(p.receivedAt);
+    $("paymentMethod").value="Mobile Money";$("transactionRef").value=ref;
+    MM.pending={pid:p.id,ref,clientId:c?.id||""};
+    toast("Add the items (for example Maintenance), then press “Record Payment & Generate Receipt” to save and make the receipt for "+cedi(p.amount)+".");
+  };
+
+  // After any payment is recorded, link it to the MoMo payment it came from.
+  function receiptExtras(pid){
+    const bar=document.querySelector("#view-receipt-preview .no-print");if(!bar)return;
+    let box=document.getElementById("mmReceiptBtns");
+    if(!box){box=document.createElement("span");box.id="mmReceiptBtns";box.style.cssText="display:inline-flex;gap:7px;flex-wrap:wrap";bar.appendChild(box)}
+    box.innerHTML=pid?'<button class="btn" type="button" onclick="momoSendReceipt(\''+h(pid)+'\')">Send on WhatsApp</button><button class="btn" type="button" onclick="show(\'momo\')">← MoMo payments</button>':"";
+  }
+  window.__momoReceiptExtras=receiptExtras;
+  async function afterRecord(){
+    const inv=typeof current!=="undefined"?current:null;if(!inv||!Array.isArray(inv.payments))return;
+    const pend=MM.pending;
+    const candidates=MM.payments.filter(p=>p.status==="new");
+    for(const p of candidates){
+      const tx=p.transactionId||("SMS "+p.id);
+      const pay=inv.payments.slice().reverse().find(x=>String(x.transactionRef||"").includes(tx));
+      if(!pay)continue;
+      try{await markMatched(p,inv,pay,pend&&pend.pid===p.id&&pend.clientId?clientById(pend.clientId):null);receiptExtras(p.id);toast("Receipt "+(pay.receiptNo||"")+" made from the MoMo payment of "+cedi(pay.amount)+".")}
+      catch(e){alert("The receipt was made, but the MoMo payment could not be marked as recorded: "+e.message)}
+    }
+    MM.pending=null;
+  }
+  const origRecord=window.recordPayment;
+  if(typeof origRecord==="function"){
+    window.recordPayment=async function(){receiptExtras("");const r=await origRecord.apply(this,arguments);try{await afterRecord()}catch(e){console.warn("MoMo link after payment failed",e)}
+      if(document.getElementById("view-receipt-preview")?.classList.contains("active")){const t=document.getElementById("title"),st=document.getElementById("subtitle");if(t)t.textContent="Official Receipt";if(st)st.textContent="Preview and print your receipt"}
+      return r};
+  }
+
+  window.momoIgnore=async function(pid){
+    const note=prompt("This payment will be moved out of “To match”. Add a short note if you like (optional):","");if(note===null)return;
+    try{await api("/api/momo/payments/"+encodeURIComponent(pid)+"/ignore",{note});await load(true);render()}catch(e){alert(e.message)}
+  };
+  window.momoReopen=async function(pid){
+    const p=MM.payments.find(x=>x.id===pid);
+    if(p&&p.status==="matched"&&!confirm("Move this payment back to “To match”?\n\nThe receipt "+(p.receiptNo||"")+" stays on "+(p.invoiceNo||"the invoice")+". If it was recorded on the wrong invoice, remove that payment from the invoice too."))return;
+    try{await api("/api/momo/payments/"+encodeURIComponent(pid)+"/reopen",{});await load(true);render()}catch(e){alert(e.message)}
+  };
+  window.momoSendReceipt=function(pid){
+    const p=MM.payments.find(x=>x.id===pid);if(!p)return;
+    const inv=allInvoices().find(x=>String(x.id)===String(p.invoiceId));
+    const phone=digits((inv&&inv.clientPhone)||p.payerPhone);
+    const to=phone.length===10&&phone[0]==="0"?"233"+phone.slice(1):phone;
+    const bal=inv?invBalance(inv):0;
+    const biz=(typeof settings!=="undefined"&&settings.biz)||"FILM BEYOND IMAGINATION (FBI)";
+    const msg="Hello "+((inv&&inv.client)||p.payerName||"")+",\n\nThank you. We have received your payment of "+cedi(p.amount)+" for invoice "+(p.invoiceNo||"")+".\nReceipt number: "+(p.receiptNo||"")+"\nTransaction ID: "+(p.transactionId||"")+"\n"+(bal>0.005?"Balance remaining: "+cedi(bal):"Your invoice is now fully paid.")+"\n\n"+biz;
+    window.open("https://wa.me/"+(to||"")+"?text="+encodeURIComponent(msg),"_blank","noopener");
+  };
+
+  // Keep the menu badge current and announce new payments while the app is open.
+  function startPolling(){clearInterval(MM.timer);MM.timer=setInterval(()=>{if(!document.hidden)load(true)},45000)}
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)load(true)});
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",injectShell);else injectShell();
+  setTimeout(()=>{injectShell();load(true);startPolling()},2500);
+})();
+</script>
