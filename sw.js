@@ -1,4 +1,4 @@
-const CACHE = "fbi-invoice-studio-pwa-v11";
+const CACHE = "fbi-invoice-studio-pwa-v12";
 const APP_SHELL = ["/", "/calendar.js", "/manifest.json", "/assets/fbi-brand-logo.svg", "/assets/fbi-logo.png", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png"];
 
 self.addEventListener("install", event => {
@@ -27,6 +27,7 @@ self.addEventListener("fetch", event => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return;
+  if (url.pathname.startsWith("/momo-link")) return; // app download page, never cached as the app
 
   if (req.mode === "navigate") {
     event.respondWith(

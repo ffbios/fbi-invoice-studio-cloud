@@ -465,7 +465,7 @@ function validateMediaEventDate(invoice,focus=true){
   return true;
 }
 function setTemplate(v){settings.template=v;document.querySelectorAll("[data-template-card]").forEach(c=>c.classList.toggle("selected",c.dataset.templateCard===v));persist()}
-const NON_EVENT_DATE_CATEGORIES=["Networking","CCTV","Smart Home Automation","Data Center & Surveillance Center"];
+const NON_EVENT_DATE_CATEGORIES=["Networking","CCTV","Smart Home Automation","Data Center & Surveillance Center","Maintenance"];
 const IT_CATEGORY_SIGNALS=/\b(it|information technology|network(?:ing)?|cctv|surveillance|data\s+cent(?:er|re)|server\s+room|smart\s+home|automation|cyber\s*security|access\s+control|alarm\s+system|fiber|fibre|structured\s+cabling|telecom(?:munications?)?|wi[\s-]?fi|lan\b|wan\b|starlink|computer\s+(?:support|maintenance|repair)|software\s+(?:support|installation)|security|technical\s+support)\b/i;
 function requiresEventDate(category){
   const c=String(category||"").trim();

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phone with an arrow going up to the cloud: MoMo messages sent to Invoice Studio -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:strokeColor="#D4AF37" android:strokeWidth="4" android:fillColor="#00000000"
+        android:pathData="M42,32 h24 a4,4 0 0 1 4,4 v36 a4,4 0 0 1 -4,4 h-24 a4,4 0 0 1 -4,-4 v-36 a4,4 0 0 1 4,-4 z" />
+    <path android:strokeColor="#D4AF37" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="#00000000"
+        android:pathData="M50,70 h8" />
+    <path android:strokeColor="#F5F5F7" android:strokeWidth="4" android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000"
+        android:pathData="M54,62 V44 M47,51 L54,44 L61,51" />
+</vector>

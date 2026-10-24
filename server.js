@@ -4,6 +4,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const zlib = require('node:zlib');
 const { Pool } = require('pg');
+const momo = require('./momo');
 
 const HOST = process.env.HOST || '0.0.0.0';
 const PORT = Number(process.env.PORT || 10000);
@@ -25,7 +26,10 @@ const STATIC_FILES = {
   '/assets/fbi-logo.png': { file: path.join(ROOT, 'assets', 'fbi-logo.png'), type: 'image/png' },
   '/icons/icon-192.png': { file: path.join(ROOT, 'icons', 'icon-192.png'), type: 'image/png' },
   '/icons/icon-512.png': { file: path.join(ROOT, 'icons', 'icon-512.png'), type: 'image/png' },
-  '/icons/icon-maskable-512.png': { file: path.join(ROOT, 'icons', 'icon-maskable-512.png'), type: 'image/png' }
+  '/icons/icon-maskable-512.png': { file: path.join(ROOT, 'icons', 'icon-maskable-512.png'), type: 'image/png' },
+  // FBI MoMo Link: the Android app that forwards MoMo payment SMS (see momo-android/)
+  '/momo-link': { file: path.join(ROOT, 'downloads', 'momo-link.html'), type: 'text/html; charset=utf-8' },
+  '/momo-link.apk': { file: path.join(ROOT, 'downloads', 'fbi-momo-link.apk'), type: 'application/vnd.android.package-archive' }
 };
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const IS_PRODUCTION = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
@@ -226,6 +230,7 @@ async function initDb() {
   await pool.query('ALTER TABLE auth_account ADD COLUMN IF NOT EXISTS security_a2_hash TEXT');
 
   await ensureSafetyTables();
+  await momo.ensureMomoTables(pool);
 
   const state = await pool.query('SELECT id FROM app_state WHERE id=1');
   if (state.rowCount === 0 && process.env.SEED_ON_EMPTY !== 'false' && fs.existsSync(SEED_FILE)) {
@@ -278,7 +283,7 @@ function sendStatic(res, pathname) {
   const stat = fs.statSync(entry.file);
   const headers = {
     'Content-Type': entry.type,
-    'Cache-Control': pathname === '/sw.js' || pathname === '/payroll-staff-form.html' || pathname === '/payroll-staff-portal.html' ? 'no-store, no-cache, must-revalidate, max-age=0' : 'public, max-age=86400',
+    'Cache-Control': pathname === '/sw.js' || pathname === '/payroll-staff-form.html' || pathname === '/payroll-staff-portal.html' || pathname.startsWith('/momo-link') ? 'no-store, no-cache, must-revalidate, max-age=0' : 'public, max-age=86400',
     'X-Content-Type-Options': 'nosniff'
   };
   if (/^(text\/|application\/(javascript|json|manifest)|image\/svg)/.test(entry.type)) {
@@ -1460,7 +1465,8 @@ const ATTEMPT_RULES = {
   '/api/auth/recovery-questions': ['admin-recovery', 10, 15 * 60 * 1000, 'Too many attempts. Please wait 15 minutes and try again.'],
   '/api/auth/reset': ['admin-reset', 5, 15 * 60 * 1000, 'Too many reset attempts. Please wait 15 minutes and try again.'],
   '/api/payroll-staff/login': ['payroll-login', 10, 15 * 60 * 1000, 'Too many sign-in attempts. Please wait 15 minutes and try again.'],
-  '/api/payroll-staff/register': ['payroll-register', 5, 60 * 60 * 1000, 'Too many registration attempts. Please try again later.']
+  '/api/payroll-staff/register': ['payroll-register', 5, 60 * 60 * 1000, 'Too many registration attempts. Please try again later.'],
+  '/api/momo/pair': ['momo-pair', 8, 15 * 60 * 1000, 'Too many wrong codes. Please wait 15 minutes and try again.']
 };
 function rejectIfTooManyAttempts(req, res, pathname) {
   const rule = ATTEMPT_RULES[pathname];
@@ -1624,6 +1630,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (rejectIfTooManyAttempts(req, res, url.pathname)) return;
+    if (url.pathname.startsWith('/api/momo/') && await momo.handleMomoRoute(req, res, url, { pool, json, parseJsonBody, requireAuth })) return;
 
     if (url.pathname === '/api/backups' && req.method === 'GET') return handleBackupsList(req, res);
     { const m = url.pathname.match(/^\/api\/backups\/(current|\d+)\/download$/); if (m && req.method === 'GET') return handleBackupDownload(req, res, m[1]); }
