@@ -145,7 +145,7 @@
 
   function renderPhones(){
     const el=$m("mmPhones");if(!el)return;
-    if(!MM.devices.length){el.innerHTML='<div class="mm-phone"><span class="mm-dot bad"></span><div class="grow"><b>No phone linked yet</b><small>Link the phone that receives your MoMo payments so they appear here by themselves. Until then, you can paste a MoMo SMS.</small></div><button class="btn primary" type="button" onclick="momoPairStart()">Link phone</button></div>';return}
+    if(!MM.devices.length){el.innerHTML='<div class="mm-phone"><span class="mm-dot warn"></span><div class="grow"><b>Add a payment from the MoMo phone</b><small>Install Invoice Studio on that phone (open invoice.fbigh.com in Chrome → ⋮ → Add to Home screen / Install app) and sign in once. Then long-press any MoMo “Payment received” SMS → <b>Share</b> → <b>FBI Studio</b>. It appears here, ready to match. On a computer you can also use “Paste a MoMo SMS”.</small></div></div>';return}
     el.innerHTML=MM.devices.map(d=>{
       const age=d.lastSeenAt?Date.now()-d.lastSeenAt:Infinity,cls=age<40*60e3?"ok":age<6*3600e3?"warn":"bad";
       const state=cls==="ok"?"Connected":cls==="warn"?"Not heard from in a while":"Offline — check the phone has data and the app is open";
@@ -358,6 +358,33 @@
   // Keep the menu badge current and announce new payments while the app is open.
   function startPolling(){clearInterval(MM.timer);MM.timer=setInterval(()=>{if(!document.hidden)load(true)},45000)}
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)load(true)});
+  // A MoMo SMS shared to the installed Invoice Studio app arrives as /momo-share?text=...
+  // It is kept on the device until it has been saved, so signing in first loses nothing.
+  const SHARE_KEY="fbiMomoShare";
+  try{
+    if(location.pathname==="/momo-share"){
+      const q=new URLSearchParams(location.search);
+      const t=[q.get("title"),q.get("text"),q.get("url")].filter(Boolean).join(" ").trim();
+      if(t)localStorage.setItem(SHARE_KEY,t);
+      history.replaceState(null,"","/");
+    }
+  }catch(e){}
+  let shareBusy=false;
+  async function sendShared(){
+    let t=null;try{t=localStorage.getItem(SHARE_KEY)}catch(e){}
+    if(!t||shareBusy)return;
+    shareBusy=true;
+    try{
+      const j=await api("/api/momo/paste",{text:t});
+      try{localStorage.removeItem(SHARE_KEY)}catch(e){}
+      MM.tab="new";injectShell();show("momo");await load(true);render();
+      if(typeof toast==="function")toast(j.stored?"MoMo payment added. Pick the invoice it belongs to.":"That MoMo payment is already in the list.");
+    }catch(e){
+      if(e.status===401){/* not signed in yet: try again after sign-in */}
+      else{try{localStorage.removeItem(SHARE_KEY)}catch(x){}alert(e.message)}
+    }finally{shareBusy=false}
+  }
+  setInterval(sendShared,3000);setTimeout(sendShared,1500);
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",injectShell);else injectShell();
   setTimeout(()=>{injectShell();load(true);startPolling()},2500);
 })();
