@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -38,3 +40,12 @@ jobs:
           name: fbi-momo-link-apk
           path: momo-android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
+      - name: Publish the APK for invoice.fbigh.com/momo-link
+        run: |
+          cp momo-android/app/build/outputs/apk/release/*.apk downloads/fbi-momo-link.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add downloads/fbi-momo-link.apk
+          if git diff --cached --quiet; then echo "APK unchanged"; exit 0; fi
+          git commit -m "Build FBI MoMo Link APK"
+          git push origin HEAD:${{ github.ref_name }}

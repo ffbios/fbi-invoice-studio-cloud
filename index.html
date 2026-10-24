@@ -4374,6 +4374,8 @@ async function recordPayment(){
   x.transactionRef=payment.transactionRef;
   x.receivedBy=payment.receivedBy;
   x.status=newPaid>=total-0.005?"Paid":"Partially Paid";
+  // save() rebuilds the invoice from the form, so the form must carry the new status too.
+  if($("status"))$("status").value=x.status;
   $("receiptNo").value=receiptNo;
   const savedInvoice=await save();
   if(!savedInvoice)return;
