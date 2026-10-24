@@ -1,0 +1,20 @@
+name: MoMo edge check
+on:
+  push:
+    branches: [momo-edge-check]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Phone-style requests to Invoice Studio
+        run: |
+          for base in https://invoice.fbigh.com https://fbi-invoice-studio-production.up.railway.app; do
+            echo "=== $base"
+            curl -s -o /dev/null -w "GET health %{http_code}\n" -A "FBI-MoMo-Link/1.0 (Android 14)" $base/api/health
+            for i in 1 2 3 4 5; do
+              curl -s -w " -> HTTP %{http_code}\n" -A "FBI-MoMo-Link/1.0 (Android 14)" -H "Content-Type: application/json" -H "Authorization: Bearer test-not-a-real-token-xxxxxxxxxxxxxxxxxxxx" -X POST -d '{"appVersion":"1.0","messages":[]}' $base/api/momo/heartbeat | head -c 200
+            done
+            curl -s -w " -> HTTP %{http_code}\n" -A "Dalvik/2.1.0 (Linux; U; Android 14; SM-A155F)" -H "Content-Type: application/json" -X POST -d '{"code":"12"}' $base/api/momo/pair | head -c 200
+            curl -s -w " -> HTTP %{http_code}\n" -H "Content-Type: application/json" -X POST -d '{"messages":[]}' $base/api/momo/sms | head -c 200
+            curl -s -o /dev/null -w "GET momo-link page %{http_code}, apk: " $base/momo-link; curl -s -o /dev/null -w "%{http_code} %{size_download} bytes\n" $base/momo-link.apk
+          done
