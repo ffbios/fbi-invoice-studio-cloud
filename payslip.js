@@ -5,7 +5,11 @@
 const crypto = require('node:crypto');
 const qrcode = require('qrcode-generator');
 
-const VERIFY_BASE = String(process.env.PAYSLIP_VERIFY_BASE || 'https://invoice.fbigh.com').replace(/\/+$/, '');
+const VERIFY_HOST = String(process.env.PAYSLIP_VERIFY_HOST || 'verify.fbigh.com').trim().toLowerCase();
+const VERIFY_BASE = 'https://' + VERIFY_HOST;
+const path = require('node:path');
+const fs = require('node:fs');
+const LOGO_FILE = path.join(__dirname, 'assets', 'fbi-logo.png');
 const PAYROLL_LOCK = 492012;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
@@ -67,7 +71,7 @@ function figuresOf(rec, worker) {
   const payments = (Array.isArray(rec.payments) ? rec.payments : []).slice(-5).map(p => ({ date: String(p.date || ''), amount: r2(p.amount), method: String(p.method || ''), reference: String(p.reference || '') }));
   return {
     worker: {
-      name: String(worker.name || '').trim(), code: String(worker.workerCode || '').trim(), role: String(rec.role || worker.role || '').trim(),
+      name: String(worker.name || '').trim(), code: validStaffId(worker.workerCode) ? String(worker.workerCode).trim() : '', role: String(rec.role || worker.role || '').trim(),
       department: String(worker.department || '').trim(), type: String(worker.workerType || '').trim(),
       payMethod: String(worker.paymentMethod || '').trim(),
       payTo: worker.paymentMethod === 'Bank' ? [worker.bank, maskAccount(worker.accountNumber)].filter(Boolean).join(' ') : (worker.paymentMethod === 'Cash' ? 'Cash' : maskAccount(worker.momo || worker.phone))
@@ -78,8 +82,33 @@ function figuresOf(rec, worker) {
   };
 }
 
+// A usable staff ID: not empty, no spaces (so form hints like "Leave blank if not assigned" don't count).
+function validStaffId(v) { const t = String(v || '').trim(); return !!t && t.length <= 24 && !/\s/.test(t); }
+
+// Gives the worker on this record the next FBI-WK-#### number if they have no real staff ID yet, and saves it.
+async function ensureStaffId(pool, recordId) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('SELECT pg_advisory_xact_lock($1)', [PAYROLL_LOCK]);
+    const q = await client.query('SELECT state_json FROM payroll_state WHERE id=1 FOR UPDATE');
+    let st = q.rows[0] ? q.rows[0].state_json : null; if (typeof st === 'string') st = JSON.parse(st);
+    const rec = st && (st.records || []).find(r => String(r.id) === String(recordId));
+    const w = rec && (st.workers || []).find(x => String(x.id) === String(rec.workerId));
+    if (!w || validStaffId(w.workerCode)) { await client.query('COMMIT'); return; }
+    let max = 0;
+    for (const x of st.workers) { const m = String(x.workerCode || '').trim().match(/^FBI-WK-(\d+)$/i); if (m) max = Math.max(max, Number(m[1])); }
+    w.workerCode = 'FBI-WK-' + String(max + 1).padStart(4, '0');
+    w.updatedAt = new Date().toISOString();
+    st.savedAt = Date.now();
+    await client.query('UPDATE payroll_state SET saved_at=$1, state_json=$2::jsonb WHERE id=1', [st.savedAt, JSON.stringify(st)]);
+    await client.query('COMMIT');
+  } catch (err) { try { await client.query('ROLLBACK'); } catch {} throw err; } finally { client.release(); }
+}
+
 // Issues (or re-uses) the payslip for a payroll record. Returns the stored row.
 async function issue(pool, recordId, issuedBy, onlyWorkerId) {
+  await ensureStaffId(pool, recordId);
   const payroll = await readJsonRow(pool, 'SELECT state_json FROM payroll_state WHERE id=1') || {};
   const rec = (payroll.records || []).find(r => String(r.id) === String(recordId));
   if (!rec || (onlyWorkerId && String(rec.workerId) !== String(onlyWorkerId))) { const e = new Error('Payroll record not found.'); e.status = 404; throw e; }
@@ -108,7 +137,7 @@ async function issue(pool, recordId, issuedBy, onlyWorkerId) {
   } catch (err) { try { await client.query('ROLLBACK'); } catch {} throw err; } finally { client.release(); }
 }
 
-function verifyUrl(row) { return VERIFY_BASE + '/verify?s=' + encodeURIComponent(row.serial) + '&c=' + encodeURIComponent(row.code); }
+function verifyUrl(row) { return VERIFY_BASE + '/' + encodeURIComponent(row.serial) + '?c=' + encodeURIComponent(row.code); }
 
 function qrSvg(text, px) {
   const q = qrcode(0, 'M'); q.addData(text); q.make();
@@ -202,14 +231,14 @@ ${opts.toolbar === false ? '' : `<div class="bar"><span>Payslip ${esc(row.serial
     <div class="head"><img src="${esc(logo)}" alt="FBI"><div class="t"><h1>PAYSLIP</h1><div class="s">No. <b>${esc(row.serial)}</b></div><div class="s">Issued ${esc(fmtDate(row.issued_at))}</div></div></div>
     <div class="co"><div><b>${esc(c.name)}</b><br>${esc(c.address)}</div><div style="text-align:right">${esc([c.phone, c.email].filter(Boolean).join(' • '))}<br>${esc(c.website)}</div></div>
     <div class="grid">
-      <div class="box"><h3>Employee</h3><div class="kv"><span>Name</span><b>${esc(w.name)}</b>${w.code ? `<span>Staff ID</span><b>${esc(w.code)}</b>` : ''}<span>Role</span><b>${esc(w.role || '—')}</b><span>Department</span><b>${esc(w.department || '—')}</b><span>Paid via</span><b>${esc([w.payMethod, w.payTo].filter(Boolean).join(' • ') || '—')}</b></div></div>
+      <div class="box"><h3>Employee</h3><div class="kv"><span>Name</span><b>${esc(w.name)}</b><span>Staff ID</span><b>${esc(w.code || '\u2014')}</b><span>Role</span><b>${esc(w.role || '—')}</b><span>Department</span><b>${esc(w.department || '—')}</b><span>Paid via</span><b>${esc([w.payMethod, w.payTo].filter(Boolean).join(' • ') || '—')}</b></div></div>
       <div class="box"><h3>Pay details</h3><div class="kv"><span>Work date</span><b>${esc(f.work.date || '—')}</b><span>Pay basis</span><b>${esc(f.work.basis || '—')}</b><span>Project / event</span><b>${esc(f.work.project || '—')}</b><span>Status</span><b><span class="pill ${statusCls}">${esc(f.status)}</span></b></div></div>
       <div class="box"><h3>Earnings</h3><table>${lineRows(f.earnings)}<tr class="tot"><td>Gross pay</td><td class="r">${money(f.gross)}</td></tr></table></div>
       <div class="box"><h3>Deductions &amp; adjustments</h3><table>${f.deductions.length ? lineRows(f.deductions) : '<tr><td>No deductions</td><td class="r">' + money(0) + '</td></tr>'}${f.previousBalance ? `<tr><td>Previous balance owed (added)</td><td class="r">${money(f.previousBalance)}</td></tr>` : ''}<tr class="tot"><td>Total deductions</td><td class="r">${money(totalDed)}</td></tr></table></div>
     </div>
     <div class="net"><span>Net pay</span><b>${money(f.net)}</b></div>
     <div class="sum"><div><span>Amount paid</span><b>${money(f.paid)}</b></div><div><span>Balance due</span><b>${money(f.balance)}</b></div><div><span>Last payment</span><b style="font-size:12.5px">${pay ? esc(pay.date) + '<br>' + esc(pay.method) + (pay.reference ? ' • ' + esc(pay.reference) : '') : '—'}</b></div></div>
-    <div class="ver">${qrSvg(url, 128)}<div><h3>Check this payslip is genuine</h3><p>Scan the QR code, or go to <b>${esc(VERIFY_BASE.replace(/^https?:\/\//, ''))}/verify</b> and enter the payslip number and security code. A genuine payslip shows the same figures as above.</p><p>Payslip no. <code>${esc(row.serial)}</code> &nbsp; Security code <code>${esc(row.code)}</code></p><p>Document fingerprint <code style="font-size:11.5px">${esc(row.fingerprint)}</code></p></div></div>
+    <div class="ver">${qrSvg(url, 128)}<div><h3>Check this payslip is genuine</h3><p>Scan the QR code, or go to <b>${esc(VERIFY_HOST)}</b> and enter the payslip number and security code. A genuine payslip shows the same figures as above.</p><p>Payslip no. <code>${esc(row.serial)}</code> &nbsp; Security code <code>${esc(row.code)}</code></p><p>Document fingerprint <code style="font-size:11.5px">${esc(row.fingerprint)}</code></p></div></div>
     <div class="sign"><div>Computer-generated payslip. Valid only if it verifies online.</div><div class="line">${esc(c.signatory || 'Authorised signatory')}<br><span style="font-size:10.5px">for ${esc(c.name)}</span></div></div>
     <div class="foot">Any alteration makes this payslip invalid. Report suspected forgeries to ${esc(c.email || c.phone || c.name)}.</div>
   </div>
@@ -224,24 +253,25 @@ function noteFail(ip) { const l = failures.get(ip) || []; l.push(Date.now()); fa
 function verifyPage(body, title) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)}</title>
 <style>*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#0f1218;font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif;color:#141821;display:flex;flex-direction:column;align-items:center;padding:28px 16px}
-.logo{height:48px;margin:6px 0 20px}.card{width:min(560px,100%);background:#fff;border-radius:16px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.logo{height:48px;margin:6px 0 10px}.brand{color:#e6c46a;font-size:12.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:18px;text-align:center}.small a{color:#e6c46a;text-decoration:none;font-weight:600}.card{width:min(560px,100%);background:#fff;border-radius:16px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
 h1{font-size:22px;margin:0 0 6px}p{color:#4b5563;line-height:1.5;margin:0 0 14px}.st{display:flex;gap:12px;align-items:center;padding:14px 16px;border-radius:12px;margin-bottom:18px;font-weight:700;font-size:16px}
 .ok{background:#e5f5ec;color:#0f6b40}.bad{background:#fdecea;color:#a3221a}.warn{background:#fdf1d9;color:#7a4f00}
 dl{display:grid;grid-template-columns:150px 1fr;gap:10px 12px;margin:0;font-size:15px}dt{color:#6b7280}dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
 form{display:grid;gap:10px}label{font-size:13px;font-weight:600;color:#4b5563}input{font:inherit;font-size:16px;padding:12px 14px;border:1px solid #d1d5db;border-radius:10px;text-transform:uppercase}
-button{font:inherit;font-weight:700;padding:12px;border-radius:10px;border:0;background:#a80e4d;color:#fff;cursor:pointer}.small{font-size:12.5px;color:#9aa3b2;margin-top:18px;text-align:center}
+button{font:inherit;font-weight:700;padding:12px;border-radius:10px;border:0;background:#a80e4d;color:#fff;cursor:pointer}.small{font-size:12.5px;color:#9aa3b2;margin-top:18px;text-align:center;line-height:1.6}
 @media(max-width:480px){dl{grid-template-columns:1fr;gap:2px}dd{margin-bottom:8px}}</style></head>
-<body><img class="logo" src="/assets/fbi-logo.png" alt="FBI"><div class="card">${body}</div><div class="small">Film Beyond Imagination • Payslip verification</div></body></html>`;
+<body><img class="logo" src="/assets/fbi-logo.png" alt="FBI"><div class="brand">FBI GH • Official document verification</div><div class="card">${body}</div><div class="small">This is the official verification service of Film Beyond Imagination (FBI GH).<br><a href="https://fbigh.com">fbigh.com</a></div></body></html>`;
 }
 function formHtml(serial, code, msg) {
   return `${msg || ''}<h1>Verify a payslip</h1><p>Enter the payslip number and security code printed in the verification box at the bottom of the payslip.</p>
-<form method="get" action="/verify"><label for="s">Payslip number</label><input id="s" name="s" value="${esc(serial || '')}" placeholder="FBI-PS-2026-000123" required autocomplete="off">
+<form method="get" action="/"><label for="s">Payslip number</label><input id="s" name="s" value="${esc(serial || '')}" placeholder="FBI-PS-2026-000123" required autocomplete="off">
 <label for="c">Security code</label><input id="c" name="c" value="${esc(code || '')}" placeholder="8 characters" required autocomplete="off"><button type="submit">Verify</button></form>`;
 }
 
 async function handleVerify(req, res, url, h) {
   const send = (code, html) => { res.writeHead(code, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex', 'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'DENY' }); res.end(html); };
-  const serial = String(url.searchParams.get('s') || '').trim().toUpperCase().slice(0, 40);
+  let fromPath = ''; try { fromPath = decodeURIComponent(url.pathname.replace(/^\/+/, '').replace(/^verify\/?/i, '').replace(/\/+$/, '')); } catch {}
+  const serial = String(url.searchParams.get('s') || fromPath || '').trim().toUpperCase().slice(0, 40);
   const code = String(url.searchParams.get('c') || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 16);
   if (!serial && !code) return send(200, verifyPage(formHtml('', ''), 'Verify a payslip'));
   const ip = h.requestIp(req);
@@ -259,7 +289,7 @@ async function handleVerify(req, res, url, h) {
   const body = `<div class="st ok">✓ &nbsp;Genuine payslip issued by ${esc(s.company.name)}</div>
 ${sup ? `<div class="st warn" style="font-size:14px">An updated payslip (${esc(sup.serial)}) was issued later for the same work, for example after another payment. The figures below are as at ${esc(fmtDate(row.issued_at))}.</div>` : ''}
 <p>Compare these figures with the paper or PDF copy. If anything differs, the copy has been altered.</p>
-<dl><dt>Payslip no.</dt><dd>${esc(row.serial)}</dd><dt>Issued</dt><dd>${esc(fmtDate(row.issued_at))}</dd><dt>Employee</dt><dd>${esc(f.worker.name)}</dd>
+<dl><dt>Payslip no.</dt><dd>${esc(row.serial)}</dd><dt>Issued</dt><dd>${esc(fmtDate(row.issued_at))}</dd><dt>Employee</dt><dd>${esc(f.worker.name)}</dd><dt>Staff ID</dt><dd>${esc(f.worker.code || '\u2014')}</dd>
 <dt>Role</dt><dd>${esc(f.worker.role || '—')}</dd><dt>Work date</dt><dd>${esc(f.work.date || '—')}</dd><dt>Project / event</dt><dd>${esc(f.work.project || '—')}</dd>
 <dt>Gross pay</dt><dd>${money(f.gross)}</dd><dt>Net pay</dt><dd>${money(f.net)}</dd><dt>Amount paid</dt><dd>${money(f.paid)}</dd><dt>Balance due</dt><dd>${money(f.balance)}</dd>
 <dt>Status</dt><dd>${esc(f.status)}</dd><dt>Fingerprint</dt><dd style="font-family:Consolas,monospace">${esc(row.fingerprint)}</dd></dl>`;
@@ -268,10 +298,34 @@ ${sup ? `<div class="st warn" style="font-size:14px">An updated payslip (${esc(s
 
 function sendHtml(res, html) { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' }); res.end(html); }
 
+function hostOf(req) { return String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim().toLowerCase().replace(/:\d+$/, ''); }
+function isLocalHost(h) { return !h || h === 'localhost' || h === '127.0.0.1' || h === '[::1]' || h === '::1'; }
+
+// verify.fbigh.com shows ONLY the verification service - nothing from the invoicing system.
+async function handleVerifyHost(req, res, url, h) {
+  if (hostOf(req) !== VERIFY_HOST) return false;
+  const p = url.pathname;
+  if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405, { 'Content-Type': 'text/plain' }); res.end('Method not allowed'); return true; }
+  if (p === '/assets/fbi-logo.png') {
+    try { const b = fs.readFileSync(LOGO_FILE); res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=86400' }); res.end(b); } catch { res.writeHead(404); res.end(); }
+    return true;
+  }
+  if (p === '/robots.txt') { res.writeHead(200, { 'Content-Type': 'text/plain' }); res.end('User-agent: *\nDisallow: /\n'); return true; }
+  if (p === '/favicon.ico') { res.writeHead(204); res.end(); return true; }
+  if (p === '/' || p === '/verify' || /^\/(verify\/)?FBI-PS-\d{4}-\d{1,9}\/?$/i.test(p)) { await handleVerify(req, res, url, h); return true; }
+  res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' });
+  res.end(verifyPage('<h1>Page not found</h1><p>This address only verifies FBI documents.</p><p><a href="/" style="color:#a80e4d;font-weight:700">Verify a payslip</a></p>', 'Not found'));
+  return true;
+}
+
 // Admin: POST /api/payslips/issue {recordId} -> {serial, code, url}; GET /api/payslips/view?recordId=  -> payslip page
 async function handleRoute(req, res, url, h) {
   const p = url.pathname;
-  if (p === '/verify' && req.method === 'GET') { await handleVerify(req, res, url, h); return true; }
+  if (p === '/verify' && req.method === 'GET') {
+    // Old-style links on the invoice address move to verify.fbigh.com (served directly when tested on this PC).
+    if (isLocalHost(hostOf(req))) { await handleVerify(req, res, url, h); return true; }
+    res.writeHead(301, { Location: VERIFY_BASE + '/' + (url.search || '') }); res.end(); return true;
+  }
   if (!p.startsWith('/api/payslips/')) return false;
   const session = await h.requireAuth(req, res); if (!session) return true;
   try {
@@ -290,4 +344,4 @@ async function handleRoute(req, res, url, h) {
   }
 }
 
-module.exports = { ensureTables, issue, payslipHtml, handleRoute, verifyUrl, qrSvg, figuresOf };
+module.exports = { ensureTables, issue, payslipHtml, handleRoute, handleVerifyHost, verifyUrl, qrSvg, figuresOf, VERIFY_HOST };
