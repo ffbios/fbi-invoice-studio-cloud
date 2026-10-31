@@ -6,6 +6,7 @@ const zlib = require('node:zlib');
 const { Pool } = require('pg');
 const momo = require('./momo');
 const notify = require('./notify');
+const moolre = require('./moolre');
 
 const HOST = process.env.HOST || '0.0.0.0';
 const PORT = Number(process.env.PORT || 10000);
@@ -232,6 +233,7 @@ async function initDb() {
   await ensureSafetyTables();
   await momo.ensureMomoTables(pool);
   await notify.ensureTables(pool);
+  await moolre.ensureTables(pool);
 
   const state = await pool.query('SELECT id FROM app_state WHERE id=1');
   if (state.rowCount === 0 && process.env.SEED_ON_EMPTY !== 'false' && fs.existsSync(SEED_FILE)) {
@@ -1426,6 +1428,7 @@ const server = http.createServer(async (req, res) => {
 
     if (rejectIfTooManyAttempts(req, res, url.pathname)) return;
     if (url.pathname.startsWith('/api/momo/') && await momo.handleMomoRoute(req, res, url, { pool, json, parseJsonBody, requireAuth })) return;
+    if (url.pathname.startsWith('/api/moolre/') && await moolre.handleRoute(req, res, url, { pool, json, parseJsonBody, requireAuth })) return;
     if (url.pathname.startsWith('/api/push/') && await notify.handleRoute(req, res, url, { json, parseJsonBody, requireAuth })) return;
 
     if (url.pathname === '/api/backups' && req.method === 'GET') return handleBackupsList(req, res);
@@ -1495,6 +1498,7 @@ const server = http.createServer(async (req, res) => {
 initDb().then(async () => {
   try { if (await backupStateIfDue(pool, 'daily (startup)')) console.log('Automatic backup saved.'); } catch (e) { console.warn('Startup backup skipped:', e.message); }
   notify.start();
+  moolre.start(pool);
   momo.onPaymentStored = p => p.via === 'pasted' ? null : notify.notify('payment', {
     title: 'MoMo payment ' + 'GH₵' + Number(p.amount).toLocaleString('en-GB', { minimumFractionDigits: 2 }),
     body: (p.payerName || 'Unknown sender') + ' · tap to match it to an invoice',

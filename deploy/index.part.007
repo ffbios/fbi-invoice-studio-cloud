@@ -1475,6 +1475,12 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     var oldNav=window.__FBI_NAV__;
     window.__FBI_NAV__=function(v){if(v==='payroll'){activate();return false;}deactivate();return typeof oldNav==='function'?oldNav(v):false;};
     window.__FBI_PAYROLL_OPEN__=activate;
+    /* Bridge for the Moolre payout add-on (moolre-ui.html): read-only access plus a cloud refresh. */
+    window.__FBI_PAYROLL_HOOK__={
+      paymentContext:function(){var r=STATE.records.find(function(x){return x.id===paymentRecordId;});if(!r)return null;var w=getWorker(r.workerId)||{};return {recordId:r.id,balance:balance(r),record:JSON.parse(JSON.stringify(r)),worker:JSON.parse(JSON.stringify(w))};},
+      refresh:async function(){await hydratePayrollCloud();},
+      closePayment:function(){closePayment();}
+    };
     window.addEventListener('hashchange',function(){if(location.hash==='#payroll')activate();else deactivate();});
   }
   function init(){
