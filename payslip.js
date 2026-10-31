@@ -238,7 +238,7 @@ ${opts.toolbar === false ? '' : `<div class="bar"><span>Payslip ${esc(row.serial
     </div>
     <div class="net"><span>Net pay</span><b>${money(f.net)}</b></div>
     <div class="sum"><div><span>Amount paid</span><b>${money(f.paid)}</b></div><div><span>Balance due</span><b>${money(f.balance)}</b></div><div><span>Last payment</span><b style="font-size:12.5px">${pay ? esc(pay.date) + '<br>' + esc(pay.method) + (pay.reference ? ' • ' + esc(pay.reference) : '') : '—'}</b></div></div>
-    <div class="ver">${qrSvg(url, 128)}<div><h3>Check this payslip is genuine</h3><p>Scan the QR code, or go to <b>${esc(VERIFY_HOST)}</b> and enter the payslip number and security code. A genuine payslip shows the same figures as above.</p><p>Payslip no. <code>${esc(row.serial)}</code> &nbsp; Security code <code>${esc(row.code)}</code></p><p>Document fingerprint <code style="font-size:11.5px">${esc(row.fingerprint)}</code></p></div></div>
+    <div class="ver">${qrSvg(url, 128)}<div><h3>Verify with Film Beyond Imagination (FBI)</h3><p>Scan the QR code, or visit FBI's official verification site <b>${esc(VERIFY_HOST)}</b> and enter the payslip number and security code. A genuine payslip is confirmed by FBI with the same figures as above.</p><p>Payslip no. <code>${esc(row.serial)}</code> &nbsp; Security code <code>${esc(row.code)}</code></p><p>Document fingerprint <code style="font-size:11.5px">${esc(row.fingerprint)}</code></p></div></div>
     <div class="sign"><div>Computer-generated payslip. Valid only if it verifies online.</div><div class="line">${esc(c.signatory || 'Authorised signatory')}<br><span style="font-size:10.5px">for ${esc(c.name)}</span></div></div>
     <div class="foot">Any alteration makes this payslip invalid. Report suspected forgeries to ${esc(c.email || c.phone || c.name)}.</div>
   </div>
@@ -250,17 +250,35 @@ const failures = new Map();
 function tooMany(ip) { const now = Date.now(), list = (failures.get(ip) || []).filter(t => now - t < 15 * 60 * 1000); failures.set(ip, list); if (failures.size > 5000) failures.clear(); return list.length >= 20; }
 function noteFail(ip) { const l = failures.get(ip) || []; l.push(Date.now()); failures.set(ip, l); }
 
-function verifyPage(body, title) {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)}</title>
-<style>*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#0f1218;font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif;color:#141821;display:flex;flex-direction:column;align-items:center;padding:28px 16px}
-.logo{height:48px;margin:6px 0 10px}.brand{color:#e6c46a;font-size:12.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:18px;text-align:center}.small a{color:#e6c46a;text-decoration:none;font-weight:600}.card{width:min(560px,100%);background:#fff;border-radius:16px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
-h1{font-size:22px;margin:0 0 6px}p{color:#4b5563;line-height:1.5;margin:0 0 14px}.st{display:flex;gap:12px;align-items:center;padding:14px 16px;border-radius:12px;margin-bottom:18px;font-weight:700;font-size:16px}
-.ok{background:#e5f5ec;color:#0f6b40}.bad{background:#fdecea;color:#a3221a}.warn{background:#fdf1d9;color:#7a4f00}
-dl{display:grid;grid-template-columns:150px 1fr;gap:10px 12px;margin:0;font-size:15px}dt{color:#6b7280}dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+const SEAL_OK = '<svg viewBox="0 0 120 120" width="96" height="96" aria-hidden="true"><defs><path id="sc" d="M60 60 m-44 0 a44 44 0 1 1 88 0 a44 44 0 1 1 -88 0"/></defs><circle cx="60" cy="60" r="57" fill="#0f6b40"/><circle cx="60" cy="60" r="51" fill="none" stroke="#e6c46a" stroke-width="1.5"/><circle cx="60" cy="60" r="33" fill="#127a4a" stroke="#e6c46a" stroke-width="1.2"/><text font-family="Arial" font-size="9.5" font-weight="700" fill="#fff" letter-spacing="2.4"><textPath href="#sc" startOffset="2%">FILM BEYOND IMAGINATION • VERIFIED •</textPath></text><path d="M45 61 l10 10 l21 -23" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const SEAL_BAD = '<svg viewBox="0 0 120 120" width="96" height="96" aria-hidden="true"><circle cx="60" cy="60" r="57" fill="#a3221a"/><circle cx="60" cy="60" r="51" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.5"/><path d="M42 42 l36 36 M78 42 l-36 36" stroke="#fff" stroke-width="8" stroke-linecap="round"/></svg>';
+const LOCK = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="flex:none;margin-top:2px"><path fill="#0f6b40" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3H9z"/></svg>';
+
+function verifyPage(body, title, co) {
+  co = co || {};
+  const name = co.name || 'FILM BEYOND IMAGINATION (FBI)';
+  const contact = [co.address, co.phone, co.email].filter(Boolean).map(esc).join(' • ');
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>${esc(title)} – Film Beyond Imagination (FBI)</title>
+<meta property="og:site_name" content="Film Beyond Imagination (FBI)"><meta property="og:title" content="FBI Payslip Verification – Film Beyond Imagination"><meta property="og:description" content="Official payslip verification service of Film Beyond Imagination (FBI GH)."><meta property="og:image" content="${VERIFY_BASE}/assets/fbi-logo.png">
+<link rel="icon" href="/assets/fbi-logo.png"><meta name="theme-color" content="#0f1218">
+<style>*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#0f1218;font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif;color:#141821;display:flex;flex-direction:column;align-items:center;padding:0 16px 28px}
+.top{width:100%;display:flex;flex-direction:column;align-items:center;padding:26px 0 20px;margin-bottom:6px;background:radial-gradient(600px 220px at 50% 0,rgba(230,196,106,.16),transparent 70%)}
+.logo{height:52px;margin-bottom:12px}.co{color:#fff;font-size:20px;font-weight:800;letter-spacing:1.5px;text-align:center;line-height:1.25}.sub{color:#e6c46a;font-size:12.5px;font-weight:700;letter-spacing:2.2px;text-transform:uppercase;margin-top:7px;text-align:center}
+.card{width:min(560px,100%);background:#fff;border-radius:16px;padding:22px 24px 24px;box-shadow:0 20px 60px rgba(0,0,0,.35);border-top:4px solid #c9a54a}
+.trust{display:flex;gap:9px;align-items:flex-start;background:#f3f8f5;border:1px solid #d3e8dc;color:#24433a;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.45;margin-bottom:18px}.trust b{color:#0f6b40}
+.result{display:flex;gap:16px;align-items:center;margin-bottom:16px}.result h1{font-size:22px;margin:0 0 4px;line-height:1.2}.result p{margin:0;color:#4b5563;font-size:14px}
+.result.ok h1{color:#0f6b40}.result.bad h1{color:#a3221a}
+h1{font-size:22px;margin:0 0 6px}p{color:#4b5563;line-height:1.5;margin:0 0 14px}.st{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:12px;margin-bottom:16px;font-weight:600;font-size:14px;line-height:1.45}
+.warn{background:#fdf1d9;color:#7a4f00}.st.bad{background:#fdecea;color:#a3221a}
+dl{display:grid;grid-template-columns:150px 1fr;gap:10px 12px;margin:0;font-size:15px;border-top:1px solid #eef0f3;padding-top:14px}dt{color:#6b7280}dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
 form{display:grid;gap:10px}label{font-size:13px;font-weight:600;color:#4b5563}input{font:inherit;font-size:16px;padding:12px 14px;border:1px solid #d1d5db;border-radius:10px;text-transform:uppercase}
-button{font:inherit;font-weight:700;padding:12px;border-radius:10px;border:0;background:#a80e4d;color:#fff;cursor:pointer}.small{font-size:12.5px;color:#9aa3b2;margin-top:18px;text-align:center;line-height:1.6}
-@media(max-width:480px){dl{grid-template-columns:1fr;gap:2px}dd{margin-bottom:8px}}</style></head>
-<body><img class="logo" src="/assets/fbi-logo.png" alt="FBI"><div class="brand">FBI GH • Official document verification</div><div class="card">${body}</div><div class="small">This is the official verification service of Film Beyond Imagination (FBI GH).<br><a href="https://fbigh.com">fbigh.com</a></div></body></html>`;
+button{font:inherit;font-weight:700;padding:12px;border-radius:10px;border:0;background:#a80e4d;color:#fff;cursor:pointer}
+.foot{width:min(560px,100%);margin-top:18px;text-align:center;color:#9aa3b2;font-size:12.5px;line-height:1.65}.foot b{color:#fff;letter-spacing:.5px}.foot a{color:#e6c46a;text-decoration:none;font-weight:700}
+@media(max-width:480px){.co{font-size:17px}dl{grid-template-columns:1fr;gap:2px}dd{margin-bottom:8px}.result{flex-direction:column;text-align:center}.card{padding:18px}}</style></head>
+<body><header class="top"><img class="logo" src="/assets/fbi-logo.png" alt="FBI - Film Beyond Imagination"><div class="co">${esc(name)}</div><div class="sub">Official Payslip Verification</div></header>
+<main class="card"><div class="trust">${LOCK}<div>You are on <b>${esc(VERIFY_HOST)}</b>, the official verification site of <b>Film Beyond Imagination (FBI)</b>. A payslip is genuine only if it is confirmed here.</div></div>${body}</main>
+<footer class="foot"><b>${esc(name)}</b><br>${contact}<br><a href="https://fbigh.com">fbigh.com</a></footer></body></html>`;
 }
 function formHtml(serial, code, msg) {
   return `${msg || ''}<h1>Verify a payslip</h1><p>Enter the payslip number and security code printed in the verification box at the bottom of the payslip.</p>
@@ -273,27 +291,28 @@ async function handleVerify(req, res, url, h) {
   let fromPath = ''; try { fromPath = decodeURIComponent(url.pathname.replace(/^\/+/, '').replace(/^verify\/?/i, '').replace(/\/+$/, '')); } catch {}
   const serial = String(url.searchParams.get('s') || fromPath || '').trim().toUpperCase().slice(0, 40);
   const code = String(url.searchParams.get('c') || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 16);
-  if (!serial && !code) return send(200, verifyPage(formHtml('', ''), 'Verify a payslip'));
+  const co = companyFrom(await readJsonRow(h.pool, 'SELECT state_json FROM app_state WHERE id=1') || {});
+  if (!serial && !code) return send(200, verifyPage(formHtml('', ''), 'Verify a payslip', co));
   const ip = h.requestIp(req);
-  if (tooMany(ip)) return send(429, verifyPage('<div class="st bad">Too many attempts</div><p>Please wait 15 minutes and try again.</p>', 'Verify a payslip'));
+  if (tooMany(ip)) return send(429, verifyPage('<div class="st bad">Too many attempts</div><p>Please wait 15 minutes and try again.</p>', 'Verify a payslip', co));
   const q = await h.pool.query('SELECT * FROM payslip_issues WHERE serial=$1', [serial]);
   const row = q.rows[0];
   const a = Buffer.from(String(row ? row.code : 'x'.repeat(8))), b = Buffer.from(code.padEnd(a.length, '#').slice(0, a.length));
   if (!row || !code || !crypto.timingSafeEqual(a, b) || code.length !== String(row.code).length) {
     noteFail(ip);
-    return send(404, verifyPage(formHtml(serial, code, '<div class="st bad">✕ &nbsp;Not a genuine FBI payslip</div><p>No payslip matches this number and security code. Check what you typed. If it still fails, the payslip was not issued by Film Beyond Imagination.</p>'), 'Payslip not verified'));
+    return send(404, verifyPage(formHtml(serial, code, '<div class="result bad">' + SEAL_BAD + '<div><h1>Not issued by FBI</h1><p>No Film Beyond Imagination payslip matches this number and security code.</p></div></div><p>Check what you typed. If it still does not match, treat this payslip as <b>not genuine</b> and contact FBI.</p>'), 'Payslip not verified', co));
   }
   const s = typeof row.snapshot === 'string' ? JSON.parse(row.snapshot) : row.snapshot, f = s.figures;
   const newer = await h.pool.query('SELECT serial, issued_at FROM payslip_issues WHERE record_id=$1 AND issued_at>$2 ORDER BY issued_at DESC LIMIT 1', [row.record_id, row.issued_at]);
   const sup = newer.rows[0];
-  const body = `<div class="st ok">✓ &nbsp;Genuine payslip issued by ${esc(s.company.name)}</div>
+  const body = `<div class="result ok">${SEAL_OK}<div><h1>Verified genuine payslip</h1><p>Issued by <b>${esc(s.company.name)}</b>${s.company.address ? ', ' + esc(s.company.address) : ''}.</p></div></div>
 ${sup ? `<div class="st warn" style="font-size:14px">An updated payslip (${esc(sup.serial)}) was issued later for the same work, for example after another payment. The figures below are as at ${esc(fmtDate(row.issued_at))}.</div>` : ''}
 <p>Compare these figures with the paper or PDF copy. If anything differs, the copy has been altered.</p>
 <dl><dt>Payslip no.</dt><dd>${esc(row.serial)}</dd><dt>Issued</dt><dd>${esc(fmtDate(row.issued_at))}</dd><dt>Employee</dt><dd>${esc(f.worker.name)}</dd><dt>Staff ID</dt><dd>${esc(f.worker.code || '\u2014')}</dd>
 <dt>Role</dt><dd>${esc(f.worker.role || '—')}</dd><dt>Work date</dt><dd>${esc(f.work.date || '—')}</dd><dt>Project / event</dt><dd>${esc(f.work.project || '—')}</dd>
 <dt>Gross pay</dt><dd>${money(f.gross)}</dd><dt>Net pay</dt><dd>${money(f.net)}</dd><dt>Amount paid</dt><dd>${money(f.paid)}</dd><dt>Balance due</dt><dd>${money(f.balance)}</dd>
 <dt>Status</dt><dd>${esc(f.status)}</dd><dt>Fingerprint</dt><dd style="font-family:Consolas,monospace">${esc(row.fingerprint)}</dd></dl>`;
-  return send(200, verifyPage(body, 'Payslip ' + row.serial + ' verified'));
+  return send(200, verifyPage(body, 'Payslip ' + row.serial + ' verified', s.company));
 }
 
 function sendHtml(res, html) { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' }); res.end(html); }
@@ -314,7 +333,8 @@ async function handleVerifyHost(req, res, url, h) {
   if (p === '/favicon.ico') { res.writeHead(204); res.end(); return true; }
   if (p === '/' || p === '/verify' || /^\/(verify\/)?FBI-PS-\d{4}-\d{1,9}\/?$/i.test(p)) { await handleVerify(req, res, url, h); return true; }
   res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' });
-  res.end(verifyPage('<h1>Page not found</h1><p>This address only verifies FBI documents.</p><p><a href="/" style="color:#a80e4d;font-weight:700">Verify a payslip</a></p>', 'Not found'));
+  const co = companyFrom(await readJsonRow(h.pool, 'SELECT state_json FROM app_state WHERE id=1') || {});
+  res.end(verifyPage('<h1>Page not found</h1><p>This address only verifies FBI documents.</p><p><a href="/" style="color:#a80e4d;font-weight:700">Verify a payslip</a></p>', 'Not found', co));
   return true;
 }
 
