@@ -191,15 +191,15 @@ async function loadPayslips(){
   $('payslipsList').innerHTML=rows.length?rows.map(r=>{
     net+=Number(r.net||0);balance+=Number(r.balance||0);
     const p=r.payslip;
-    return '<div class="payslip"><div class="grow"><b>'+(esc(p?.payslipNo||'Not generated yet'))+'</b><small>'+esc(r.workDate||'')+' · '+esc(r.project||r.role||'')+' · '+esc(r.basis||'')+'</small><small><span class="status '+statusClass(r.status)+'">'+esc(r.status)+'</span> · Paid '+esc(money(r.paid))+' · Balance '+esc(money(r.balance))+'</small></div><div class="amount"><b>'+esc(money(r.net))+'</b><div class="actionbar" style="justify-content:flex-end;margin-top:7px">'+(p?'<button class="btn" type="button" data-download="'+esc(r.recordId)+'">Download PDF</button>':'')+'<button class="btn primary" type="button" data-generate="'+esc(r.recordId)+'">'+(p?'Generate Again':'Generate Payslip')+'</button></div></div></div>';
+    return '<div class="payslip"><div class="grow"><b>'+(esc(p?.payslipNo||'Not generated yet'))+'</b><small>'+esc(r.workDate||'')+' · '+esc(r.project||r.role||'')+' · '+esc(r.basis||'')+'</small><small><span class="status '+statusClass(r.status)+'">'+esc(r.status)+'</span> · Paid '+esc(money(r.paid))+' · Balance '+esc(money(r.balance))+'</small></div><div class="amount"><b>'+esc(money(r.net))+'</b><div class="actionbar" style="justify-content:flex-end;margin-top:7px">'+(p?'<button class="btn" type="button" data-download="'+esc(r.recordId)+'">View / Download</button>':'')+'<button class="btn primary" type="button" data-generate="'+esc(r.recordId)+'">'+(p?'Generate Again':'Generate Payslip')+'</button></div></div></div>';
   }).join(''):'<div class="loading">No payroll records are available yet. Your administrator will publish payroll records here.</div>';
   $('netTotal').textContent=money(net);$('balanceTotal').textContent=money(balance);
   $('payslipCount').textContent=String(rows.filter(r=>r.payslip).length);
   $('payslipsList').querySelectorAll('[data-generate]').forEach(btn=>btn.onclick=()=>generate(btn.dataset.generate));
-  $('payslipsList').querySelectorAll('[data-download]').forEach(btn=>btn.onclick=()=>{window.location.href='/api/payroll-staff/payslip-pdf?recordId='+encodeURIComponent(btn.dataset.download);});
+  $('payslipsList').querySelectorAll('[data-download]').forEach(btn=>btn.onclick=()=>{window.location.href='/api/payroll-staff/payslip-view?recordId='+encodeURIComponent(btn.dataset.download);});
 }
 async function generate(recordId){
-  try{await api('/api/payroll-staff/payslips',{method:'POST',body:JSON.stringify({recordId})});window.location.href='/api/payroll-staff/payslip-pdf?recordId='+encodeURIComponent(recordId);}
+  try{await api('/api/payroll-staff/payslips',{method:'POST',body:JSON.stringify({recordId})});window.location.href='/api/payroll-staff/payslip-view?recordId='+encodeURIComponent(recordId);}
   catch(e){alert(e.message);}
 }
 async function logout(){try{await api('/api/payroll-staff/logout',{method:'POST'});}catch(e){}location.reload();}

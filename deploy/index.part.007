@@ -1276,29 +1276,23 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
   }
   function generatePayslip(recordId,printNow){
     var r=STATE.records.find(function(x){return x.id===recordId;});if(!r)return;
-    var w=getWorker(r.workerId)||{},ix=selectedInvoice(r.invoiceId);
-    var p=STATE.payslips.find(function(x){return x.recordId===recordId;});
-    if(!p){p={id:uid('payslip'),recordId:recordId,payslipNo:'PAY'+String(STATE.payslips.length+1).padStart(4,'0'),generatedAt:new Date().toISOString()};STATE.payslips.push(p);saveState();}
-    var last=r.payments&&r.payments.length?r.payments[r.payments.length-1]:null;
-    var doc='<div class="paydoc"><div class="paydoc-head"><div><div class="kicker">FILM BEYOND IMAGINATION (FBI)</div><h1>PAYSLIP</h1><p>Professional Payroll Statement</p></div><div class="meta"><b>'+esc(p.payslipNo)+'</b><span>'+esc(r.workDate||'')+'</span></div></div>'+
-      '<div class="grid">'+cell('Employee',w.name||'')+cell('Worker ID',w.workerCode||'')+cell('Role',w.role||'')+cell('Department',w.department||'')+cell('Worker Type',w.workerType||'')+cell('Payment Basis',r.basis||'')+cell('Project / Event',r.project||'')+cell('Linked Invoice',ix?(ix.no||''):'Independent work')+'</div>'+
-      '<table><thead><tr><th>Description</th><th class="r">Amount</th></tr></thead><tbody>'+
-      row('Rate × Quantity',basePay(r))+row('Transport Allowance',r.transport)+row('Feeding Allowance',r.feeding)+row('Accommodation',r.accommodation)+row('Overtime',r.overtime)+row('Other Allowance',r.otherAllowance)+row('General Allowance',r.allowance)+row('Bonus',r.bonus)+
-      '<tr class="strong"><td>Gross Pay</td><td class="r">'+money(gross(r))+'</td></tr>'+
-      row('Deductions',-num(r.deduction))+row('Advance',-num(r.advance))+row('Previous Balance Owed',num(r.previousBalance))+
-      '<tr class="net"><td>NET PAY</td><td class="r">'+money(net(r))+'</td></tr>'+
-      '</tbody></table>'+
-      '<div class="payment-box"><div><span>Amount Paid</span><b>'+money(paid(r))+'</b></div><div><span>Balance</span><b>'+money(balance(r))+'</b></div><div><span>Status</span><b>'+esc(status(r))+'</b></div></div>'+
-      (last?'<div class="payment-detail"><b>Latest Payment</b><p>'+esc(last.date||'')+' · '+esc(last.method||'')+' · Ref '+esc(last.reference||'')+' · Paid by '+esc(last.paidBy||'')+'</p></div>':'')+
-      '<div class="footer">Worker payment method: '+esc(w.paymentMethod||'')+(w.momo?' · MoMo '+esc(w.momo):'')+(w.bank?' · Bank '+esc(w.bank):'')+'<br>Generated '+esc(new Date().toLocaleString())+'</div></div>';
-    var win=window.open('','_blank');
-    if(!win){alert('Please allow pop-ups to print the payslip.');return;}
-    win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+esc(p.payslipNo)+' - Payslip</title><style>'+
-      'body{font-family:Arial,sans-serif;background:#f4f5f7;color:#1c222b;padding:24px}.paydoc{width:min(760px,100%);margin:auto;background:#fff;padding:30px;border:1px solid #dde2e8;border-radius:12px}.paydoc-head{display:flex;justify-content:space-between;border-bottom:2px solid #222;padding-bottom:16px}.kicker{font-size:9px;letter-spacing:1.5px;font-weight:800;color:#8b6b2b}.paydoc h1{font-size:28px;margin:6px 0 2px}.paydoc p{margin:0;color:#6d7682;font-size:10px}.meta{text-align:right}.meta b{display:block;font-size:18px}.meta span{display:block;font-size:10px;color:#6d7682;margin-top:5px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0}.cell{border:1px solid #e0e4e9;background:#fafbfc;border-radius:8px;padding:9px}.cell span{display:block;font-size:7.5px;text-transform:uppercase;letter-spacing:.6px;color:#7f8792}.cell b{display:block;font-size:10px;margin-top:4px}.paydoc table{width:100%;border-collapse:collapse;margin-top:12px}.paydoc th{background:#151a21;color:#fff;padding:9px;text-align:left;font-size:8px;text-transform:uppercase}.paydoc td{border-bottom:1px solid #e6e9ed;padding:8px;font-size:9px}.r{text-align:right}.strong td{font-weight:800}.net td{background:#151a21;color:#fff;font-weight:900;font-size:12px}.payment-box{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}.payment-box div{border:1px solid #e0e4e9;border-radius:8px;padding:10px}.payment-box span{display:block;font-size:7.5px;text-transform:uppercase;color:#7f8792}.payment-box b{display:block;font-size:13px;margin-top:4px}.payment-detail{margin-top:13px;padding:10px;border-left:3px solid #b48b2f;background:#fff9e7;font-size:9px}.footer{margin-top:22px;padding-top:11px;border-top:1px solid #e0e4e9;color:#707985;font-size:8px;line-height:1.5}@media print{body{background:#fff;padding:0}.paydoc{border:0;border-radius:0;width:100%;padding:0}}\n    </style></head><body>'+doc+'<script>window.onload=function(){window.print()}<\\/script></body></html>');
-    win.document.close();
-    tabs('payslips');
-    toastLocal('Payslip '+p.payslipNo+' generated');
+    /* Open the window first (inside the click) so pop-up blockers allow it, then point it at the issued payslip. */
+    var win=window.open('about:blank','_blank');
+    if(win){try{win.document.write('<p style="font-family:Arial;padding:30px;color:#444">Preparing secure payslip\u2026</p>');}catch(e){}}
+    saveStateAndWait().then(function(){
+      return fetch('/api/payslips/issue',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({recordId:recordId})});
+    }).then(function(res){return res.json().then(function(b){if(!res.ok||!b.ok)throw new Error(b.error||('Payslip failed ('+res.status+')'));return b;});})
+    .then(function(b){
+      var p=STATE.payslips.find(function(x){return x.recordId===recordId;});
+      if(!p){p={id:uid('payslip'),recordId:recordId,generatedAt:new Date().toISOString()};STATE.payslips.push(p);}
+      if(p.payslipNo!==b.serial){p.payslipNo=b.serial;p.generatedAt=new Date(b.issuedAt).toISOString();p.fingerprint=b.fingerprint;saveState();}
+      var viewUrl='/api/payslips/view?recordId='+encodeURIComponent(recordId);
+      if(win&&!win.closed)win.location.href=viewUrl;else window.open(viewUrl,'_blank');
+      renderAll();tabs('payslips');
+      toastLocal('Payslip '+b.serial+' ready');
+    }).catch(function(e){if(win&&!win.closed)win.close();alert(e.message||'Payslip could not be generated.');});
   }
+
   function cell(k,v){return '<div class="cell"><span>'+esc(k)+'</span><b>'+esc(v)+'</b></div>';}
   function row(k,v){return '<tr><td>'+esc(k)+'</td><td class="r">'+money(v)+'</td></tr>';}
 

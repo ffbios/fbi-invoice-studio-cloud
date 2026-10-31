@@ -7110,29 +7110,23 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
   }
   function generatePayslip(recordId,printNow){
     var r=STATE.records.find(function(x){return x.id===recordId;});if(!r)return;
-    var w=getWorker(r.workerId)||{},ix=selectedInvoice(r.invoiceId);
-    var p=STATE.payslips.find(function(x){return x.recordId===recordId;});
-    if(!p){p={id:uid('payslip'),recordId:recordId,payslipNo:'PAY'+String(STATE.payslips.length+1).padStart(4,'0'),generatedAt:new Date().toISOString()};STATE.payslips.push(p);saveState();}
-    var last=r.payments&&r.payments.length?r.payments[r.payments.length-1]:null;
-    var doc='<div class="paydoc"><div class="paydoc-head"><div><div class="kicker">FILM BEYOND IMAGINATION (FBI)</div><h1>PAYSLIP</h1><p>Professional Payroll Statement</p></div><div class="meta"><b>'+esc(p.payslipNo)+'</b><span>'+esc(r.workDate||'')+'</span></div></div>'+
-      '<div class="grid">'+cell('Employee',w.name||'')+cell('Worker ID',w.workerCode||'')+cell('Role',w.role||'')+cell('Department',w.department||'')+cell('Worker Type',w.workerType||'')+cell('Payment Basis',r.basis||'')+cell('Project / Event',r.project||'')+cell('Linked Invoice',ix?(ix.no||''):'Independent work')+'</div>'+
-      '<table><thead><tr><th>Description</th><th class="r">Amount</th></tr></thead><tbody>'+
-      row('Rate × Quantity',basePay(r))+row('Transport Allowance',r.transport)+row('Feeding Allowance',r.feeding)+row('Accommodation',r.accommodation)+row('Overtime',r.overtime)+row('Other Allowance',r.otherAllowance)+row('General Allowance',r.allowance)+row('Bonus',r.bonus)+
-      '<tr class="strong"><td>Gross Pay</td><td class="r">'+money(gross(r))+'</td></tr>'+
-      row('Deductions',-num(r.deduction))+row('Advance',-num(r.advance))+row('Previous Balance Owed',num(r.previousBalance))+
-      '<tr class="net"><td>NET PAY</td><td class="r">'+money(net(r))+'</td></tr>'+
-      '</tbody></table>'+
-      '<div class="payment-box"><div><span>Amount Paid</span><b>'+money(paid(r))+'</b></div><div><span>Balance</span><b>'+money(balance(r))+'</b></div><div><span>Status</span><b>'+esc(status(r))+'</b></div></div>'+
-      (last?'<div class="payment-detail"><b>Latest Payment</b><p>'+esc(last.date||'')+' · '+esc(last.method||'')+' · Ref '+esc(last.reference||'')+' · Paid by '+esc(last.paidBy||'')+'</p></div>':'')+
-      '<div class="footer">Worker payment method: '+esc(w.paymentMethod||'')+(w.momo?' · MoMo '+esc(w.momo):'')+(w.bank?' · Bank '+esc(w.bank):'')+'<br>Generated '+esc(new Date().toLocaleString())+'</div></div>';
-    var win=window.open('','_blank');
-    if(!win){alert('Please allow pop-ups to print the payslip.');return;}
-    win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+esc(p.payslipNo)+' - Payslip</title><style>'+
-      'body{font-family:Arial,sans-serif;background:#f4f5f7;color:#1c222b;padding:24px}.paydoc{width:min(760px,100%);margin:auto;background:#fff;padding:30px;border:1px solid #dde2e8;border-radius:12px}.paydoc-head{display:flex;justify-content:space-between;border-bottom:2px solid #222;padding-bottom:16px}.kicker{font-size:9px;letter-spacing:1.5px;font-weight:800;color:#8b6b2b}.paydoc h1{font-size:28px;margin:6px 0 2px}.paydoc p{margin:0;color:#6d7682;font-size:10px}.meta{text-align:right}.meta b{display:block;font-size:18px}.meta span{display:block;font-size:10px;color:#6d7682;margin-top:5px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0}.cell{border:1px solid #e0e4e9;background:#fafbfc;border-radius:8px;padding:9px}.cell span{display:block;font-size:7.5px;text-transform:uppercase;letter-spacing:.6px;color:#7f8792}.cell b{display:block;font-size:10px;margin-top:4px}.paydoc table{width:100%;border-collapse:collapse;margin-top:12px}.paydoc th{background:#151a21;color:#fff;padding:9px;text-align:left;font-size:8px;text-transform:uppercase}.paydoc td{border-bottom:1px solid #e6e9ed;padding:8px;font-size:9px}.r{text-align:right}.strong td{font-weight:800}.net td{background:#151a21;color:#fff;font-weight:900;font-size:12px}.payment-box{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}.payment-box div{border:1px solid #e0e4e9;border-radius:8px;padding:10px}.payment-box span{display:block;font-size:7.5px;text-transform:uppercase;color:#7f8792}.payment-box b{display:block;font-size:13px;margin-top:4px}.payment-detail{margin-top:13px;padding:10px;border-left:3px solid #b48b2f;background:#fff9e7;font-size:9px}.footer{margin-top:22px;padding-top:11px;border-top:1px solid #e0e4e9;color:#707985;font-size:8px;line-height:1.5}@media print{body{background:#fff;padding:0}.paydoc{border:0;border-radius:0;width:100%;padding:0}}\n    </style></head><body>'+doc+'<script>window.onload=function(){window.print()}<\\/script></body></html>');
-    win.document.close();
-    tabs('payslips');
-    toastLocal('Payslip '+p.payslipNo+' generated');
+    /* Open the window first (inside the click) so pop-up blockers allow it, then point it at the issued payslip. */
+    var win=window.open('about:blank','_blank');
+    if(win){try{win.document.write('<p style="font-family:Arial;padding:30px;color:#444">Preparing secure payslip\u2026</p>');}catch(e){}}
+    saveStateAndWait().then(function(){
+      return fetch('/api/payslips/issue',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({recordId:recordId})});
+    }).then(function(res){return res.json().then(function(b){if(!res.ok||!b.ok)throw new Error(b.error||('Payslip failed ('+res.status+')'));return b;});})
+    .then(function(b){
+      var p=STATE.payslips.find(function(x){return x.recordId===recordId;});
+      if(!p){p={id:uid('payslip'),recordId:recordId,generatedAt:new Date().toISOString()};STATE.payslips.push(p);}
+      if(p.payslipNo!==b.serial){p.payslipNo=b.serial;p.generatedAt=new Date(b.issuedAt).toISOString();p.fingerprint=b.fingerprint;saveState();}
+      var viewUrl='/api/payslips/view?recordId='+encodeURIComponent(recordId);
+      if(win&&!win.closed)win.location.href=viewUrl;else window.open(viewUrl,'_blank');
+      renderAll();tabs('payslips');
+      toastLocal('Payslip '+b.serial+' ready');
+    }).catch(function(e){if(win&&!win.closed)win.close();alert(e.message||'Payslip could not be generated.');});
   }
+
   function cell(k,v){return '<div class="cell"><span>'+esc(k)+'</span><b>'+esc(v)+'</b></div>';}
   function row(k,v){return '<tr><td>'+esc(k)+'</td><td class="r">'+money(v)+'</td></tr>';}
 
@@ -8830,5 +8824,130 @@ html[data-theme] body #view-quotes .inv-toolbar{grid-template-columns:minmax(0,1
     new MutationObserver(function(){var on=m.classList.contains('show');if(on&&!was)onOpen();was=on;}).observe(m,{attributes:true,attributeFilter:['class']});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch);else watch();
+})();
+</script>
+
+<!-- Payroll look & feel: readable sizes, clear contrast in light and dark, cleaner layout. Built into index.html by build-index.js (loaded last, so it wins). -->
+<style id="fbi-payroll-polish">
+/* ---------- theme tokens (scoped to Payroll only) ---------- */
+html #fbiPayrollView{
+  --pr-text:#111827;--pr-muted:#5b6472;--pr-faint:#8a93a1;--pr-card:#ffffff;--pr-soft:#f6f7f9;--pr-line:#e3e6eb;--pr-line-strong:#cfd5dd;
+  --pr-brand:#a80e4d;--pr-brand-ink:#ffffff;--pr-gold:#a37a1f;--pr-row-hover:#f8f4f6;--pr-sel:#fbeef3;
+  --pr-ok:#127a4a;--pr-ok-bg:#e5f5ec;--pr-warn:#8a5a00;--pr-warn-bg:#fdf1d9;--pr-bad:#b42318;--pr-bad-bg:#fdecea;--pr-info:#1d4f91;--pr-info-bg:#e6eefb;
+}
+html[data-theme="dark"] #fbiPayrollView{
+  --pr-text:#f2f4f7;--pr-muted:#a3acba;--pr-faint:#7d8696;--pr-card:#12151c;--pr-soft:#171b23;--pr-line:#262c37;--pr-line-strong:#353c49;
+  --pr-brand:#d61f69;--pr-gold:#e2b552;--pr-row-hover:#1a1f29;--pr-sel:#2a1621;
+  --pr-ok:#5fd39a;--pr-ok-bg:rgba(95,211,154,.12);--pr-warn:#f2c46b;--pr-warn-bg:rgba(242,196,107,.12);--pr-bad:#ff8a80;--pr-bad-bg:rgba(255,138,128,.12);--pr-info:#8ab4ff;--pr-info-bg:rgba(138,180,255,.12);
+}
+
+/* ---------- typography: nothing below 12px ---------- */
+html body #fbiPayrollView{font-size:14px;color:var(--pr-text)}
+html body #fbiPayrollView :is(.fbi-payroll-section-head h3,.fbi-payroll-widget-head h3,.fbi-payroll-profile h4){color:var(--pr-text)!important;-webkit-text-fill-color:var(--pr-text)!important;font-size:17px!important;font-weight:700!important;letter-spacing:-.2px;margin:0 0 4px!important}
+html body #fbiPayrollView :is(.fbi-payroll-section-head p,.fbi-payroll-widget-head small,.fbi-payroll-dashboard-sub){color:var(--pr-muted)!important;font-size:13px!important;line-height:1.5!important}
+html body #fbiPayrollView :is(.fbi-payroll-kicker,.fbi-payroll-dashboard-eyebrow){font-size:11.5px!important;letter-spacing:1.4px!important;color:var(--pr-gold)!important}
+html body #fbiPayrollView .fbi-payroll-hero p{font-size:14px!important}
+html body #fbiPayrollView :is(.fbi-payroll-stat span,.fbi-payroll-kpi span,.fbi-payroll-summary-item span,.fbi-payroll-report-summary span,.fbi-payroll-pay-balance span){font-size:12px!important;letter-spacing:.6px!important;color:var(--pr-muted)!important;font-weight:700!important}
+html body #fbiPayrollView :is(.fbi-payroll-stat small,.fbi-payroll-kpi small,.fbi-payroll-health-copy small,.fbi-payroll-list-row small,.fbi-payroll-payslip-row small,.fbi-payroll-quick small,.fbi-payroll-dialog-head small){font-size:12.5px!important;color:var(--pr-muted)!important}
+html body #fbiPayrollView :is(.fbi-payroll-chart-label,.fbi-payroll-chart-value,.fbi-payroll-dept-label,.fbi-payroll-health-stat,.fbi-payroll-info,.fbi-payroll-period){font-size:12.5px!important}
+html body #fbiPayrollView :is(.fbi-payroll-list-row b,.fbi-payroll-list-amount b,.fbi-payroll-quick b,.fbi-payroll-payslip-row b){font-size:14px!important;color:var(--pr-text)!important}
+html body #fbiPayrollView .fbi-payroll-empty{font-size:14px!important;color:var(--pr-muted)!important;background:var(--pr-soft)!important;border:1px dashed var(--pr-line-strong)!important;border-radius:12px!important;padding:26px!important}
+
+/* ---------- buttons: no underlines, no cramped text ---------- */
+html body #fbiPayrollView :is(a.btn,button.btn,.fbi-payroll-mini-btn){text-decoration:none!important;white-space:nowrap}
+html body #fbiPayrollView .fbi-payroll-mini-btn{font-size:12.5px!important;font-weight:600!important;padding:7px 12px!important;border-radius:8px!important;min-height:32px;background:var(--pr-card)!important;color:var(--pr-text)!important;border:1px solid var(--pr-line-strong)!important;box-shadow:none!important}
+html body #fbiPayrollView .fbi-payroll-mini-btn:hover{border-color:var(--pr-text)!important}
+html body #fbiPayrollView .fbi-payroll-mini-btn.primary{background:var(--pr-brand)!important;border-color:var(--pr-brand)!important;color:var(--pr-brand-ink)!important}
+html body #fbiPayrollView .fbi-payroll-mini-btn.danger{color:var(--pr-bad)!important;border-color:color-mix(in srgb,var(--pr-bad) 40%,transparent)!important;background:transparent!important}
+
+/* ---------- tabs ---------- */
+html body #fbiPayrollView .fbi-payroll-tabs{gap:4px!important;padding:5px!important;background:var(--pr-soft)!important;border:1px solid var(--pr-line)!important;border-radius:12px!important;overflow-x:auto;flex-wrap:nowrap!important}
+html body #fbiPayrollView .fbi-payroll-tab{font-size:13.5px!important;font-weight:600!important;padding:9px 16px!important;border-radius:9px!important;color:var(--pr-muted)!important;background:transparent!important;border:0!important;white-space:nowrap}
+html body #fbiPayrollView .fbi-payroll-tab:hover{color:var(--pr-text)!important}
+html body #fbiPayrollView .fbi-payroll-tab.active{background:var(--pr-card)!important;color:var(--pr-text)!important;box-shadow:0 1px 2px rgba(16,24,40,.08),0 0 0 1px var(--pr-line)!important}
+
+/* ---------- tables ---------- */
+html body #fbiPayrollView .fbi-payroll-table-wrap{border:1px solid var(--pr-line)!important;border-radius:12px!important;overflow-x:auto!important;background:var(--pr-card)!important}
+html body #fbiPayrollView .fbi-payroll-table{width:100%;border-collapse:collapse}
+html body #fbiPayrollView .fbi-payroll-table th{font-size:11.5px!important;font-weight:700!important;text-transform:uppercase;letter-spacing:.7px!important;color:var(--pr-muted)!important;background:var(--pr-soft)!important;padding:11px 14px!important;border-bottom:1px solid var(--pr-line)!important;white-space:nowrap}
+html body #fbiPayrollView .fbi-payroll-table td{font-size:14px!important;color:var(--pr-text)!important;padding:12px 14px!important;border-bottom:1px solid var(--pr-line)!important;vertical-align:middle!important}
+html body #fbiPayrollView .fbi-payroll-table tbody tr:last-child td{border-bottom:0!important}
+html body #fbiPayrollView .fbi-payroll-table tbody tr:hover td{background:var(--pr-row-hover)!important}
+html body #fbiPayrollView .fbi-payroll-table td b{color:var(--pr-text)!important;font-weight:650}
+html body #fbiPayrollView .fbi-payroll-table .sub{display:block;font-size:12.5px!important;color:var(--pr-muted)!important;margin-top:3px}
+html body #fbiPayrollView .fbi-payroll-table td.num,html body #fbiPayrollView .fbi-payroll-table th.num{text-align:right;font-variant-numeric:tabular-nums}
+html body #fbiPayrollView .fbi-payroll-actions-cell{display:flex;gap:6px;flex-wrap:nowrap}
+html body #fbiPayrollView .fbi-payroll-table tr.is-selected td{background:var(--pr-sel)!important}
+html body #fbiPayrollView .fbi-payroll-table tr.is-selected td:first-child{box-shadow:inset 3px 0 0 var(--pr-brand)}
+
+/* ---------- status badges ---------- */
+html body #fbiPayrollView .fbi-payroll-badge{font-size:12px!important;font-weight:700!important;padding:4px 10px!important;border-radius:999px!important;border:0!important;display:inline-block;white-space:nowrap}
+html body #fbiPayrollView .fbi-payroll-badge:is(.paid,.active){background:var(--pr-ok-bg)!important;color:var(--pr-ok)!important}
+html body #fbiPayrollView .fbi-payroll-badge.partial{background:var(--pr-warn-bg)!important;color:var(--pr-warn)!important}
+html body #fbiPayrollView .fbi-payroll-badge.pending{background:var(--pr-info-bg)!important;color:var(--pr-info)!important}
+html body #fbiPayrollView .fbi-payroll-badge.inactive{background:var(--pr-soft)!important;color:var(--pr-muted)!important}
+
+/* ---------- workers: directory first, profile as a side card ---------- */
+html body #fbiPayrollView .fbi-payroll-worker-layout{display:grid!important;grid-template-columns:minmax(0,1fr) 360px!important;gap:16px!important;align-items:start}
+html body #fbiPayrollView #fbiPayrollWorkersTable{order:1;min-width:0}
+html body #fbiPayrollView #fbiPayrollWorkerProfile{order:2;position:sticky;top:84px}
+html body #fbiPayrollView .fbi-payroll-profile{background:var(--pr-card)!important;border:1px solid var(--pr-line)!important;border-radius:14px!important;padding:18px 18px 8px!important;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+html body #fbiPayrollView .fbi-payroll-profile h4{padding-bottom:12px;border-bottom:1px solid var(--pr-line);margin-bottom:4px!important}
+html body #fbiPayrollView .fbi-payroll-profile-row{display:grid!important;grid-template-columns:128px minmax(0,1fr)!important;gap:10px!important;padding:9px 0!important;border-bottom:1px solid var(--pr-line)!important;font-size:13.5px!important}
+html body #fbiPayrollView .fbi-payroll-profile-row:last-child{border-bottom:0!important}
+html body #fbiPayrollView .fbi-payroll-profile-row>*:first-child{color:var(--pr-muted)!important;-webkit-text-fill-color:var(--pr-muted)!important;font-weight:500!important;font-size:13px!important}
+html body #fbiPayrollView .fbi-payroll-profile-row>*:last-child{color:var(--pr-text)!important;-webkit-text-fill-color:var(--pr-text)!important;font-weight:600!important;font-size:13.5px!important;overflow-wrap:anywhere;text-align:left!important}
+@media (min-width:0px){
+  html body #fbiPayrollView .fbi-payroll-worker-layout{grid-template-columns:1fr!important}
+  html body #fbiPayrollView #fbiPayrollWorkerProfile{order:0;position:static}
+  html body #fbiPayrollView .fbi-payroll-profile{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:28px;padding:16px 20px 10px!important}
+  html body #fbiPayrollView .fbi-payroll-profile h4{grid-column:1/-1}
+  html body #fbiPayrollView .fbi-payroll-profile-row{grid-template-columns:118px minmax(0,1fr)!important}
+  html body #fbiPayrollView .fbi-payroll-profile-row:last-child{border-bottom:1px solid var(--pr-line)!important}
+  html body #fbiPayrollView .fbi-payroll-profile>.fbi-payroll-empty{grid-column:1/-1}
+  html body #fbiPayrollView .fbi-payroll-profile>div:not(.fbi-payroll-profile-row){grid-column:1/-1;margin-bottom:6px}
+}
+@media (max-width:1100px){html body #fbiPayrollView .fbi-payroll-profile{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:700px){html body #fbiPayrollView .fbi-payroll-profile{grid-template-columns:1fr}}
+html body #fbiPayrollView .fbi-payroll-table td:has(.sub){white-space:normal}
+html body #fbiPayrollView #fbiPayrollWorkersTable .fbi-payroll-table td{white-space:nowrap}
+html body #fbiPayrollView #fbiPayrollRecordsTable .fbi-payroll-table td:not(:first-child){white-space:nowrap}
+html body #fbiPayrollView #fbiPayrollRecordsTable .fbi-payroll-table td:first-child{min-width:170px}
+
+/* ---------- forms ---------- */
+html body #fbiPayrollView .fbi-payroll-field label,html body .fbi-payroll-modal .fbi-payroll-field label{font-size:12.5px!important;font-weight:600!important;color:var(--pr-muted,#5b6472)!important;letter-spacing:.2px!important;text-transform:none!important}
+html body #fbiPayrollView :is(.fbi-payroll-field input,.fbi-payroll-field select,.fbi-payroll-field textarea),html body .fbi-payroll-modal :is(.fbi-payroll-field input,.fbi-payroll-field select,.fbi-payroll-field textarea){font-size:14px!important;min-height:40px}
+
+/* ---------- section headings line up with their buttons ---------- */
+html body #fbiPayrollView .fbi-payroll-section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin:18px 0 14px!important}
+
+@media (max-width:640px){
+  html body #fbiPayrollView .fbi-payroll-tab{padding:8px 12px!important;font-size:13px!important}
+  html body #fbiPayrollView .fbi-payroll-profile-row{grid-template-columns:110px minmax(0,1fr)!important}
+}
+</style>
+<script id="fbi-payroll-polish-js">
+(function(){
+  'use strict';
+  /* Strip decorative emoji from payroll button labels so they read as clean, professional buttons. */
+  var EMOJI=/^[\s←-⯿＋➕\uD83C-􏰀-\uDFFF️‍+]+/;
+  function cleanLabels(root){
+    (root||document).querySelectorAll('#fbiPayrollView :is(a.btn,button.btn,.fbi-payroll-mini-btn)').forEach(function(b){
+      if(b.__prClean)return;b.__prClean=1;
+      for(var n=b.firstChild;n;n=n.nextSibling){if(n.nodeType===3&&n.nodeValue.trim()){var plus=/^\s*[＋+➕]/.test(n.nodeValue);n.nodeValue=n.nodeValue.replace(EMOJI,'');if(plus&&!/^Add|^New/.test(n.nodeValue))n.nodeValue='+ '+n.nodeValue;break;}}
+    });
+  }
+  /* Mark the selected worker row with a class instead of the faint inline tint. */
+  function markSelected(){
+    document.querySelectorAll('#fbiPayrollWorkersTable tbody tr').forEach(function(tr){
+      var sel=/background/.test(tr.getAttribute('style')||'');tr.classList.toggle('is-selected',sel);if(sel)tr.removeAttribute('style');
+    });
+  }
+  function run(){cleanLabels();markSelected();}
+  function start(){
+    var v=document.getElementById('fbiPayrollView');if(!v){setTimeout(start,600);return;}
+    run();new MutationObserver(function(){run();}).observe(v,{childList:true,subtree:true});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
 </script>
