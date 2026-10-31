@@ -7309,6 +7309,12 @@ body.fbi-payroll-mode .fbi-payroll-quick{padding:9px}
     var oldNav=window.__FBI_NAV__;
     window.__FBI_NAV__=function(v){if(v==='payroll'){activate();return false;}deactivate();return typeof oldNav==='function'?oldNav(v):false;};
     window.__FBI_PAYROLL_OPEN__=activate;
+    /* Bridge for the Moolre payout add-on (moolre-ui.html): read-only access plus a cloud refresh. */
+    window.__FBI_PAYROLL_HOOK__={
+      paymentContext:function(){var r=STATE.records.find(function(x){return x.id===paymentRecordId;});if(!r)return null;var w=getWorker(r.workerId)||{};return {recordId:r.id,balance:balance(r),record:JSON.parse(JSON.stringify(r)),worker:JSON.parse(JSON.stringify(w))};},
+      refresh:async function(){await hydratePayrollCloud();},
+      closePayment:function(){closePayment();}
+    };
     window.addEventListener('hashchange',function(){if(location.hash==='#payroll')activate();else deactivate();});
   }
   function init(){
@@ -8645,5 +8651,184 @@ html[data-theme] body #view-quotes .inv-toolbar{grid-template-columns:minmax(0,1
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
   // Refresh the card whenever Business settings is opened.
   setTimeout(()=>{inject();const v=$n("view-settings");if(v)new MutationObserver(()=>{if(settingsShown())load()}).observe(v,{attributes:true,attributeFilter:["class"]})},1500);
+})();
+</script>
+
+<!-- Moolre payouts for Payroll: built into index.html by build-index.js. Adds "Pay with Moolre" to the payroll Pay window. -->
+<style id="fbi-moolre-styles">
+#fbiMoolreBox{margin-top:14px;padding:14px;border:1px solid var(--line,#343a48);border-radius:12px;background:var(--u-row,rgba(255,255,255,.03))}
+#fbiMoolreBox .ml-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+#fbiMoolreBox .ml-head b{font-size:14px}
+#fbiMoolreBox .ml-sub{display:block;font-size:12px;color:var(--muted,#8a93a3);margin-top:2px}
+#fbiMoolreBox .ml-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+#fbiMoolreBox .ml-form .full{grid-column:1/-1}
+#fbiMoolreBox label{display:block;font-size:12px;color:var(--muted,#8a93a3);margin-bottom:4px}
+#fbiMoolreBox input,#fbiMoolreBox select{width:100%;box-sizing:border-box}
+#fbiMoolreBox .ml-name{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13px;display:none}
+#fbiMoolreBox .ml-name.ok{display:block;background:rgba(42,157,106,.12);border:1px solid rgba(42,157,106,.45)}
+#fbiMoolreBox .ml-name.bad{display:block;background:rgba(204,51,51,.1);border:1px solid rgba(204,51,51,.45)}
+#fbiMoolreBox .ml-name.wait{display:block;background:rgba(201,154,26,.1);border:1px solid rgba(201,154,26,.45)}
+#fbiMoolreBox .ml-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
+#fbiMoolreBox .ml-hist{margin-top:12px;display:grid;gap:6px}
+#fbiMoolreBox .ml-row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:12.5px;padding:8px 10px;border:1px solid var(--line,#343a48);border-radius:9px}
+#fbiMoolreBox .ml-pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;border:1px solid currentColor}
+#fbiMoolreBox .ml-pill.paid{color:#2a9d6a}#fbiMoolreBox .ml-pill.failed{color:#d24b4b}#fbiMoolreBox .ml-pill.pending,#fbiMoolreBox .ml-pill.unknown,#fbiMoolreBox .ml-pill.sending{color:#c99a1a}
+@media(max-width:600px){#fbiMoolreBox .ml-form{grid-template-columns:1fr}}
+</style>
+<script id="fbi-moolre-script">
+(function(){
+  'use strict';
+  var NET={mtn:'MTN MoMo',telecel:'Telecel Cash',at:'AT Money',bank:'Bank transfer'};
+  var ctx=null, checked=null, status=null, banks=null, busy=false;
+  function $(id){return document.getElementById(id);}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
+  function money(v){return 'GH₵'+(Number(v)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function toast(m){try{if(typeof window.toast==='function')window.toast(m);}catch(e){}}
+  function phone(v){var d=String(v||'').replace(/\D/g,'');if(/^233\d{9}$/.test(d))return '0'+d.slice(3);if(/^0\d{9}$/.test(d))return d;if(/^\d{9}$/.test(d))return '0'+d;return '';}
+  function guess(p){p=phone(p).slice(0,3);if(['024','025','053','054','055','059'].indexOf(p)>=0)return 'mtn';if(['020','050'].indexOf(p)>=0)return 'telecel';if(['026','027','056','057'].indexOf(p)>=0)return 'at';return '';}
+  async function api(path,opt){
+    opt=opt||{};
+    var r=await fetch(path,{method:opt.method||'GET',credentials:'same-origin',cache:'no-store',headers:opt.body?{'Content-Type':'application/json'}:{},body:opt.body?JSON.stringify(opt.body):undefined});
+    var b=await r.json().catch(function(){return {ok:false,error:'Server error ('+r.status+')'};});
+    if(!r.ok&&b.ok!==false)b.ok=false;
+    return b;
+  }
+  function amount(){return Math.round((Number(($('fbiPayrollPaymentAmount')||{}).value)||0)*100)/100;}
+  function recipient(){
+    var ch=$('mlChannel').value;
+    return {channel:ch,receiver:($('mlReceiver').value||'').trim(),bankCode:ch==='bank'?$('mlBank').value:''};
+  }
+  function sameRecipient(a,b){return a&&b&&a.channel===b.channel&&a.bankCode===b.bankCode&&String(a.receiver).replace(/\D/g,'')===String(b.receiver).replace(/\D/g,'');}
+  function setName(cls,html){var el=$('mlName');el.className='ml-name '+(cls||'');el.innerHTML=html||'';}
+  function updateSend(){
+    var b=$('mlSend');if(!b)return;
+    var ok=!busy&&checked&&sameRecipient(checked.rc,recipient())&&amount()>=1&&ctx&&amount()<=ctx.balance+0.005;
+    b.disabled=!ok;
+    b.textContent=ok?('Send '+money(amount())+' now'):'Send money';
+  }
+
+  function ensureBox(){
+    var body=document.querySelector('#fbiPayrollPaymentModal .fbi-payroll-dialog-body');if(!body)return null;
+    var box=$('fbiMoolreBox');
+    if(!box){box=document.createElement('div');box.id='fbiMoolreBox';body.appendChild(box);}
+    return box;
+  }
+
+  async function onOpen(){
+    var hook=window.__FBI_PAYROLL_HOOK__;ctx=hook&&hook.paymentContext();checked=null;busy=false;
+    var box=ensureBox();if(!box||!ctx)return;
+    box.innerHTML='<div class="ml-head"><div><b>💸 Pay directly with Moolre</b><span class="ml-sub" id="mlStatus">Checking your Moolre wallet…</span></div>'+
+      '<button class="btn" type="button" id="mlOpen" disabled>Pay with Moolre</button></div><div id="mlPanel"></div><div class="ml-hist" id="mlHist"></div>';
+    loadHistory();
+    var s=await api('/api/moolre/status');status=s;
+    var st=$('mlStatus'),open=$('mlOpen');if(!st)return;
+    if(!s.ok){st.textContent=s.error||'Could not reach the server.';return;}
+    if(!s.configured){st.textContent='Moolre is not connected on the server yet.';return;}
+    if(!s.connected){st.textContent='Moolre refused the connection: '+(s.error||'unknown error');return;}
+    st.textContent='Wallet: '+(s.accountName||'Moolre')+' · Balance '+money(s.balance);
+    open.disabled=false;open.classList.add('primary');open.onclick=showPanel;
+  }
+
+  function showPanel(){
+    var w=ctx.worker||{},method=String(w.paymentMethod||''),isBank=/bank/i.test(method)&&w.accountNumber;
+    var ch=isBank?'bank':(guess(w.momo||w.phone)||'mtn');
+    var rec=isBank?w.accountNumber:(w.momo||w.phone||'');
+    $('mlOpen').style.display='none';
+    $('mlPanel').innerHTML='<div class="ml-form">'+
+      '<div><label>Send to</label><select id="mlChannel">'+Object.keys(NET).map(function(k){return '<option value="'+k+'"'+(k===ch?' selected':'')+'>'+NET[k]+'</option>';}).join('')+'</select></div>'+
+      '<div><label id="mlReceiverLabel">Mobile money number</label><input id="mlReceiver" type="text" inputmode="numeric" value="'+esc(rec)+'"></div>'+
+      '<div class="full" id="mlBankWrap" style="display:none"><label>Bank</label><select id="mlBank"><option value="">Loading banks…</option></select></div>'+
+      '</div>'+
+      '<div class="ml-name" id="mlName"></div>'+
+      '<div class="ml-sub" style="margin-top:8px">The amount comes from the Amount box above. Moolre fees are taken from the wallet, so the worker gets the full amount.</div>'+
+      '<div class="ml-actions"><button class="btn" type="button" id="mlCheck">Check name</button><button class="btn primary" type="button" id="mlSend" disabled>Send money</button></div>';
+    $('mlChannel').onchange=function(){checked=null;setName();syncChannel();updateSend();};
+    $('mlReceiver').oninput=function(){if(checked&&!sameRecipient(checked.rc,recipient())){checked=null;setName();}if($('mlChannel').value!=='bank'){var g=guess(this.value);if(g&&g!==$('mlChannel').value){$('mlChannel').value=g;}}updateSend();};
+    $('mlBank').onchange=function(){checked=null;setName();updateSend();};
+    $('mlCheck').onclick=checkName;
+    $('mlSend').onclick=send;
+    var amt=$('fbiPayrollPaymentAmount');if(amt&&!amt.__ml){amt.__ml=1;amt.addEventListener('input',updateSend);}
+    syncChannel();
+    if(rec)checkName();
+  }
+  async function syncChannel(){
+    var bank=$('mlChannel').value==='bank';
+    $('mlBankWrap').style.display=bank?'':'none';
+    $('mlReceiverLabel').textContent=bank?'Account number':'Mobile money number';
+    if(bank&&!banks){
+      var b=await api('/api/moolre/banks');
+      var sel=$('mlBank');if(!sel)return;
+      if(!b.ok){sel.innerHTML='<option value="">'+esc(b.error||'Could not load banks')+'</option>';return;}
+      banks=b.banks;
+      var want=String((ctx.worker||{}).bank||'').toLowerCase();
+      sel.innerHTML='<option value="">Choose bank…</option>'+banks.map(function(x){var pick=want&&x.name.toLowerCase().indexOf(want.split(' ')[0])>=0;return '<option value="'+esc(x.code)+'"'+(pick?' selected':'')+'>'+esc(x.name)+'</option>';}).join('');
+    }else if(bank&&banks&&$('mlBank').options.length<2){
+      $('mlBank').innerHTML='<option value="">Choose bank…</option>'+banks.map(function(x){return '<option value="'+esc(x.code)+'">'+esc(x.name)+'</option>';}).join('');
+    }
+  }
+  async function checkName(){
+    var rc=recipient();
+    if(rc.channel!=='bank'&&!phone(rc.receiver)){setName('bad','Enter a valid 10-digit mobile money number.');return;}
+    if(rc.channel==='bank'&&!rc.bankCode){setName('bad','Choose the bank first.');return;}
+    setName('wait','Checking with Moolre…');$('mlCheck').disabled=true;
+    var r=await api('/api/moolre/validate',{method:'POST',body:rc});
+    if($('mlCheck'))$('mlCheck').disabled=false;
+    if(!sameRecipient(rc,recipient()))return;
+    if(!r.ok){checked=null;setName('bad',esc(r.error||'Name check failed.'));updateSend();return;}
+    checked={rc:rc,name:r.name};
+    var wn=String((ctx.worker||{}).name||'');
+    setName('ok','Account name: <b>'+esc(r.name)+'</b>'+(wn?'<span class="ml-sub">Worker on payroll: '+esc(wn)+'. Make sure this is the same person.</span>':''));
+    updateSend();
+  }
+  async function send(){
+    if(busy||!checked)return;
+    var amt=amount(),rc=recipient();
+    if(!sameRecipient(checked.rc,rc)){checked=null;updateSend();return;}
+    if(amt>ctx.balance+0.005){alert('Only '+money(ctx.balance)+' is owed on this payroll.');return;}
+    if(status&&status.connected&&amt>Number(status.balance)){alert('Your Moolre wallet balance ('+money(status.balance)+') is not enough. Top up the wallet first.');return;}
+    var by=(($('fbiPayrollPaymentBy')||{}).value||'').trim();
+    if(!confirm('Send '+money(amt)+' to '+checked.name+'\n'+NET[rc.channel]+' '+rc.receiver+'\n\nThis sends real money from your Moolre wallet and cannot be undone.'))return;
+    busy=true;updateSend();$('mlSend').textContent='Sending…';$('mlCheck').disabled=true;
+    var r=await api('/api/moolre/pay',{method:'POST',body:{recordId:ctx.recordId,amount:amt,channel:rc.channel,receiver:rc.receiver,bankCode:rc.bankCode,paidBy:by||'Moolre'}});
+    busy=false;
+    if(!r.ok){setName('bad',esc(r.error||'Payment failed.'));if($('mlCheck'))$('mlCheck').disabled=false;updateSend();loadHistory();return;}
+    var p=r.payout;
+    await afterResult(p,r.warning);
+  }
+  async function afterResult(p,warning){
+    var hook=window.__FBI_PAYROLL_HOOK__;
+    if(p.status==='paid'){
+      try{await hook.refresh();}catch(e){}
+      toast(money(p.amount)+' sent to '+(p.receiverName||p.receiver)+' via Moolre');
+      if(warning)alert(warning);
+      hook.closePayment();
+      return;
+    }
+    if(p.status==='failed'){setName('bad','Moolre did not send the money: '+esc(p.message||p.code||'failed')+'. Nothing was deducted for this attempt.');}
+    else setName('wait','Moolre is still processing this payment ('+esc(p.message||'in progress')+'). It will be added to the payroll automatically once Moolre confirms it. Do <b>not</b> pay again.');
+    if($('mlCheck'))$('mlCheck').disabled=false;
+    updateSend();loadHistory();
+  }
+  async function loadHistory(){
+    var el=$('mlHist');if(!el||!ctx)return;
+    var r=await api('/api/moolre/payouts?recordId='+encodeURIComponent(ctx.recordId));
+    if(!r.ok||!r.payouts||!r.payouts.length){el.innerHTML='';return;}
+    el.innerHTML='<span class="ml-sub">Moolre payments for this payroll</span>'+r.payouts.map(function(p){
+      var label={paid:'Sent',failed:'Failed',pending:'Processing',unknown:'Checking',sending:'Sending'}[p.status]||p.status;
+      return '<div class="ml-row"><span>'+money(p.amount)+' → '+esc(p.receiverName||p.receiver)+' <span class="ml-sub">'+esc(p.channelLabel)+' '+esc(p.receiver)+' · '+new Date(p.createdAt).toLocaleString()+(p.transactionId?' · ID '+esc(p.transactionId):'')+'</span></span>'+
+        '<span><span class="ml-pill '+esc(p.status)+'">'+esc(label)+'</span>'+(['pending','unknown','sending'].indexOf(p.status)>=0?' <button class="btn" type="button" data-mlcheck="'+esc(p.ref)+'">Check now</button>':'')+'</span></div>';
+    }).join('');
+    el.querySelectorAll('[data-mlcheck]').forEach(function(b){b.onclick=async function(){b.disabled=true;b.textContent='Checking…';var x=await api('/api/moolre/payouts/'+encodeURIComponent(b.dataset.mlcheck)+'/check',{method:'POST'});if(!x.ok){alert(x.error||'Check failed');b.disabled=false;b.textContent='Check now';return;}await afterResult(x.payout,'');loadHistory();};});
+    var active=r.payouts.some(function(p){return ['pending','unknown','sending'].indexOf(p.status)>=0;});
+    var open=$('mlOpen');if(open&&active){open.disabled=true;open.title='A Moolre payment for this payroll is still processing';}
+  }
+
+  function watch(){
+    var m=$('fbiPayrollPaymentModal');
+    if(!m){setTimeout(watch,800);return;}
+    var was=false;
+    new MutationObserver(function(){var on=m.classList.contains('show');if(on&&!was)onOpen();was=on;}).observe(m,{attributes:true,attributeFilter:['class']});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch);else watch();
 })();
 </script>
