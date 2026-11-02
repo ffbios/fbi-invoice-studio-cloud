@@ -1396,6 +1396,10 @@ async function handleStaffUserAction(req, res, id, action) {
 
 const server = http.createServer(async (req, res) => {
   try {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 
     if (req.method === 'OPTIONS') {
